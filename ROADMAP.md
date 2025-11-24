@@ -1,6 +1,44 @@
 # clauderepo Roadmap to 1,000 Users
 
-**Current Status**: Production-ready, 53 solutions, v1.0.1 published to npm
+**Current Status**: v2.0.0 - Ticket system live, 85+ solutions (53 + 32 from Larry), ready for testing
+
+---
+
+## Phase 0: Security & Admin Setup (BEFORE PUBLIC LAUNCH)
+
+**Goal**: Lock down security vulnerabilities before wide release
+
+### Critical Security Issues:
+- [ ] **Ticket auto-contribution bypass** - Resolved tickets instantly add to KB without moderation
+- [ ] **Malicious command risk** - No sanitization on user-submitted bash commands
+- [ ] **No ban system** - Rate limit by IP only, VPNs bypass limits
+- [ ] **No rollback** - Bad solutions can only be deleted via admin dashboard
+
+### Admin Features Needed:
+- [ ] **Admin MCP server** (`clauderepo-admin-mcp`)
+  - Delete tickets/solutions
+  - View analytics dashboard
+  - Bulk operations
+  - Service role key access
+- [ ] **Approval queue** for ticket-based contributions
+- [ ] **Content moderation** - Flag/review suspicious solutions
+- [ ] **User banning** - Block IPs/patterns from contributing
+- [ ] **Solution validation** - Test commands before publishing
+- [ ] **Audit log** - Track all DB changes
+
+### Test Data Cleanup:
+- [x] Delete test tickets (TICKET_000001-000004) ✅ Requires dashboard access
+- [ ] Review all 85 solutions for quality
+- [ ] Remove any dummy/test data
+
+### Testing Before Launch:
+- [ ] End-to-end ticket workflow (search → no results → ticket → resolve → KB entry)
+- [ ] Rate limiting verification (100 searches, 20 votes, 5 contributions)
+- [ ] Malicious input testing (SQL injection, XSS, command injection)
+- [ ] Load testing (simulate 100 concurrent users)
+
+**Timeline**: 1-2 weeks
+**Blocker**: Do NOT share publicly until security issues addressed
 
 ---
 
