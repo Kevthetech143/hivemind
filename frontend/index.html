@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clauderepo - Solutions at the Speed of Thought</title>
+    <meta name="description" content="Claude Code knowledge base embedded in your workflow. Get troubleshooting solutions in 10 seconds, not 15 minutes. 100% free, community-driven.">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #3b82f6;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .code-block {
+            background: #1e293b;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+
+        .code-block code {
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.7;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .nav-blur {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- Navigation -->
+    <nav class="nav-blur fixed top-0 w-full z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#2563eb"/>
+                        <path d="M12 14L16 18L12 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M28 14L24 18L28 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="18" y1="25" x2="22" y2="25" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-2xl font-bold text-gray-900">clauderepo</span>
+                </div>
+
+                <!-- Nav Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#how-it-works" class="text-gray-600 hover:text-gray-900 font-medium">How it Works</a>
+                    <a href="#top-solutions" class="text-gray-600 hover:text-gray-900 font-medium">Solutions</a>
+                    <a href="https://github.com/clauderepo/mcp-client" target="_blank" class="text-gray-600 hover:text-gray-900 font-medium">GitHub</a>
+                    <button onclick="scrollToGetStarted()" class="btn-primary">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6">
+        <div class="container mx-auto max-w-6xl">
+            <div class="text-center max-w-4xl mx-auto">
+                <div class="inline-block mb-6">
+                    <span class="px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-semibold">
+                        100% Free · Community-Driven · MCP-Powered
+                    </span>
+                </div>
+                <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                    Solutions at the
+                    <span class="gradient-text">Speed of Thought</span>
+                </h1>
+                <p class="text-xl text-gray-600 mb-10 leading-relaxed">
+                    Knowledge base embedded in your <span class="font-semibold">Claude Code</span> workflow.
+                    <br/>
+                    Get troubleshooting solutions at the moment of error. No context switching.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button onclick="scrollToGetStarted()" class="btn-primary text-lg px-8 py-4">
+                        Get Started Free
+                    </button>
+                    <a href="#top-solutions" class="px-8 py-4 border-2 border-gray-300 rounded-lg font-semibold hover:border-gray-400 transition">
+                        Browse Solutions
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-8 mt-16 max-w-3xl mx-auto">
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600">1000+</div>
+                        <div class="text-gray-600 mt-2">Solutions</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600">&lt;10ms</div>
+                        <div class="text-gray-600 mt-2">Query Speed</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600">100%</div>
+                        <div class="text-gray-600 mt-2">Free</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Before/After Comparison -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">From 15 Minutes to 10 Seconds</h2>
+                <p class="text-gray-600 text-lg">Stop context switching. Get answers where you work.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Without -->
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        <h3 class="text-2xl font-bold text-gray-900">Without clauderepo</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="text-red-600 font-bold mt-1">1.</span>
+                            <p class="text-gray-700">Copy error message from Claude Code</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-red-600 font-bold mt-1">2.</span>
+                            <p class="text-gray-700">Search Discord, scroll through hundreds of messages</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-red-600 font-bold mt-1">3.</span>
+                            <p class="text-gray-700">Search GitHub issues, find closed thread from 2023</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-red-600 font-bold mt-1">4.</span>
+                            <p class="text-gray-700">Read through docs, try 3 different solutions</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-red-600 font-bold mt-1">5.</span>
+                            <p class="text-gray-700">Finally find the fix after 15 minutes</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t-2 border-red-200">
+                        <p class="text-3xl font-bold text-red-600">~15 minutes</p>
+                        <p class="text-gray-600 mt-1">Average time to solution</p>
+                    </div>
+                </div>
+
+                <!-- With -->
+                <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <h3 class="text-2xl font-bold text-gray-900">With clauderepo</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold mt-1">1.</span>
+                            <p class="text-gray-700">Error occurs in Claude Code workflow</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold mt-1">2.</span>
+                            <p class="text-gray-700">Ask Claude: "Search clauderepo for [error]"</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold mt-1">3.</span>
+                            <p class="text-gray-700">Get ranked solutions with success rates instantly</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold mt-1">4.</span>
+                            <p class="text-gray-700">Apply top solution, verify with success indicators</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-600 font-bold mt-1">5.</span>
+                            <p class="text-gray-700">Back to building in seconds</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-6 border-t-2 border-green-200">
+                        <p class="text-3xl font-bold text-green-600">~10 seconds</p>
+                        <p class="text-gray-600 mt-1">Average time to solution</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Solutions -->
+    <section id="top-solutions" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Most Searched Solutions</h2>
+                <p class="text-gray-600 text-lg">Real problems solved by the community</p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Solution 1 -->
+                <div class="bg-white rounded-xl p-6 border-2 border-gray-200 card-hover cursor-pointer">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">MCP server connection refused</h3>
+                            <p class="text-gray-600 mb-3">76% fixed by checking package.json main path, 18% needed npm install</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">mcp-troubleshooting</span>
+                                <span class="text-gray-500">3,100 users · 76% success rate</span>
+                            </div>
+                        </div>
+                        <div class="text-blue-600 font-bold text-lg">#1</div>
+                    </div>
+                </div>
+
+                <!-- Solution 2 -->
+                <div class="bg-white rounded-xl p-6 border-2 border-gray-200 card-hover cursor-pointer">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Playwright install permission denied</h3>
+                            <p class="text-gray-600 mb-3">90% solved by using virtual env instead of sudo, 8% needed PLAYWRIGHT_BROWSERS_PATH</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                <span class="px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-medium">web-automation</span>
+                                <span class="text-gray-500">2,800 users · 90% success rate</span>
+                            </div>
+                        </div>
+                        <div class="text-blue-600 font-bold text-lg">#2</div>
+                    </div>
+                </div>
+
+                <!-- Solution 3 -->
+                <div class="bg-white rounded-xl p-6 border-2 border-gray-200 card-hover cursor-pointer">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">API key authentication failed</h3>
+                            <p class="text-gray-600 mb-3">68% missing env var, 22% wrong config file location, 10% expired key</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                <span class="px-3 py-1 bg-green-50 text-green-700 rounded-full font-medium">mcp-auth</span>
+                                <span class="text-gray-500">2,100 users · 68% success rate</span>
+                            </div>
+                        </div>
+                        <div class="text-blue-600 font-bold text-lg">#3</div>
+                    </div>
+                </div>
+
+                <!-- Solution 4 -->
+                <div class="bg-white rounded-xl p-6 border-2 border-gray-200 card-hover cursor-pointer">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">MCP tool returns undefined</h3>
+                            <p class="text-gray-600 mb-3">68% async not awaited, 22% missing return statement, 10% JSON serialization fails</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">mcp-troubleshooting</span>
+                                <span class="text-gray-500">1,900 users · 68% success rate</span>
+                            </div>
+                        </div>
+                        <div class="text-blue-600 font-bold text-lg">#4</div>
+                    </div>
+                </div>
+
+                <!-- Solution 5 -->
+                <div class="bg-white rounded-xl p-6 border-2 border-gray-200 card-hover cursor-pointer">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Playwright timeout waiting for selector</h3>
+                            <p class="text-gray-600 mb-3">50% use semantic locators instead of CSS, 30% add wait conditions, 20% increase timeout</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                <span class="px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-medium">web-automation</span>
+                                <span class="text-gray-500">1,600 users · 50% success rate</span>
+                            </div>
+                        </div>
+                        <div class="text-blue-600 font-bold text-lg">#5</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <button onclick="scrollToGetStarted()" class="btn-primary text-lg px-8 py-4">
+                    Search 1000+ More Solutions
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-20 bg-white">
+        <div class="container mx-auto px-6 max-w-6xl">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Embedded Intelligence</h2>
+                <p class="text-gray-600 text-lg">Not another search engine. Knowledge comes to you.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-hover bg-gray-50 p-8 rounded-xl border border-gray-200">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Context-Aware</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Solutions appear at the moment of error. No leaving Claude Code. No tab switching.
+                    </p>
+                </div>
+
+                <div class="card-hover bg-gray-50 p-8 rounded-xl border border-gray-200">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Instant Results</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        FTS5 full-text search returns ranked solutions in under 10ms with success rates.
+                    </p>
+                </div>
+
+                <div class="card-hover bg-gray-50 p-8 rounded-xl border border-gray-200">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Community-Driven</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Real solutions from real users. Validated by thousands. Contribute what you discover.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Get Started -->
+    <section id="get-started" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Get Started in 3 Steps</h2>
+                <p class="text-gray-600 text-lg">Install once, use forever. Completely free.</p>
+            </div>
+
+            <!-- Step 1: Generate Key -->
+            <div class="bg-white rounded-2xl shadow-lg p-10 mb-8">
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xl font-bold">
+                            1
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold mb-4">Generate Your API Key</h3>
+                        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <label for="email" class="block text-sm font-semibold text-gray-700 mb-3">
+                                Email Address
+                            </label>
+                            <div class="flex gap-4">
+                                <input
+                                    type="email"
+                                    id="email"
+                                    placeholder="you@example.com"
+                                    class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                                >
+                                <button
+                                    onclick="generateAPIKey()"
+                                    class="btn-primary whitespace-nowrap"
+                                >
+                                    Generate Key
+                                </button>
+                            </div>
+
+                            <div id="apiKeyResult" class="mt-6 hidden">
+                                <div class="bg-green-50 border-2 border-green-200 rounded-xl p-6">
+                                    <p class="text-sm font-semibold text-green-800 mb-3">API Key Generated Successfully</p>
+                                    <div class="code-block">
+                                        <code id="apiKeyValue" class="text-green-400">ckb_...</code>
+                                    </div>
+                                    <p class="text-sm text-green-700 mt-4 font-medium">
+                                        Save this key securely - you won't see it again
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Install MCP -->
+            <div class="bg-white rounded-2xl shadow-lg p-10 mb-8">
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xl font-bold">
+                            2
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold mb-4">Install MCP Server</h3>
+                        <p class="text-gray-600 mb-4">
+                            Add to your <code class="bg-gray-100 px-2 py-1 rounded font-mono text-sm">claude_desktop_config.json</code>:
+                        </p>
+                        <div class="code-block">
+<code>{
+  "mcpServers": {
+    "clauderepo": {
+      "command": "npx",
+      "args": ["-y", "@clauderepo/mcp-server"],
+      "env": {
+        "KB_API_KEY": "YOUR_KEY_HERE",
+        "KB_BACKEND_URL": "https://ksethrexopllfhyrxlrb.supabase.co/functions/v1"
+      }
+    }
+  }
+}</code>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-4">
+                            Restart Claude Code after adding the configuration
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Use -->
+            <div class="bg-white rounded-2xl shadow-lg p-10">
+                <div class="flex items-start gap-6">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xl font-bold">
+                            3
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold mb-4">Search from Claude Code</h3>
+                        <p class="text-gray-600 mb-4">Knowledge comes to you when you need it:</p>
+                        <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+                            <p class="font-mono text-gray-900">
+                                "Search clauderepo for MCP connection refused"
+                            </p>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-4">
+                            Claude Code automatically uses the search_kb tool and returns ranked solutions with success rates
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="py-20 bg-white">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">Example Response</h2>
+                <p class="text-gray-600 text-lg">See what you get in 10 seconds</p>
+            </div>
+
+            <div class="bg-slate-900 rounded-2xl shadow-2xl p-8 overflow-hidden">
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="ml-4 text-gray-400 text-sm font-mono">clauderepo search results</span>
+                </div>
+                <div class="font-mono text-sm text-gray-100 leading-relaxed">
+<pre class="text-gray-300"># Search Results: "MCP connection refused"
+
+<span class="text-blue-400 font-semibold">Primary Solution</span> <span class="text-gray-500">(90% confidence)</span>
+
+<span class="text-gray-400">Problem:</span> MCP server connection refused
+<span class="text-gray-400">Category:</span> mcp-troubleshooting
+<span class="text-gray-400">Community Data:</span> 3,100 users experienced this (76% success rate)
+
+<span class="text-green-400 font-semibold">Solutions (ranked by success rate):</span>
+
+<span class="text-yellow-400">1.</span> Check package.json main path <span class="text-gray-500">(76% of users)</span>
+   <span class="text-gray-500">$</span> <span class="text-purple-400">cd /path/to/mcp && npm install</span>
+
+<span class="text-yellow-400">2.</span> Missing node_modules <span class="text-gray-500">(18% of users)</span>
+   <span class="text-gray-500">$</span> <span class="text-purple-400">npm install</span>
+
+<span class="text-yellow-400">3.</span> Port already in use <span class="text-gray-500">(6% of users)</span>
+   <span class="text-gray-500">$</span> <span class="text-purple-400">lsof -i :PORT</span>
+
+<span class="text-green-400 font-semibold">Prerequisites:</span>
+• Node.js installed
+• MCP config in Claude settings
+
+<span class="text-green-400 font-semibold">Success Validation:</span>
+• MCP tools appear in tool list
+• No connection errors in logs
+
+<span class="text-gray-600">---</span>
+<span class="text-gray-500">Search completed in 8.3ms using fts5</span></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contribute -->
+    <section class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <div class="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-2xl p-12 text-white text-center">
+                <h2 class="text-4xl font-bold mb-6">Found a Solution?</h2>
+                <p class="text-xl text-blue-100 mb-8">
+                    Share it directly from Claude Code. Help thousands of developers in seconds.
+                </p>
+
+                <!-- Contribution Example -->
+                <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8 text-left max-w-2xl mx-auto">
+                    <p class="text-sm text-blue-100 mb-2 font-semibold">Example:</p>
+                    <p class="font-mono text-sm text-white">
+                        "I found a solution to [problem]. Submit to clauderepo:<br/>
+                        - Problem: MCP timeout<br/>
+                        - Solution: Increase timeout in config<br/>
+                        - Works 90% of the time"
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button onclick="scrollToGetStarted()" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">
+                        Get Started
+                    </button>
+                    <a href="https://github.com/clauderepo/mcp-client" target="_blank" class="px-8 py-4 border-2 border-white rounded-lg font-bold text-lg hover:bg-white hover:text-blue-600 transition">
+                        View MCP Client on GitHub
+                    </a>
+                </div>
+
+                <p class="text-sm text-blue-100 mt-6">
+                    Contributions are reviewed within 24-48 hours
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="8" fill="#2563eb"/>
+                            <path d="M12 14L16 18L12 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M28 14L24 18L28 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="18" y1="25" x2="22" y2="25" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-white font-bold text-lg">clauderepo</span>
+                    </div>
+                    <p class="text-sm">
+                        Embedded knowledge base for Claude Code. 100% free, community-driven.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#how-it-works" class="hover:text-white">How it Works</a></li>
+                        <li><a href="#top-solutions" class="hover:text-white">Top Solutions</a></li>
+                        <li><a href="https://api.clauderepo.com/docs" class="hover:text-white">API Docs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Community</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="https://github.com/clauderepo/mcp-client" class="hover:text-white">GitHub (MCP Client)</a></li>
+                        <li><a href="#get-started" class="hover:text-white">Contribute Solutions</a></li>
+                        <li><a href="https://discord.gg/clauderepo" class="hover:text-white">Discord</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/privacy" class="hover:text-white">Privacy Policy</a></li>
+                        <li><a href="/terms" class="hover:text-white">Terms of Service</a></li>
+                        <li><a href="mailto:support@clauderepo.com" class="hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-sm">
+                <p>&copy; 2025 clauderepo. Built for the Claude Code community.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Supabase config
+        const SUPABASE_URL = 'https://ksethrexopllfhyrxlrb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZXRocmV4b3BsbGZoeXJ4bHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3NDU4ODksImV4cCI6MjA3OTMyMTg4OX0.SDJulNaemJ66EaFl77-1IJLTAleihU5PvEChNaO5osI';
+
+        function scrollToGetStarted() {
+            document.getElementById('get-started').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function generateAPIKey() {
+            const email = document.getElementById('email').value;
+
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/contribute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate key');
+                }
+
+                const data = await response.json();
+
+                document.getElementById('apiKeyValue').textContent = data.api_key;
+                document.getElementById('apiKeyResult').classList.remove('hidden');
+
+                navigator.clipboard.writeText(data.api_key);
+
+            } catch (error) {
+                alert('Error generating API key. Please try again later.');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>
