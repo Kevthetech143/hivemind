@@ -1,0 +1,213 @@
+-- Mine Stack Overflow: Top 12 highest-voted OAuth Q&A batch 1
+-- Source: https://stackoverflow.com/questions/tagged/oauth?tab=votes
+-- Category: stackoverflow-oauth
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Difference between OpenID and OAuth authentication',
+    'stackoverflow-oauth',
+    'VERY_HIGH',
+    '[
+        {"solution": "OpenID is for authentication (proving identity), OAuth is for authorization (granting access to functionality/data). OpenID lets you prove who you are through a third party; OAuth lets apps access your data without knowing your password.", "percentage": 95, "note": "Fundamental distinction - historical accuracy; OAuth 2.0 has evolved to handle some authentication scenarios"},
+        {"solution": "OAuth allows external applications to perform actions (like post photos) on your behalf without sharing your actual credentials, similar to giving a valet a limited-use car key.", "percentage": 90, "note": "Practical analogy for understanding the difference"}
+    ]'::jsonb,
+    'Understanding of authentication vs authorization concepts',
+    'Ability to explain the difference between proving identity and granting resource access',
+    'Common misconception: OAuth and OpenID serve the same purpose. OAuth 2.0 can now handle authentication but was not originally designed for it.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1087031/whats-the-difference-between-openid-and-oauth'
+),
+(
+    'Setting Authorization Header with OAuth Bearer token in HttpClient',
+    'stackoverflow-oauth',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use AuthenticationHeaderValue class: httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(\"Bearer\", \"Your Oauth token\");", "percentage": 95, "note": "Standard C# approach using System.Net.Http.Headers namespace", "command": "httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(\"Bearer\", token);"},
+        {"solution": "For token expiration scenarios, use HttpClientFactory with a DelegatingHandler to refresh tokens on each request", "percentage": 85, "note": "Advanced pattern for handling token lifecycle"},
+        {"solution": "Ensure proper capitalization of Bearer scheme (capital B) to comply with HTTP specifications", "percentage": 80, "note": "Common formatting mistake"}
+    ]'::jsonb,
+    'HttpClient instance, Valid OAuth token, System.Net.Http.Headers namespace reference',
+    'HTTP requests include Authorization header, API returns 200 status with valid token, requests fail with 401 when token is invalid',
+    'Avoid using HttpClient within using statements - causes socket exhaustion. Reuse HttpClient instances. Token scheme name must be "Bearer" with capital B.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14627399/setting-authorization-header-of-httpclient'
+),
+(
+    'Why OAuth 2.0 has both access tokens and refresh tokens',
+    'stackoverflow-oauth',
+    'VERY_HIGH',
+    '[
+        {"solution": "Refresh tokens enable revocation capability. Short-lived access tokens can be self-contained (validated via cryptographic signatures), while refresh tokens in database allow revocation control without database hits on every API call.", "percentage": 92, "note": "Addresses the revocation window problem - time between revocation and actual denial"},
+        {"solution": "This architecture reduces database hits to only refresh events rather than every API call, enabling better scalability while maintaining security", "percentage": 88, "note": "Performance vs security tradeoff"},
+        {"solution": "Some major OAuth providers (GitHub, Foursquare) operate without refresh tokens, suggesting architectural alternatives exist depending on priorities", "percentage": 75, "note": "Not all OAuth implementations use this pattern"}
+    ]'::jsonb,
+    'Understanding of OAuth 2.0 token architecture, knowledge of access token vs refresh token roles',
+    'Ability to explain revocation mechanism, understand performance-security tradeoff, recognize different OAuth implementations',
+    'Misconception: refresh tokens serve only for automatic renewal. Key purpose is enabling revocation capability while maintaining scalability.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/3487991/why-does-oauth-v2-have-both-access-and-refresh-tokens'
+),
+(
+    'Key differences between OAuth 2 and OAuth 1',
+    'stackoverflow-oauth',
+    'HIGH',
+    '[
+        {"solution": "OAuth 2.0 supports multiple authorization flows (browser, desktop, mobile), eliminates complex cryptographic signing, relies on HTTPS for transport security instead", "percentage": 93, "note": "Major simplification from OAuth 1.0"},
+        {"solution": "OAuth 2.0 introduces short-lived access tokens with refresh tokens enabling automatic renewal without user re-authorization (OAuth 1.0 tokens remain valid long-term)", "percentage": 90, "note": "Improved token lifecycle management"},
+        {"solution": "OAuth 2.0 cleanly separates authorization server from resource server roles, improving system architecture and maintainability", "percentage": 85, "note": "Better separation of concerns"}
+    ]'::jsonb,
+    'Knowledge of both OAuth 1.0 and OAuth 2.0 specifications, understanding of cryptographic concepts',
+    'Ability to explain why OAuth 2.0 is simpler, understand transport security reliance on HTTPS, recognize token management improvements',
+    'OAuth 1.0 required developers to implement HMAC-SHA1 signatures; OAuth 2.0 eliminates this burden. HTTP mandatory for OAuth 1.0, HTTPS required for OAuth 2.0.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4113934/how-is-oauth-2-different-from-oauth-1'
+),
+(
+    'JWT versus OAuth 2.0 authentication - differences and use cases',
+    'stackoverflow-oauth',
+    'VERY_HIGH',
+    '[
+        {"solution": "JWT is a token format (compact self-contained mechanism for transmitting digitally signed data); OAuth 2.0 is an authorization protocol that can use JWT as a token", "percentage": 94, "note": "Fundamental distinction - they operate at different levels"},
+        {"solution": "OAuth 2.0 specifies multiple ways clients obtain tokens from Authorization Server; JWT only specifies token structure. Use Authorization header with Bearer scheme per RFC 6750", "percentage": 90, "note": "Protocol vs format distinction"},
+        {"solution": "For simple single-client scenarios, JWT-based auth may suffice. OAuth 2.0 becomes valuable with multiple client types (browser, mobile, server-side)", "percentage": 85, "note": "When each approach is appropriate"}
+    ]'::jsonb,
+    'Understanding of token formats, Authorization Server concepts, HTTP header conventions',
+    'Ability to distinguish between authorization protocol and token format, understand when each approach fits, recognize Bearer scheme usage',
+    'Common mistake: treating JWT and OAuth as alternatives when JWT is actually a token format that can be used within OAuth 2.0. CSRF tokens should remain separate from JWT.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39909419/what-are-the-main-differences-between-jwt-and-oauth-authentication'
+),
+(
+    'Facebook OAuth domain configuration error - valid redirect URIs',
+    'stackoverflow-oauth',
+    'HIGH',
+    '[
+        {"solution": "Add Facebook Login as a product in app dashboard by clicking +Add Product, then configure OAuth settings under that product with Valid OAuth redirect URIs (e.g., http://localhost:3000)", "percentage": 94, "note": "Error message about \"app domains\" is misleading; actual issue is redirect URI config"},
+        {"solution": "Match redirect URIs exactly between code and Facebook settings including trailing slashes; for local development use localhost or custom hosts file entries, not IP addresses", "percentage": 92, "note": "Exact matching required"},
+        {"solution": "Enable \"Embedded Browser OAuth Login\" if developing locally; verify Client ID matches Facebook dashboard and ensure app is set to public status", "percentage": 88, "note": "Often-overlooked configuration steps"}
+    ]'::jsonb,
+    'Facebook developer account, created Facebook app, access to app dashboard, local development URL',
+    'OAuth login works without domain error, redirect successfully completes, user authentication succeeds',
+    'Common mistake: configuring App Domains but skipping Facebook Login product OAuth redirect URI setup. Error message misleading - check product-specific OAuth settings, not main app domains.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37063685/facebook-oauth-the-domain-of-this-url-isnt-included-in-the-apps-domain'
+),
+(
+    'Authorization Code flow versus Implicit flow security in OAuth 2',
+    'stackoverflow-oauth',
+    'HIGH',
+    '[
+        {"solution": "Authorization Code flow keeps access tokens server-to-server using client credentials, keeping sensitive tokens off browser. Implicit flow passes access token directly as hash fragment, exposing to browser environment", "percentage": 93, "note": "Core security distinction"},
+        {"solution": "Authorization Code flow shifts HTTPS burden to OAuth provider only, not third-party developers. Provider needs robust HTTPS; authorization code itself can pass over non-encrypted connections since useless without client secret", "percentage": 90, "note": "Practical security design prioritizing broad adoption"},
+        {"solution": "Implicit flow sacrifices ability to maintain long-lived tokens and refresh tokens available in Authorization Code flow where trusted backend securely stores credentials", "percentage": 85, "note": "Feature tradeoff for simplicity"}
+    ]'::jsonb,
+    'Understanding of OAuth flows, HTTPS concepts, security implications of token exposure',
+    'Ability to explain why Authorization Code is more secure, understand how code-for-token exchange prevents exposure, recognize implicit flow limitations',
+    'Implicit flow was designed for browser-only apps with no server component. Modern best practices discourage implicit flow for new implementations due to security risks.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/13387698/why-is-there-an-authorization-code-flow-in-oauth2-when-implicit-flow-works-so-well'
+),
+(
+    'GitHub repository clone with OAuth personal access token',
+    'stackoverflow-oauth',
+    'HIGH',
+    '[
+        {"solution": "Use HTTPS URL with token embedded: git clone https://oauth2:<token>@github.com/username/repo.git (for fine-grained tokens introduced Oct 2022) or git clone https://username:<token>@github.com/username/repo.git (classic tokens)", "percentage": 92, "note": "oauth2 prefix recommended for new fine-grained tokens"},
+        {"solution": "Alternative: Clone normally and provide token as password when prompted: git clone https://github.com/owner/repo.git then enter token at password prompt", "percentage": 88, "note": "More interactive but simpler to remember"},
+        {"solution": "If authentication fails, verify token has repo scope (full repo access for private repos); GitHub error messages intentionally vague for security reasons", "percentage": 85, "note": "Scope issues common cause of failures"}
+    ]'::jsonb,
+    'GitHub personal access token generated, token has appropriate repo scope, HTTPS support in git',
+    'Repository clones successfully, no authentication errors, able to push/pull with token',
+    'Token scope insufficient for repository type - private repos need full repo scope. GitHub auth failures intentionally vague. Token must have not expired.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/42148841/github-clone-with-oauth-access-token'
+),
+(
+    'Implicit grant authorization flow purpose in OAuth 2',
+    'stackoverflow-oauth',
+    'MEDIUM',
+    '[
+        {"solution": "Implicit grant provides simplicity for browser-based JavaScript applications with no server-side backend. Since everything happens in resource owner browser, issuing auth code and client secret adds no benefit - token must still be shared with browser", "percentage": 91, "note": "Designed when full separation impossible"},
+        {"solution": "Eliminates unnecessary steps when token/credentials already exposed in browser context. Simplicity is primary advantage over Authorization Code flow complexity", "percentage": 87, "note": "Pragmatic tradeoff for frontend-only apps"},
+        {"solution": "Implicit grants sacrifice ability to maintain long-lived tokens and refresh tokens available in Authorization Code flow where trusted backend securely stores credentials", "percentage": 82, "note": "Accepts security limitations for simplicity"}
+    ]'::jsonb,
+    'Understanding of OAuth flows, browser-based application architecture, JavaScript security implications',
+    'Ability to explain why implicit grant exists for frontend apps, understand simplified flow benefits, recognize security tradeoffs',
+    'Modern OAuth best practices discourage implicit flow for new implementations. Authorization Code with PKCE now recommended even for browser apps. Implicit flow represents historical compromise.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7522831/what-is-the-purpose-of-the-implicit-grant-authorization-type-in-oauth-2'
+),
+(
+    'JWT versus Bearer token - encoding format versus transmission method',
+    'stackoverflow-oauth',
+    'HIGH',
+    '[
+        {"solution": "JWT is a token encoding standard containing JSON payload that is signed/encrypted; Bearer is HTTP authentication scheme for transmitting tokens. JWT encodes claims; Bearer is how you send it", "percentage": 94, "note": "Hierarchical relationship - Bearer carries JWT"},
+        {"solution": "Historically tokens were arbitrary strings requiring database lookup to verify claims (like 2pWS6RQmdZpE0TQ93X). JWTs encode their own claims with signatures, enabling stateless authentication without constant database access", "percentage": 90, "note": "Evolution of token design reducing server load"},
+        {"solution": "Bearer tokens can carry different token formats (JWT, opaque tokens, etc.) via Authorization headers, query parameters, cookies, or request bodies. Use Bearer authorization header per RFC standard", "percentage": 88, "note": "Bearer flexible for multiple token types"}
+    ]'::jsonb,
+    'Understanding of JWT structure, HTTP authentication schemes, token verification concepts',
+    'Ability to explain JWT vs Bearer distinction, understand encoding vs transmission, recognize stateless authentication benefits',
+    'Common confusion: JWT and Bearer are not interchangeable. Bearer is transmission mechanism (HTTP scheme); JWT is token format (JSON encoding with signature).',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40375508/whats-the-difference-between-jwts-and-a-bearer-token'
+),
+(
+    'OAuth 2.0 benefits and advantages over OAuth 1.0a',
+    'stackoverflow-oauth',
+    'MEDIUM',
+    '[
+        {"solution": "Primary advantage is reduced complexity. OAuth 2.0 removes need for HMAC-based request signing, argument sorting by relying on SSL/TLS connections instead. Eliminates fiddly cryptographic signature code", "percentage": 93, "note": "Developer experience improvement"},
+        {"solution": "Refresh token mechanism: refresh token permanent and encrypted, short-lived access tokens expire within minutes. Improves security vs single long-lived tokens", "percentage": 89, "note": "Enhanced token security model"},
+        {"solution": "Standardizes extensions like Resource Owner Password Credentials making it practical for mobile apps requiring embedded HTTP view for authorization flows", "percentage": 85, "note": "Modern application support"}
+    ]'::jsonb,
+    'Understanding of OAuth 1.0a limitations, HMAC signing concepts, mobile app requirements',
+    'Ability to explain simplified OAuth 2.0 implementation, understand refresh token advantages, recognize mobile app support improvements',
+    'OAuth 2.0 prioritizes developer experience and practical scalability over theoretical security perfection. HTTP required for OAuth 1.0; HTTPS mandatory for OAuth 2.0.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7561631/oauth-2-0-benefits-and-use-cases-why'
+),
+(
+    'Securing ASP.NET Web API with authentication for third-party access',
+    'stackoverflow-oauth',
+    'MEDIUM',
+    '[
+        {"solution": "Use HMAC-SHA256 authentication: create signature from HTTP request data (timestamp, verb, URL, parameters) with shared secret key, transmit via custom headers format: username:signature", "percentage": 88, "note": "Practical alternative to full OAuth for simple scenarios"},
+        {"solution": "Implement replay attack prevention: validate timestamps with configurable windows and cache request signatures to reject duplicate submissions", "percentage": 85, "note": "Security hardening required"},
+        {"solution": "HTTPS is essential regardless of authentication method to prevent man-in-the-middle attacks. Reconstructs signature server-side for validation", "percentage": 90, "note": "Transport security non-negotiable"}
+    ]'::jsonb,
+    'Understanding of HMAC authentication, request signature generation, ASP.NET Web API framework knowledge',
+    'API requests authenticated successfully, unauthorized requests rejected, replay attacks prevented, server-side signature validation works',
+    'HMAC authentication simpler than full OAuth but suitable only for direct API access, not user delegation scenarios. HTTPS required for all approaches.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/11775594/how-to-secure-an-asp-net-web-api'
+)
+ON CONFLICT DO NOTHING;

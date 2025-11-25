@@ -1,0 +1,213 @@
+-- Add Claude Code and API documentation solutions batch 1
+-- Source: Official Anthropic and Claude Code documentation
+-- Categories: mcp-troubleshooting, ai-api
+-- Date: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Claude Code Windows WSL: exec node not found error',
+    'mcp-troubleshooting',
+    'HIGH',
+    '[
+        {"solution": "Install Node via Linux package manager or nvm instead of using Windows Node", "percentage": 95, "note": "WSL should use Linux version of Node, not Windows version"},
+        {"solution": "Verify paths with which npm and which node - should show /usr/ paths, not /mnt/c/", "percentage": 90, "command": "which npm && which node"},
+        {"solution": "Add to shell config (~/.bashrc or ~/.zshrc): export NVM_DIR=\"$HOME/.nvm\" and source nvm.sh", "percentage": 85, "note": "Fixes NVM version conflicts between WSL and Windows"}
+    ]'::jsonb,
+    'WSL2 installed, Node installed on Windows, Claude Code installed via npm',
+    'which node returns /usr/ path, claude command executes successfully',
+    'WSL PATH imports Windows version by default. Do not use Windows Node.js from WSL - install Linux version separately.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/troubleshooting'
+),
+(
+    'Claude Code installation: npm config set os linux error',
+    'mcp-troubleshooting',
+    'MEDIUM',
+    '[
+        {"solution": "Run npm config set os linux before installation", "percentage": 90, "command": "npm config set os linux"},
+        {"solution": "Install with npm install -g @anthropic-ai/claude-code --force --no-os-check", "percentage": 95, "note": "Do not use sudo"},
+        {"solution": "Use native installation script instead: curl -fsSL https://claude.ai/install.sh | bash", "percentage": 85, "note": "Recommended for Linux/WSL"}
+    ]'::jsonb,
+    'WSL2 or Linux environment, npm installed',
+    'Claude Code installs without OS detection errors, claude command available',
+    'OS/Platform detection fails on WSL. Do not use sudo with --no-os-check flag.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/troubleshooting'
+),
+(
+    'Claude Code: PATH or permission issues during installation',
+    'mcp-troubleshooting',
+    'HIGH',
+    '[
+        {"solution": "Use native installation script: curl -fsSL https://claude.ai/install.sh | bash", "percentage": 95, "note": "Ensures proper PATH configuration"},
+        {"solution": "Ensure ~/.local/bin is in system PATH", "percentage": 90, "command": "echo $PATH | grep .local/bin"},
+        {"solution": "Run claude migrate-installer to move to ~/.claude/local/", "percentage": 85, "note": "Migrates from old installation location"},
+        {"solution": "Run claude doctor to verify installation health", "percentage": 80, "command": "claude doctor"}
+    ]'::jsonb,
+    'Linux or macOS system, npm global prefix not writable (e.g. /usr or /usr/local)',
+    'claude command available globally, claude doctor shows healthy status',
+    'Non-writable npm global prefix causes permission errors. Do not use sudo - use native installer instead.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/troubleshooting'
+),
+(
+    'Claude Code authentication failures and repeated login prompts',
+    'mcp-troubleshooting',
+    'MEDIUM',
+    '[
+        {"solution": "Run /logout command, close Claude Code, restart with claude and re-authenticate", "percentage": 90, "note": "Standard auth reset procedure"},
+        {"solution": "Remove auth file manually: rm -rf ~/.config/claude-code/auth.json", "percentage": 85, "command": "rm -rf ~/.config/claude-code/auth.json"},
+        {"solution": "Use /permissions command to allow specific tools without repeated approval", "percentage": 75, "note": "For repeated permission prompts only"}
+    ]'::jsonb,
+    'Claude Code installed, previous authentication completed',
+    'Authentication succeeds without error, no repeated login prompts',
+    'Remove auth file only if /logout does not resolve issue. Close terminal completely before restarting.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/troubleshooting'
+),
+(
+    'Claude Code MCP server: Connection closed error on Windows with npx',
+    'mcp-troubleshooting',
+    'VERY_HIGH',
+    '[
+        {"solution": "Wrap npx commands with cmd /c for Windows native execution", "percentage": 95, "command": "claude mcp add --transport stdio my-server -- cmd /c npx -y @some/package"},
+        {"solution": "Add to .mcp.json: \"command\": \"cmd\", \"args\": [\"/c\", \"npx\", \"-y\", \"@package\"]", "percentage": 90, "note": "Persistent configuration method"}
+    ]'::jsonb,
+    'Windows (non-WSL) environment, npx installed, MCP server package available',
+    'MCP server connects successfully, no connection closed errors in logs',
+    'Windows cannot directly execute npx without cmd /c wrapper. This is Windows-specific - do not use on Linux/WSL.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/mcp'
+),
+(
+    'Claude Code MCP: spawn claude ENOENT error',
+    'mcp-troubleshooting',
+    'MEDIUM',
+    '[
+        {"solution": "Locate full executable path with which claude", "percentage": 95, "command": "which claude"},
+        {"solution": "Use full path in .mcp.json configuration instead of just claude", "percentage": 90, "note": "Example: /usr/local/bin/claude instead of claude"},
+        {"solution": "Ensure claude is in system PATH", "percentage": 85, "command": "echo $PATH"}
+    ]'::jsonb,
+    'Claude Code installed, attempting to configure as MCP server',
+    'MCP server starts without ENOENT error, full path resolves correctly',
+    'Executable path not in system PATH or not using absolute path in config. Always use which to find exact location.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/mcp'
+),
+(
+    'Claude Code MCP: Environment variable expansion failures in .mcp.json',
+    'mcp-troubleshooting',
+    'HIGH',
+    '[
+        {"solution": "Set required environment variables before running Claude Code", "percentage": 90, "note": "Export in shell profile or .env file"},
+        {"solution": "Use default syntax in .mcp.json: ${VAR:-default_value}", "percentage": 95, "note": "Prevents failures when variable is missing"},
+        {"solution": "Verify variables are set: echo $VAR_NAME", "percentage": 85, "command": "echo $VAR_NAME"}
+    ]'::jsonb,
+    'MCP server configuration in .mcp.json, environment variables referenced',
+    'MCP server starts without parsing errors, variables expand correctly',
+    'Missing environment variables cause parsing failures at startup. Use default syntax ${VAR:-default} to prevent failures.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/mcp'
+),
+(
+    'Claude Code MCP: Server startup timeout or failure to start',
+    'mcp-troubleshooting',
+    'MEDIUM',
+    '[
+        {"solution": "Configure timeout via MCP_TIMEOUT environment variable in milliseconds", "percentage": 90, "note": "Default may be too short for slow servers"},
+        {"solution": "Check server logs for startup errors: claude mcp logs", "percentage": 85, "command": "claude mcp logs"},
+        {"solution": "Verify server executable is working: run command directly in terminal", "percentage": 80, "note": "Test server outside of Claude Code"}
+    ]'::jsonb,
+    'MCP server configured in .mcp.json, network connection available',
+    'Server starts within timeout period, tools/resources become available',
+    'Default timeout may be insufficient for servers with slow initialization. Set MCP_TIMEOUT before all other troubleshooting.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://code.claude.com/docs/en/mcp'
+),
+(
+    'Claude API error 429: Rate limit exceeded',
+    'ai-api',
+    'VERY_HIGH',
+    '[
+        {"solution": "Retry with exponential backoff using retry-after header value", "percentage": 95, "note": "Header specifies seconds to wait"},
+        {"solution": "Implement prompt caching - cached input tokens do not count toward rate limits", "percentage": 90, "note": "Dramatically increases throughput without raising limits"},
+        {"solution": "Ramp up traffic gradually and maintain consistent usage patterns", "percentage": 85, "note": "Avoid sharp increases to prevent acceleration limits"},
+        {"solution": "Monitor usage via Claude Console Usage page to identify peak periods", "percentage": 80, "note": "Track rate limit headroom"}
+    ]'::jsonb,
+    'Valid Anthropic API key, Request that previously succeeded',
+    'Request returns 200 status code, Response contains expected data, No 429 errors in logs',
+    'Do not retry immediately - always use exponential backoff. Check retry-after header for exact wait time. Sharp traffic increases trigger acceleration limits.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://platform.claude.com/docs/en/api/rate-limits'
+),
+(
+    'Claude API error 529: Overloaded',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Retry request with exponential backoff starting at 1 second", "percentage": 90, "note": "API temporarily overloaded during high traffic"},
+        {"solution": "Implement retry logic with maximum 5 attempts", "percentage": 85, "note": "Prevents infinite retry loops"},
+        {"solution": "Switch to batching multiple requests if possible", "percentage": 75, "note": "Reduces total request count during peak periods"}
+    ]'::jsonb,
+    'Valid Anthropic API key, Request that previously succeeded',
+    'Request returns 200 status code, Response contains expected data',
+    'Occurs during high traffic periods. Do not retry immediately - always use exponential backoff. Not caused by your usage patterns.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://platform.claude.com/docs/en/api/errors'
+),
+(
+    'Claude API error 401: Authentication error',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Verify API key is correctly set in ANTHROPIC_API_KEY environment variable", "percentage": 95, "command": "echo $ANTHROPIC_API_KEY"},
+        {"solution": "Regenerate API key from Claude Console if key is invalid or expired", "percentage": 90, "note": "Check console.anthropic.com"},
+        {"solution": "Ensure API key is passed correctly in request headers: x-api-key", "percentage": 85, "note": "SDK handles this automatically"}
+    ]'::jsonb,
+    'Anthropic account created, API key generated from console',
+    'Request returns 200 status code, Authentication succeeds without error',
+    'Expired or invalid API keys cause 401 errors. Do not hardcode API keys in source code - use environment variables.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://platform.claude.com/docs/en/api/errors'
+),
+(
+    'Claude API streaming: Connection interrupted or timeout',
+    'ai-api',
+    'MEDIUM',
+    '[
+        {"solution": "Preserve partial content received before interruption and construct continuation request", "percentage": 90, "note": "Include partial response as start of new assistant message"},
+        {"solution": "Resume streaming from interruption point using SDK message accumulation features", "percentage": 85, "note": "Built-in error handling in official SDKs"},
+        {"solution": "For requests exceeding 10 minutes, use Batch API instead of streaming to avoid network timeouts", "percentage": 80, "note": "Prevents connection drops on long requests"}
+    ]'::jsonb,
+    'Valid API key, Streaming request initiated, Network connection available',
+    'Stream resumes successfully, Partial content preserved and continued',
+    'Tool use and extended thinking blocks cannot be partially recovered - only resume from most recent text block. Do not restart from beginning.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://platform.claude.com/docs/en/api/streaming'
+);

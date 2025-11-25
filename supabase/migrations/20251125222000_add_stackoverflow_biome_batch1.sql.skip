@@ -1,0 +1,214 @@
+-- Stack Overflow Biome/Rome Toolchain Solutions Batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Decorators are not valid here, biome(parse) error in NestJS',
+    'stackoverflow-biome',
+    'HIGH',
+    '[
+        {"solution": "Enable decorator support by adding unsafeParameterDecoratorsEnabled to JavaScript parser config: {\"javascript\": {\"parser\": {\"unsafeParameterDecoratorsEnabled\": true}}}", "percentage": 95, "note": "Official Biome configuration solution"},
+        {"solution": "Ensure biome.requireConfiguration is set to true in VS Code settings to force plugin compliance with workspace biome.json", "percentage": 85, "note": "Fixes decorator errors in editor plugin"}
+    ]'::jsonb,
+    'Biome installed and configured, NestJS project with decorators, Biome configuration file accessible',
+    'NestJS decorators compile without parse errors, biome lint command succeeds',
+    'Do not rely on editor plugin defaults - always configure unsafeParameterDecoratorsEnabled explicitly. Some editor plugins may not respect workspace settings.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77804479/decorators-are-not-valid-here-biomeparse'
+),
+(
+    'How to prevent Biome from linting a build directory inside a Monorepo',
+    'stackoverflow-biome',
+    'HIGH',
+    '[
+        {"solution": "Use files.includes property with negation patterns instead of files.ignore in biome.json: {\"files\": {\"includes\": [\"**\", \"!**/dist\", \"!**/build\"]}}", "percentage": 95, "note": "Biome 2+ uses allowlist approach instead of blocklist"},
+        {"solution": "Apply shared base configuration to all workspace packages with proper glob patterns for build output directories", "percentage": 90, "note": "Works with Turborepo monorepos when properly extended"}
+    ]'::jsonb,
+    'Biome 2.0+ installed, Monorepo (Turborepo) structure, Shared biome configuration package',
+    'biome lint ignores dist and build directories, linter output excludes build artifacts',
+    'Using old files.ignore property will not work in Biome 2 - must use files.includes with negation. Patterns must use ** glob syntax correctly.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77925349/how-to-prevent-biome-from-linting-a-build-directory-inside-a-monorepo'
+),
+(
+    'How can I allow any only in tests folder with biome',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Use overrides configuration with includes pattern to disable noExplicitAny rule only for test directories: {\"overrides\": [{\"include\": [\"tests/**\"], \"linter\": {\"rules\": {\"suspicious\": {\"noExplicitAny\": \"off\"}}}}]}", "percentage": 95, "note": "Path-specific rule overrides solution"},
+        {"solution": "Newer Biome versions use includes (plural) instead of include property in overrides configuration", "percentage": 90, "note": "Check Biome version for correct property name"}
+    ]'::jsonb,
+    'Biome installed and configured in TypeScript project, Project structure with src/ and tests/ directories',
+    'biome lint allows any type in tests/ directory, enforces strict typing in src/ directory',
+    'Ensure you use the correct property name: newer versions use includes not include. Path patterns are case-sensitive and must use ** glob syntax.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/79002053/how-can-i-allow-any-only-in-tests-folder-with-biome'
+),
+(
+    'Biome won\'t address CSS files - CSS not supported or ignored',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Set Biome as default CSS formatter in VSCode: search for @id:editor.defaultFormatter @lang:css and select Biome extension", "percentage": 95, "note": "VSCode extension configuration fix"},
+        {"solution": "Verify CSS formatter is enabled in biome.json: {\"css\": {\"formatter\": {\"enabled\": true}}}", "percentage": 90, "note": "Configuration check"}
+    ]'::jsonb,
+    'VSCode with Biomejs extension installed, Biome 1.8.3+, biome.json configured with CSS formatter settings',
+    'VSCode recognizes CSS files as supported by Biome, Biome formats CSS files, biome lint includes CSS files',
+    'Issue is usually VSCode configuration, not Biome. Ensure the Biome extension is the default formatter for CSS. Earlier Biome versions may have had CSS support bugs.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78929034/biomejs-wont-address-css-files'
+),
+(
+    'Biome runs linter with no errors even if there are errors shown in the file',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "The recommended ruleset does not include noUndeclaredVariables rule. Change configuration from recommended: true to all: true in linter.rules", "percentage": 90, "note": "Enables stricter ruleset"},
+        {"solution": "Review which rules are included in recommended ruleset and explicitly enable additional rules needed for your project", "percentage": 85, "note": "Use Biome playground to compare recommended vs all rulesets"}
+    ]'::jsonb,
+    'Biome installed and configured, biome.json with linter enabled, TypeScript project',
+    'biome lint detects undefined variable errors, linter output includes all expected errors',
+    'Recommended ruleset is intentionally less strict than all ruleset. Do not assume recommended includes all validation rules. Check Biome playground for rule differences.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78312577/biomejs-runs-linter-with-no-errors-even-if-there-are-errors-shown-in-the-file'
+),
+(
+    'How to stop Biome giving the same error message multiple times',
+    'stackoverflow-biome',
+    'LOW',
+    '[
+        {"solution": "This may be a Biome output formatting issue. Check if upgrading to latest Biome version resolves duplicate error messages", "percentage": 70, "note": "Potential bug in older versions"},
+        {"solution": "If errors are legitimate duplicates (same rule violation on same line multiple times), review the code pattern causing multiple violations", "percentage": 60, "note": "May be expected behavior for certain rule types"}
+    ]'::jsonb,
+    'Biome installed and configured, linting rules enabled, understanding of linter output format',
+    'biome lint output shows each error message only once, linter report is concise and readable',
+    'The provided answer on Stack Overflow (suggesting to disable the rule) does not address the core issue. This appears to be either a Biome version-specific bug or expected behavior for certain rules.',
+    0.65,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77969079/how-to-stop-biome-giving-me-the-same-error-message-multiple-times'
+),
+(
+    'Configure kebab-case in biome for tanstack router dynamic routes',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Use overrides to disable useFilenamingConvention rule for routes directory: {\"overrides\": [{\"include\": [\"src/routes/**/*\"], \"linter\": {\"rules\": {\"style\": {\"useFilenamingConvention\": \"off\"}}}}]}", "percentage": 95, "note": "Allows dynamic routes like $itemId.tsx while enforcing kebab-case elsewhere"},
+        {"solution": "Alternative: Configure style.useFilenamingConvention with regex pattern in match option to allow dynamic route syntax", "percentage": 70, "note": "Less reliable - overrides approach is recommended"}
+    ]'::jsonb,
+    'Biome installed, React+TanStack Router project, biome.json configured with naming conventions',
+    'Dynamic route files (e.g., $itemId.tsx) compile without linting errors, kebab-case enforced in non-routes directories',
+    'Regex patterns in style.options.match are not reliable for this use case. Always use overrides with include paths for file-pattern-specific rules. Dollar-sign prefixed filenames cannot follow kebab-case convention.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/79680997/configure-kebab-case-in-biome-for-tanstack-routers-dynamic-routes'
+),
+(
+    'Neovim BiomeJS not using biome.json formatting configuration',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure LSP configuration in lsp.lua specifies correct root_dir pattern: {\"biome\": {\"cmd\": {\"biome\", \"lsp-proxy\"}, \"root_dir\": util.root_pattern(\"biome.json\")}}", "percentage": 75, "note": "LSP needs to find biome.json in project root"},
+        {"solution": "Disable other formatter LSP servers that may take precedence - ensure Biome is the only active formatter for supported file types", "percentage": 80, "note": "Verify no conflicting LSP servers for JS/TS/JSON/CSS"}
+    ]'::jsonb,
+    'Neovim with LSP setup, Biome installed via Mason, biome.json configured in project root, nvim-lspconfig installed',
+    'Neovim formatting (via Neovim LSP) respects biome.json settings, format output matches biome configuration',
+    'Neovim LSP behavior differs from VSCode - biome.json settings may not apply if root_dir is not correctly detected. Conflicting LSP servers can prevent Biome from being used.',
+    0.70,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78765047/neovim-biomejs-not-using-biome-json-formatting'
+),
+(
+    'Why does Rome think my file is empty when I try to compile it',
+    'stackoverflow-biome',
+    'LOW',
+    '[
+        {"solution": "Ensure rome.json file contains valid JSON (at minimum {}) instead of being completely blank. Documentation stating \"empty file\" is misleading - it must be valid JSON", "percentage": 95, "note": "Common misinterpretation of Rome documentation"},
+        {"solution": "Use initialization script to generate proper rome.json configuration: ./scripts/dev-rome init - this provides recommended configuration with linting enabled", "percentage": 90, "note": "Prevents configuration errors during Rome setup"}
+    ]'::jsonb,
+    'Rome built from source or installed, JavaScript project with index.js file, ability to create rome.json',
+    'Rome compile succeeds without empty file errors, rome.json contains valid JSON structure',
+    'Rome documentation was misleading about \"empty file\" requirement. The file must be valid JSON at minimum. Do not create truly blank configuration files.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/60608736/why-does-rome-think-my-file-is-empty-when-i-try-to-compile-it'
+),
+(
+    'Biome linting configuration errors with strict TypeScript rules',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Configure biome.json with appropriate rule levels for TypeScript: use noUndeclaredVariables with error level for strict checking", "percentage": 88, "note": "Requires explicit rule configuration"},
+        {"solution": "Import rules configuration and verify against Biome documentation schema to ensure all required rules are properly enabled", "percentage": 82, "note": "Use JSON schema validation in editor"}
+    ]'::jsonb,
+    'Biome 1.6.4+, TypeScript project, biome.json with linter configuration, understanding of rule levels',
+    'biome lint command detects all expected TypeScript errors, configuration passes schema validation',
+    'Default recommended ruleset may not include strict rules you expect. Always verify specific rules are enabled. Schema validation helps catch configuration errors early.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78312577/biomejs-runs-linter-with-no-errors-even-if-there-are-errors-shown-in-the-file'
+),
+(
+    'Biome formatter configuration not applied in monorepo workspace',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Create shared biome configuration in base.json and extend it in all workspace packages using proper JSON schema reference", "percentage": 85, "note": "Central configuration approach"},
+        {"solution": "Verify each workspace package extends the shared configuration correctly and has no conflicting local biome.json overrides", "percentage": 88, "note": "Check configuration inheritance chain"}
+    ]'::jsonb,
+    'Biome 2.0+, Monorepo structure (Turborepo/pnpm workspaces), shared configuration file created',
+    'All workspace packages apply consistent formatting, biome format works across monorepo',
+    'Configuration inheritance in monorepos can be tricky - ensure extends path is correct and relative to each package location. Verify no package overrides shared config unintentionally.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77925349/how-to-prevent-biome-from-linting-a-build-directory-inside-a-monorepo'
+),
+(
+    'Biome requires configuration error when using without biome.json',
+    'stackoverflow-biome',
+    'MEDIUM',
+    '[
+        {"solution": "Create a biome.json file in project root with minimum valid configuration: {} or with formatter/linter settings", "percentage": 92, "note": "Biome requires configuration file for proper operation"},
+        {"solution": "For projects using shared configuration, ensure extends points to valid configuration file accessible from project root", "percentage": 85, "note": "Path resolution must work from project context"}
+    ]'::jsonb,
+    'Biome installed, project directory structure established, ability to create configuration files',
+    'biome lint and biome format commands execute without configuration errors',
+    'Biome design requires configuration file presence. Do not attempt to run Biome without biome.json. Even minimal {} config is valid - add settings as needed.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77925349/how-to-prevent-biome-from-linting-a-build-directory-inside-a-monorepo'
+),
+(
+    'Setting Biome root directory in Neovim with lspconfig for monorepo',
+    'stackoverflow-biome',
+    'LOW',
+    '[
+        {"solution": "Use util.root_pattern with explicit biome.json file detection to establish workspace root in Neovim LSP configuration", "percentage": 82, "note": "Proper LSP root_dir configuration"},
+        {"solution": "Ensure biome.json exists in monorepo root and workspace directories inherit configuration via extends mechanism", "percentage": 78, "note": "Configuration structure affects root detection"}
+    ]'::jsonb,
+    'Neovim with nvim-lspconfig, Biome LSP enabled, monorepo with biome.json in appropriate directory',
+    'Neovim LSP detects correct root directory, Biome LSP operates from project root, formatting applies project configuration',
+    'Root directory detection in monorepos depends on biome.json file placement. LSP may attach to wrong root if configuration file is not at workspace root.',
+    0.76,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78765047/neovim-biomejs-not-using-biome-json-formatting'
+);

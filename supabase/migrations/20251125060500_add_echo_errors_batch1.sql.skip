@@ -1,0 +1,210 @@
+-- Add Echo web framework common errors and solutions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Echo routing: Multiple wildcard parameters not matching as expected',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Understand that only the first match-any (*) parameter is effective. Route /v1/*/images/* functions as /v1/* because the first wildcard matches to the end of URL", "percentage": 95, "note": "This is by design - first wildcard greedily matches everything"},
+        {"solution": "Use single wildcard parameter per route. If you need multiple segments, use path parameters (:param) instead", "percentage": 90, "note": "Example: /v1/:service/images/:id instead of /v1/*/images/*"},
+        {"solution": "Verify route matching order using Echo#Routes() method to debug which route is being matched", "percentage": 85, "command": "e.Routes() returns all registered routes"}
+    ]'::jsonb,
+    'Echo application initialized, Routes configured',
+    'Route matches correctly, First wildcard consumes expected path segment',
+    'Do not assume multiple wildcards work independently. The first * will match to the end regardless of subsequent patterns. Test route matching with Routes() method.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/routing'
+),
+(
+    'Echo context: Cannot access Context from multiple goroutines',
+    'echo',
+    'VERY_HIGH',
+    '[
+        {"solution": "Never pass Echo Context directly to spawned goroutines. Context object is pooled for reuse and becomes invalid after request handling", "percentage": 95, "note": "This is a critical concurrency issue"},
+        {"solution": "Extract needed data from Context before spawning goroutine: data := c.Get(\"key\"), then spawn goroutine with the data copy", "percentage": 95, "command": "Pass values extracted from context, not the context itself"},
+        {"solution": "Use channels to communicate between request goroutine and spawned workers. Create buffered channel, send only necessary data, monitor c.Request().Context().Done()", "percentage": 90, "note": "Recommended pattern for async operations"},
+        {"solution": "Check c.Request().Context().Done() in goroutines to detect when original request times out or is cancelled", "percentage": 85, "note": "Prevents operations on stale contexts"}
+    ]'::jsonb,
+    'Echo application running, Request handler active',
+    'Goroutine completes without race conditions, Data returned through channels successfully',
+    'Do not access Context outside its original request goroutine. Context is pooled and reused - accessing it after request handling causes data races. Always pass data values instead.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/context'
+),
+(
+    'Echo binding: Required struct tags missing for path/query/header/form parameters',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Always explicitly set tags for path, query, header, and form data. Example: type User struct { Name string `query:\"name\"` }", "percentage": 95, "note": "JSON and XML binding use field names as fallback, but these sources require explicit tags"},
+        {"solution": "For missing tags, binding will skip the field. Add tags with source identifier: `path`, `query`, `header`, or `form`", "percentage": 92, "command": "Use tags like query:\"fieldName\" to bind URL query parameters"},
+        {"solution": "Test binding with BindError() or BindErrors() to catch missing/invalid tag errors early", "percentage": 88, "note": "FailFast defaults to true for immediate error reporting"}
+    ]'::jsonb,
+    'Echo application initialized, Struct types defined',
+    'Binding succeeds with all expected values populated, No BindError returned',
+    'Do not assume field names auto-bind for path/query/header/form data. Missing or incorrect tags silently skip fields. JSON/XML binding falls back to field names, but explicit tags always required for other sources.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/binding'
+),
+(
+    'Echo binding: Data overwriting when same field bound from multiple sources',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Understand that when specifying multiple source tags on same field, binding at each stage overwrites previous values. Last source wins", "percentage": 95, "note": "Design limitation - each source binding step overwrites"},
+        {"solution": "Separate source handling: either bind from one source, or handle each source independently in different fields", "percentage": 90, "command": "Define separate struct fields for each source if needed"},
+        {"solution": "Use FailFast(false) with BindErrors() to capture all binding issues before data overwrites occur", "percentage": 85, "note": "Allows inspection of binding sequence"}
+    ]'::jsonb,
+    'Echo application initialized, Multi-source binding attempted',
+    'Data values are as expected without unintended overwrites, Fields bind from intended single source',
+    'Be aware that binding from multiple sources on the same field causes each source to overwrite previous values. The last source processed determines final value. Design struct fields for single source use.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/binding'
+),
+(
+    'Echo binding: Unsupported media type error when binding request body',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Verify request Content-Type is one of: application/json, application/xml, or application/x-www-form-urlencoded", "percentage": 94, "note": "Echo only supports these three content types for automatic binding"},
+        {"solution": "Check HTTP request Content-Type header matches the data format being sent. Set header: Content-Type: application/json for JSON body", "percentage": 93, "command": "Ensure Content-Type header matches request body format"},
+        {"solution": "For custom content types, implement custom binder via Echo#Binder interface to handle unsupported formats", "percentage": 85, "note": "Allows extension for specialized formats"}
+    ]'::jsonb,
+    'Echo application initialized, Request binding configured',
+    'Request body binds successfully, No ErrUnsupportedMediaType error returned',
+    'Do not send requests with unsupported Content-Type headers (e.g., text/plain). Echo only auto-binds JSON, XML, and form data. Custom binders needed for other types.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/binding'
+),
+(
+    'Echo binding: Type conversion failure for incompatible data types',
+    'echo',
+    'MEDIUM',
+    '[
+        {"solution": "Use supported types only: bool, int (all variants), float32/64, string, time.Time, and time.Duration. Other types require custom binding", "percentage": 94, "note": "Fluent binders have limited type support"},
+        {"solution": "Check BindError() or BindErrors() return values to detect type conversion failures before processing", "percentage": 90, "command": "Call c.BindError() to check for type mismatch errors"},
+        {"solution": "Implement custom binder for unsupported types that need special conversion logic", "percentage": 85, "note": "Register with Echo#Binder interface"}
+    ]'::jsonb,
+    'Echo application initialized, Data binding configured',
+    'Binding succeeds with correct types, Numeric/time values bind from strings correctly',
+    'Do not assume all Go types can be auto-bound. Fluent binders only support common types. Complex types need custom unmarshaling. Check BindError() after binding to catch type failures.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/binding'
+),
+(
+    'Echo binding: Unintended field exposure through direct struct binding',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Create separate Data Transfer Object (DTO) structs for binding that only expose fields users should modify. Do not pass bound structs directly to business logic", "percentage": 96, "note": "Critical security pattern - prevents unauthorized field binding like IsAdmin"},
+        {"solution": "Use bindable DTO struct with only public fields, then map to internal domain struct containing private fields", "percentage": 94, "command": "Define type UserInput struct { Name, Email string } separate from User struct"},
+        {"solution": "Add tags to control which fields are bindable from specific sources. Omit tags for sensitive fields", "percentage": 88, "note": "Defense in depth - field-level access control"}
+    ]'::jsonb,
+    'Echo application initialized, Struct binding in use',
+    'Only intended fields are bindable, Sensitive fields (IsAdmin, Role) cannot be modified via binding',
+    'Never pass bound structs directly to other methods without field validation. Use separate DTOs for binding input. Otherwise users can bind unintended fields like IsAdmin=true. This is a security vulnerability.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/binding'
+),
+(
+    'Echo: Default error handler not providing custom error responses',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Override the default error handler by assigning custom function to e.HTTPErrorHandler. This enables custom error page rendering and external logging", "percentage": 94, "note": "Default handler returns {\"message\": \"error text\"} JSON only"},
+        {"solution": "In custom handler, check response commitment status (c.Response().Committed) before writing headers to prevent already-sent errors", "percentage": 92, "command": "if !c.Response().Committed { c.HTML(code, html) }"},
+        {"solution": "Return HTTPError objects from handlers with custom status and message: return echo.NewHTTPError(http.StatusBadRequest, \"custom message\")", "percentage": 90, "note": "HTTPError uses status text as default message"}
+    ]'::jsonb,
+    'Echo application initialized, Error handling configured',
+    'Custom error pages render correctly, Status codes match error types, Errors logged to external service',
+    'Do not assume default error handler formats match your needs. Default returns only JSON {\"message\": ...}. Override HTTPErrorHandler for custom responses (HTML pages, external logging). Always check response commitment before writing headers.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/error-handling'
+),
+(
+    'Echo: Form validation not built-in, custom validation required',
+    'echo',
+    'HIGH',
+    '[
+        {"solution": "Register a custom validator with e.Validator that implements Echo#Validator interface. Framework has no built-in validation", "percentage": 95, "note": "Validation is intentionally not provided - use third-party libraries"},
+        {"solution": "Use go-playground/validator library: e.Validator = &CustomValidator{validator: validate.New()}", "percentage": 92, "command": "Import github.com/go-playground/validator/v10"},
+        {"solution": "Manually validate bound structs in handlers: return 400 Bad Request if validation fails. Check each required field", "percentage": 85, "note": "Minimum viable validation if no third-party library used"}
+    ]'::jsonb,
+    'Echo application initialized, Data binding working',
+    'Validation errors return 400 status, Invalid data is rejected before processing',
+    'Do not assume Echo validates bound data automatically. Framework intentionally lacks built-in validation. Implement custom validator using go-playground/validator or similar. Manual field checks are error-prone.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/request'
+),
+(
+    'Echo templates: Template not found or glob pattern mismatch',
+    'echo',
+    'MEDIUM',
+    '[
+        {"solution": "Verify glob pattern in template.ParseGlob() matches actual file paths. Example: template.ParseGlob(\"public/views/*.html\") requires *.html files in public/views/", "percentage": 95, "note": "Path is relative to working directory at runtime"},
+        {"solution": "Pre-compile all templates at startup using ParseGlob(). Ensure template names match render calls: c.Render(200, \"index.html\", data)", "percentage": 93, "command": "e.Renderer = &TemplateRenderer{templates: t}"},
+        {"solution": "Use absolute paths for glob pattern if relative paths fail: filepath.Join(wd, \"public/views/*.html\")", "percentage": 88, "note": "Resolves path issues in different execution contexts"}
+    ]'::jsonb,
+    'Echo application initialized, Renderer configured, Template files exist',
+    'Templates render successfully, Template.Execute() completes without errors',
+    'Do not assume relative paths work in template glob patterns. Verify glob pattern matches file locations. Use absolute paths if relative paths fail due to working directory changes. Missing templates cause panic during Render().',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/templates'
+),
+(
+    'Echo templates: Cannot generate URLs inside templates',
+    'echo',
+    'MEDIUM',
+    '[
+        {"solution": "Inject Echo instance or reverse function into template context as data. Use e.Reverse(\"routeName\", params) in template to generate URLs", "percentage": 93, "note": "Templates cannot directly access Echo instance - must be passed explicitly"},
+        {"solution": "Pass template function context: data = map[string]interface{}{\"URL\": c.Echo().Reverse}. Call in template: {{.URL \"routeName\" param}}", "percentage": 91, "command": "Inject reverse function via template context"},
+        {"solution": "Build URLs manually in handler before passing to template if Reverse() is unavailable", "percentage": 80, "note": "Workaround for complex URL generation"}
+    ]'::jsonb,
+    'Echo application initialized, Routes named, Templates configured',
+    'URLs generated correctly in templates, Link references are valid',
+    'Do not try to call Echo#Reverse() directly in templates. Echo instance is not available to templates. Pass reverse function explicitly via template data context. This requires deliberate injection in handler.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/templates'
+),
+(
+    'Echo testing: Path and query parameters not set in test requests',
+    'echo',
+    'MEDIUM',
+    '[
+        {"solution": "For path parameters, use c.SetParamNames() and c.SetParamValues() BEFORE executing handler. Example: c.SetParamNames(\"id\"); c.SetParamValues(\"123\")", "percentage": 94, "note": "Must set both names and values for route parameters"},
+        {"solution": "For query parameters, encode into request URL: req := httptest.NewRequest(\"GET\", \"/path?key=value\", nil)", "percentage": 92, "command": "Use url.Values to build query strings: req := httptest.NewRequest(\"GET\", \"/path?\" + url.QueryEscape(\"key\", \"value\"), nil)"},
+        {"solution": "Set form data with proper Content-Type header: c.SetHeader(\"Content-Type\", \"application/x-www-form-urlencoded\") and encode form values in body", "percentage": 88, "note": "Form testing requires body encoding and correct header"}
+    ]'::jsonb,
+    'Echo application initialized, Test file created, httptest imported',
+    'Test assertions pass, Parameters are received by handler with expected values',
+    'Do not forget to call SetParamNames() and SetParamValues() in tests. Parameters do not auto-populate from request URL - they must be explicitly set on context. Query parameters must be encoded in request URL, not set separately.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://echo.labstack.com/docs/testing'
+);

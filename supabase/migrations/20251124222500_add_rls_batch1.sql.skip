@@ -1,0 +1,212 @@
+-- Add Supabase RLS troubleshooting solutions batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Supabase RLS: auth.uid() returns null for unauthenticated users',
+    'postgres',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add explicit null check: USING (auth.uid() IS NOT NULL AND auth.uid() = user_id)", "percentage": 95, "note": "Prevents silent policy failures"},
+        {"solution": "Create separate policy for authenticated users: TO authenticated USING (auth.uid() = user_id)", "percentage": 90, "note": "Cleaner role-based approach"},
+        {"solution": "Add anon access policy if needed: TO anon USING (is_public = true)", "percentage": 85, "note": "Explicit public data access"}
+    ]'::jsonb,
+    'RLS enabled on table, Policies created, User authentication configured',
+    'Unauthenticated requests return appropriate data or access denied, Authenticated requests work as expected',
+    'auth.uid() returns null when no access token exists. Comparisons with null always return false in SQL, not true. Do not assume auth.uid() will always have a value.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: No data access after enabling RLS on table',
+    'postgres',
+    'VERY_HIGH',
+    '[
+        {"solution": "Create SELECT policy for your use case: CREATE POLICY select_policy ON table_name FOR SELECT USING (condition)", "percentage": 95, "note": "RLS blocks all access until policies exist"},
+        {"solution": "Add policies for each operation needed: SELECT, INSERT, UPDATE, DELETE", "percentage": 90, "note": "Operations require explicit policies"},
+        {"solution": "Check policy applies to correct role: TO authenticated or TO anon", "percentage": 85, "note": "Policy must target the role making requests"}
+    ]'::jsonb,
+    'Table exists, RLS enabled with ALTER TABLE ENABLE ROW LEVEL SECURITY',
+    'Data accessible via anon or authenticated key, Appropriate rows returned based on policy logic',
+    'Enabling RLS immediately blocks ALL access including with anon key. You must create policies before data becomes accessible. Tables are not accessible by default once RLS is enabled.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: UPDATE policy fails even though policy exists',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Create corresponding SELECT policy: CREATE POLICY select_policy ON table_name FOR SELECT TO authenticated USING (auth.uid() = user_id)", "percentage": 95, "note": "UPDATE requires SELECT policy to identify rows"},
+        {"solution": "Verify both SELECT and UPDATE policies target same role: TO authenticated on both", "percentage": 90, "note": "Roles must match between policies"},
+        {"solution": "Check UPDATE policy USING clause allows row visibility: USING (auth.uid() = user_id)", "percentage": 85, "note": "Row must be visible before update allowed"}
+    ]'::jsonb,
+    'RLS enabled, UPDATE policy created, User authenticated',
+    'UPDATE operations succeed, Data modified as expected, No permission denied errors',
+    'UPDATE operations require a SELECT policy to exist. Users must be able to see rows before they can modify them. Missing SELECT policy is the most common cause of UPDATE failures.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: Slow query performance after adding policies',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Add index on policy condition columns: CREATE INDEX idx_user_id ON table_name(user_id)", "percentage": 95, "note": "Most impactful performance fix", "command": "CREATE INDEX idx_user_id ON table_name(user_id)"},
+        {"solution": "Wrap auth.uid() in SELECT to cache per statement: USING ((SELECT auth.uid()) = user_id)", "percentage": 85, "note": "Prevents per-row function calls"},
+        {"solution": "Use security definer functions for complex logic to bypass RLS on joined tables", "percentage": 80, "note": "Bypasses RLS penalty on joins"},
+        {"solution": "Minimize joins in policies, fetch authorization data into arrays/sets instead", "percentage": 75, "note": "Reduces policy evaluation overhead"}
+    ]'::jsonb,
+    'RLS policies active, Query performance metrics available, Database access',
+    'Query execution time improves, Policy evaluation faster, No timeout errors',
+    'Index non-primary key columns used in policies. Policy functions run per row unless wrapped in SELECT. Complex joins in policies cause significant slowdowns.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: Policy not applying to specific role',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Add TO clause specifying role: CREATE POLICY name ON table TO authenticated USING (condition)", "percentage": 95, "note": "Explicit role targeting prevents evaluation waste"},
+        {"solution": "Check user is authenticated if policy targets authenticated role: verify JWT token exists", "percentage": 90, "note": "anon requests do not match authenticated policies"},
+        {"solution": "Create separate policies for anon and authenticated roles with different logic", "percentage": 85, "note": "Different roles often need different access patterns"}
+    ]'::jsonb,
+    'RLS enabled, Policy created, User role identified (anon or authenticated)',
+    'Policy applies to intended role, Access granted/denied as expected, No unauthorized access',
+    'Policies without TO clause evaluate for all roles unnecessarily. anon and authenticated are separate roles requiring separate policies. Authenticated users do not match anon policies.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: View bypasses RLS policies',
+    'postgres',
+    'MEDIUM',
+    '[
+        {"solution": "For Postgres 15+: CREATE VIEW view_name WITH (security_invoker = true) AS SELECT ...", "percentage": 95, "note": "Enforces RLS on views", "command": "CREATE VIEW view_name WITH (security_invoker = true) AS SELECT ..."},
+        {"solution": "For older Postgres: Revoke access from anon/authenticated on view", "percentage": 85, "note": "Prevents bypass on older versions", "command": "REVOKE ALL ON view_name FROM anon, authenticated"},
+        {"solution": "Place views in non-exposed schema that is not in search_path", "percentage": 80, "note": "Prevents API access to view"}
+    ]'::jsonb,
+    'View created, RLS policies on underlying table, Postgres version known',
+    'View respects RLS policies, Data filtered according to policies, No bypass occurs',
+    'Views created with postgres user bypass RLS by default. security_invoker option only available in Postgres 15+. Views in public schema are auto-exposed via API.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: Need to bypass RLS for admin operations',
+    'postgres',
+    'MEDIUM',
+    '[
+        {"solution": "Use Supabase service role key (server-side only, never expose in browser)", "percentage": 95, "note": "Official way to bypass RLS safely"},
+        {"solution": "Create Postgres role with bypassrls privilege for admin functions", "percentage": 85, "note": "For custom admin operations", "command": "CREATE ROLE admin_role WITH bypassrls"},
+        {"solution": "Use security definer function owned by postgres user", "percentage": 80, "note": "Controlled bypass for specific operations"}
+    ]'::jsonb,
+    'Admin operations needed, Service role key available or ability to create Postgres roles',
+    'Admin operations complete successfully, RLS still protects normal user access, No security exposure',
+    'Never expose service role key in browser/client code. bypassrls privilege is powerful - only grant to trusted roles. Do not share bypass role credentials.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: Policy using auth.jwt() not reflecting metadata changes',
+    'postgres',
+    'MEDIUM',
+    '[
+        {"solution": "User must refresh JWT token to see metadata changes: call refreshSession() client-side", "percentage": 90, "note": "JWT metadata cached until refresh"},
+        {"solution": "Use auth.uid() lookups to user table for real-time data instead of JWT claims", "percentage": 85, "note": "Database lookups reflect immediate changes"},
+        {"solution": "Store authorization data in raw_app_meta_data (immutable) not raw_user_meta_data", "percentage": 80, "note": "Prevents user tampering with auth data"}
+    ]'::jsonb,
+    'Policy using auth.jwt() claims, User metadata updated, Client SDK available',
+    'Policy reflects current metadata after JWT refresh, Authorization decisions use latest data',
+    'auth.jwt() metadata does not update in real-time - requires JWT refresh. raw_user_meta_data can be modified by users - never use for authorization. App metadata changes require new JWT.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: Permission denied for table even with policy',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Verify RLS is enabled: SELECT tablename, rowsecurity FROM pg_tables WHERE tablename = ''your_table''", "percentage": 95, "command": "SELECT tablename, rowsecurity FROM pg_tables WHERE tablename = ''your_table''"},
+        {"solution": "Check policy exists and is not disabled: SELECT * FROM pg_policies WHERE tablename = ''your_table''", "percentage": 90, "command": "SELECT * FROM pg_policies WHERE tablename = ''your_table''"},
+        {"solution": "Verify policy operation matches request type: FOR SELECT vs FOR INSERT vs FOR UPDATE vs FOR DELETE", "percentage": 85, "note": "Policy must match operation type"},
+        {"solution": "Test policy condition manually: SELECT * FROM table WHERE (policy_condition)", "percentage": 80, "note": "Verifies condition logic"}
+    ]'::jsonb,
+    'Table exists, Policy created, Access attempted via anon or authenticated role',
+    'Permission granted, Data accessible, No permission denied errors',
+    'Policy operation type (SELECT/INSERT/UPDATE/DELETE) must match request. ALL operation type covers all operations. Policy condition must evaluate to true for access.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: INSERT policy allows inserting but cannot see inserted row',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Create SELECT policy with same conditions as INSERT policy", "percentage": 95, "note": "SELECT policy required to view inserted data"},
+        {"solution": "Use RETURNING clause to get inserted data immediately: INSERT INTO table VALUES (...) RETURNING *", "percentage": 90, "note": "Bypasses SELECT policy for same transaction"},
+        {"solution": "Verify SELECT policy condition matches inserted row attributes", "percentage": 85, "note": "Row must satisfy SELECT policy to be visible"}
+    ]'::jsonb,
+    'INSERT policy exists and works, Row successfully inserted',
+    'Inserted row visible in subsequent queries, Client receives inserted data',
+    'INSERT does not require SELECT policy but viewing inserted data does. RETURNING clause works in same transaction before SELECT policy applies. Mismatched conditions between INSERT and SELECT cause invisible rows.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: DELETE policy not working',
+    'postgres',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure SELECT policy exists allowing row visibility: CREATE POLICY select_policy FOR SELECT USING (condition)", "percentage": 95, "note": "Must see rows before deleting"},
+        {"solution": "Check DELETE policy USING clause matches row conditions", "percentage": 90, "note": "DELETE USING determines deletable rows"},
+        {"solution": "Verify both SELECT and DELETE policies target same role (TO authenticated)", "percentage": 85, "note": "Role mismatch prevents deletion"}
+    ]'::jsonb,
+    'DELETE policy created, SELECT policy exists, User authenticated if needed',
+    'Rows can be deleted as expected, No permission denied errors',
+    'DELETE requires SELECT policy like UPDATE does. User must be able to see row before deletion allowed. DELETE policy USING clause determines which visible rows can be deleted.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+),
+(
+    'Supabase RLS: Policy works in SQL editor but not via API',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Verify API request uses correct key: anon key vs authenticated key with JWT", "percentage": 95, "note": "SQL editor uses postgres role, API uses anon/authenticated"},
+        {"solution": "Check policy targets correct role: TO authenticated if using auth, TO anon for public", "percentage": 90, "note": "SQL editor bypasses role-specific policies"},
+        {"solution": "Test with same role as API: SET ROLE authenticated; then run query", "percentage": 85, "command": "SET ROLE authenticated; SELECT * FROM table"},
+        {"solution": "Verify JWT token is valid and contains expected claims", "percentage": 80, "note": "Expired or invalid JWT causes auth.uid() to return null"}
+    ]'::jsonb,
+    'Policy works in SQL editor, API configured, Client using Supabase client library',
+    'API requests return same data as SQL editor with role simulation, Policy applies correctly',
+    'SQL editor runs as postgres role which bypasses RLS. API uses anon or authenticated roles. SET ROLE in SQL editor to test actual policy behavior. auth.uid() only works with valid JWT.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/row-level-security'
+);

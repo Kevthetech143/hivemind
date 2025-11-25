@@ -1,0 +1,219 @@
+-- Add Tailwind CSS documentation solutions batch 1
+-- DOC-MINER-28: Tailwind CSS errors (config, build, classes not applying)
+-- Source: Official Tailwind CSS documentation
+-- Entries: 12
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Tailwind CSS classes not applying: dynamic class names with string concatenation',
+    'tailwind',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use complete static class names instead of string interpolation. Map props to predefined class combinations rather than concatenating strings.", "percentage": 95, "note": "Tailwind scans files as plain text and cannot understand string concatenation"},
+        {"solution": "For React components, create a mapping object: const colorMap = { blue: \"bg-blue-600\", red: \"bg-red-600\" }; then use colorMap[color]", "percentage": 90, "note": "Ensures all class names exist in full in your source code"},
+        {"solution": "Use safelist with @source inline directive to force generate specific classes: @source inline(\"bg-{blue,red,green}-{400,500,600}\")", "percentage": 85, "note": "Use sparingly as it increases CSS bundle size"}
+    ]'::jsonb,
+    'Tailwind CSS installed and configured, Source files in content configuration',
+    'Classes appear in generated CSS, Styles apply correctly in browser',
+    'Never use template literals like bg-${color}-600 - Tailwind cannot detect these. Do not concatenate partial class names. The strings must exist in full somewhere in your source code.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/content-configuration'
+),
+(
+    'Tailwind CSS error: No utility classes were detected in your source files',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Configure content array in tailwind.config.js to include all template files: content: [\"./src/**/*.{js,jsx,ts,tsx,html}\"]", "percentage": 95, "note": "Most common cause - missing file paths in configuration"},
+        {"solution": "Check for missing file extensions in content glob patterns (e.g., using .js when files are .jsx)", "percentage": 90, "note": "Common mistake when using React or TypeScript"},
+        {"solution": "Use @source directive in CSS to specify base path: @import \"tailwindcss\" source(\"../src\")", "percentage": 85, "note": "Useful for monorepo setups where build runs from root"},
+        {"solution": "Verify files are not in .gitignore or node_modules - Tailwind automatically skips these", "percentage": 80, "note": "Use @source directive to explicitly include ignored sources"}
+    ]'::jsonb,
+    'Tailwind CSS installed, Build process running, Template files exist with Tailwind classes',
+    'Build completes without warnings, Generated CSS file contains utility classes, Styles render in browser',
+    'Never include CSS files in content configuration - only scan templates where classes are used. Check that new directories created mid-project are added to content array. Binary files and package manager lock files are automatically ignored.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/content-configuration'
+),
+(
+    'PostCSS plugin tailwindcss requires PostCSS 8 error',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Install PostCSS 7 compatibility build if your tool does not support PostCSS 8", "percentage": 90, "command": "npm uninstall tailwindcss postcss autoprefixer && npm install -D tailwindcss@npm:@tailwindcss/postcss7-compat postcss@^7 autoprefixer@^9", "note": "For Create React App and other tools stuck on PostCSS 7"},
+        {"solution": "Upgrade to PostCSS 8 if using Tailwind v3+, as PostCSS 7 compatibility build is no longer provided", "percentage": 95, "command": "npm install -D postcss@latest autoprefixer@latest", "note": "Tailwind CSS v3.0+ requires PostCSS 8"},
+        {"solution": "Use Tailwind CLI instead of PostCSS plugin if you cannot upgrade PostCSS", "percentage": 85, "command": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch", "note": "Bypasses PostCSS version requirements entirely"}
+    ]'::jsonb,
+    'Node.js and npm installed, Existing project with Tailwind CSS',
+    'Build completes without PostCSS version errors, Tailwind classes compile correctly',
+    'Tailwind CSS v3.0 and later require PostCSS 8 - the compatibility build is only for v2.x. Create React App does not support PostCSS 8 natively. Check your build tool documentation for PostCSS version support.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/installation/using-postcss'
+),
+(
+    'VS Code error: Unknown at rule @tailwind',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Install official Tailwind CSS IntelliSense extension from VS Code marketplace", "percentage": 95, "note": "Provides dedicated Tailwind CSS language mode with support for all custom at-rules"},
+        {"solution": "Install PostCSS Language Support plugin for VS Code as alternative", "percentage": 85, "note": "Provides general PostCSS syntax support"},
+        {"solution": "Disable native CSS linting in VS Code settings if using strict CSS validation", "percentage": 75, "note": "Add \"css.validate\": false to settings.json"}
+    ]'::jsonb,
+    'VS Code installed, Tailwind CSS project open',
+    'No squiggly underlines on @tailwind directives, IntelliSense autocomplete works for Tailwind classes',
+    'The Tailwind CSS IntelliSense extension is the official solution - do not just disable CSS validation without installing proper language support. The extension also provides autocomplete, syntax highlighting, and linting features.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/editor-setup'
+),
+(
+    'Tailwind v4 migration: @tailwind base and @tailwind components no longer work',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Replace @tailwind directives with @import \"tailwindcss\" in your CSS file", "percentage": 95, "note": "v4 uses standard CSS imports instead of custom directives"},
+        {"solution": "For preflight styles specifically, use @import \"tailwindcss/preflight\" if needed separately", "percentage": 90, "note": "Preflight is now a separate import option"},
+        {"solution": "Run upgrade tool to automate migration", "percentage": 85, "command": "npx @tailwindcss/upgrade", "note": "Automatically updates syntax across your project"}
+    ]'::jsonb,
+    'Tailwind CSS v4 installed, Existing v3 project being migrated',
+    'CSS imports successfully, No build errors, Tailwind utilities generate correctly',
+    'Tailwind v4 is a major breaking change - the content array is no longer needed. Use the upgrade tool before manual changes. JavaScript config files are still supported but not auto-detected - use @config directive to load explicitly.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/upgrade-guide'
+),
+(
+    'Tailwind v4 migration: Opacity modifier classes removed (bg-opacity-*, text-opacity-*)',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Replace opacity modifiers with slash syntax: bg-opacity-50 becomes bg-black/50", "percentage": 95, "note": "New syntax is more concise and consistent"},
+        {"solution": "Update text-opacity-*: text-opacity-75 becomes text-gray-900/75", "percentage": 95, "note": "Works with any color utility"},
+        {"solution": "Update border-opacity-*: border-opacity-25 becomes border-blue-500/25", "percentage": 95, "note": "Apply same pattern to all color utilities"},
+        {"solution": "Use upgrade tool to automate all opacity modifier replacements", "percentage": 90, "command": "npx @tailwindcss/upgrade"}
+    ]'::jsonb,
+    'Tailwind CSS v4 installed, Code using v3 opacity modifiers',
+    'All opacity styles render correctly, No console warnings about missing classes',
+    'The slash syntax was available in v3 but optional - it is now the only way in v4. Run the upgrade tool to catch all instances. Manually searching for -opacity- in your codebase can help find missed occurrences.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/upgrade-guide'
+),
+(
+    'Tailwind v4 migration: Renamed utility classes (shadow-sm, rounded-sm, outline-none)',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Update shadow scale: shadow-sm → shadow-xs, shadow → shadow-sm, shadow-md → shadow, etc.", "percentage": 95, "note": "Entire shadow scale shifted down one step"},
+        {"solution": "Update border radius: rounded-sm → rounded-xs with cascade through scale", "percentage": 95, "note": "Consistent -xs suffix for smallest values"},
+        {"solution": "Update outline: outline-none → outline-hidden", "percentage": 95, "note": "Better semantic naming"},
+        {"solution": "Update blur scale: blur-sm → blur-xs following same pattern", "percentage": 95, "note": "Consistent with other scale changes"},
+        {"solution": "Run upgrade tool to handle all renames automatically", "percentage": 90, "command": "npx @tailwindcss/upgrade"}
+    ]'::jsonb,
+    'Tailwind CSS v4 installed, Code using v3 class names',
+    'All visual styles match previous appearance, No missing class warnings in build',
+    'These renames affect visual appearance if not updated - shadow-sm in v4 is larger than v3. The upgrade tool handles most cases but review output carefully. Search codebase for specific old class names to catch dynamic usage.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/upgrade-guide'
+),
+(
+    'Tailwind v4 migration: Important modifier position changed',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Move ! from prefix to suffix: !flex !bg-red-500 becomes flex! bg-red-500!", "percentage": 95, "note": "Each class gets its own ! suffix"},
+        {"solution": "Update in arbitrary values: ![display:none] becomes [display:none]!", "percentage": 90, "note": "! moves outside the brackets"},
+        {"solution": "Run upgrade tool to automate important modifier repositioning", "percentage": 85, "command": "npx @tailwindcss/upgrade"}
+    ]'::jsonb,
+    'Tailwind CSS v4 installed, Code using v3 important prefix syntax',
+    'Important styles still override as expected, No specificity issues',
+    'The new suffix syntax is more intuitive but completely breaks v3 important usage. Grep your codebase for \"!\\w\" pattern to find prefix usage. The upgrade tool handles this but verify in complex scenarios.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/upgrade-guide'
+),
+(
+    'Tailwind v4 migration: CSS variables in arbitrary values syntax changed',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Replace brackets with parentheses for CSS variables: bg-[--brand-color] becomes bg-(--brand-color)", "percentage": 95, "note": "New syntax distinguishes variables from arbitrary values"},
+        {"solution": "Update in all contexts: text-[--heading-color] → text-(--heading-color)", "percentage": 95, "note": "Applies to any utility using CSS variables"},
+        {"solution": "Run upgrade tool to update all variable syntax", "percentage": 85, "command": "npx @tailwindcss/upgrade"}
+    ]'::jsonb,
+    'Tailwind CSS v4 installed, Code using CSS custom properties in arbitrary values',
+    'CSS variables resolve correctly, Styles apply with dynamic theme values',
+    'Square brackets now only for arbitrary static values, parentheses for variables. This is a breaking change with no backwards compatibility. Test thoroughly with theme switching if using CSS variables for theming.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/upgrade-guide'
+),
+(
+    'Tailwind CSS classes not applying in component library (React/Vue)',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Never use props to dynamically construct classes. Map props to complete static class names instead.", "percentage": 95, "note": "Component library files must contain full class strings"},
+        {"solution": "Include component library source in content configuration: content: [\"./node_modules/@your-org/ui/**/*.{js,jsx}\"]", "percentage": 90, "note": "Or use @source directive to include node_modules"},
+        {"solution": "Use @source directive in CSS to explicitly register library: @source \"../node_modules/@acmecorp/ui-lib\"", "percentage": 85, "note": "Bypasses automatic node_modules exclusion"},
+        {"solution": "Publish pre-compiled CSS with your component library instead of relying on consumer build", "percentage": 80, "note": "Most reliable for distributed components"}
+    ]'::jsonb,
+    'Tailwind CSS configured, Component library installed, Components using Tailwind classes',
+    'Component styles render correctly, All Tailwind utilities apply in consumer app',
+    'Tailwind automatically skips node_modules - you must explicitly include component libraries. Do not rely on safelist for this - include source files properly. Dynamic class construction will never work regardless of configuration.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/content-configuration'
+),
+(
+    'Tailwind CSS build slow: multiple CSS module files',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Use single global CSS file instead of CSS modules when possible", "percentage": 90, "note": "Build tools process each CSS module separately, causing Tailwind to run multiple times"},
+        {"solution": "Consider switching build tools - Vite, Parcel, and Turbopack have this issue more than others", "percentage": 75, "note": "Some tools handle CSS modules better with PostCSS"},
+        {"solution": "Use Tailwind CLI to compile CSS separately from build tool", "percentage": 85, "command": "npx tailwindcss -i ./src/input.css -o ./dist/output.css", "note": "Runs Tailwind once instead of per-module"},
+        {"solution": "Limit CSS modules to truly scoped components, use global Tailwind otherwise", "percentage": 80, "note": "Hybrid approach balances performance and scoping"}
+    ]'::jsonb,
+    'Tailwind CSS configured with build tool, Project using CSS modules, Slow build times observed',
+    'Build time decreases significantly, Development hot-reload is faster',
+    'If you have 50 CSS modules, Tailwind runs 50 separate times. This is documented behavior, not a bug. CSS modules and Tailwind utility-first approach are somewhat at odds philosophically.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://tailwindcss.com/docs/compatibility'
+),
+(
+    'Tailwind CSS: Purge/Content configuration removes needed classes',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Use safelist to protect dynamically generated classes that come from database/CMS", "percentage": 90, "note": "Add safelist: [\"bg-red-500\", \"text-blue-600\"] to config"},
+        {"solution": "Use @source inline directive to force generate class ranges: @source inline(\"bg-{red,blue,green}-{400,500,600}\")", "percentage": 85, "note": "v4 approach for safelisting"},
+        {"solution": "Ensure all template files using classes are in content configuration", "percentage": 95, "note": "Missing paths is most common cause"},
+        {"solution": "Use transform option if content compiles from other format (markdown, MDX)", "percentage": 80, "note": "Transforms content before scanning for classes"}
+    ]'::jsonb,
+    'Tailwind CSS configured with content/purge, Classes being removed in production build',
+    'All needed classes present in production CSS, No missing styles in production',
+    'PurgeCSS is intentionally naive - it scans for strings matching class patterns. Never rely on runtime-generated class names. Safelist increases bundle size, so use sparingly. Make sure the selector template file is included if using custom PurgeCSS selector strategy.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://v3.tailwindcss.com/docs/content-configuration'
+);

@@ -1,0 +1,267 @@
+-- Add Stack Overflow solutions batch 4: Multi-category errors
+-- Source: Stack Overflow accepted answers with community verification
+
+-- Docker: Daemon not running
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Docker error: daemon is not running',
+    'docker',
+    'VERY_HIGH',
+    '[
+        {"solution": "Open Docker Desktop application and ensure it is running", "percentage": 85, "note": "Most common cause - Docker Desktop not started"},
+        {"solution": "Restart Docker service: Windows + R → services.msc → Restart Docker Desktop Service", "percentage": 70, "note": "Windows users"},
+        {"solution": "Run PowerShell or cmd as Administrator", "percentage": 65, "note": "Access denied errors"}
+    ]'::jsonb,
+    'Docker Desktop installed, Administrator access (Windows)',
+    'docker ps command runs without errors, Docker containers visible',
+    'Docker Desktop may be installed but not running in background. Check system tray for Docker icon.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/67788960/'
+);
+
+-- OpenAI: Rate limit without usage
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'OpenAI API 429 rate limit error with no usage',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Add credit to OpenAI API account and wait 2-5 minutes", "percentage": 90, "note": "Free tier has very low limits"},
+        {"solution": "Check account tier - prepay to increase tier from 1 to 2+", "percentage": 85, "note": "Tier 1 has 3 RPM, easily exceeded"},
+        {"solution": "Wait 60 seconds between requests if on free tier", "percentage": 70, "note": "Temporary rate limiting"}
+    ]'::jsonb,
+    'Valid OpenAI API key, Access to OpenAI dashboard',
+    'API requests return 200 status, No 429 errors in logs',
+    'Error message does not clearly indicate low balance. Tier 1 limits are 3 requests/minute, 200 requests/day.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75494945/'
+);
+
+-- MCP: HTTP timeout -32001
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url, pattern_id
+) VALUES (
+    'MCP error -32001 request timed out Node.js server',
+    'mcp-troubleshooting',
+    'HIGH',
+    '[
+        {"solution": "Ensure server.connect(transport) is awaited before app.listen()", "percentage": 85, "note": "Async initialization timing"},
+        {"solution": "Add timeout configuration to StreamableHTTPServerTransport", "percentage": 75, "note": "Increase from default 30s"},
+        {"solution": "Check server responds to /health endpoint before MCP requests", "percentage": 70, "note": "Verify server is ready"}
+    ]'::jsonb,
+    '@modelcontextprotocol/sdk installed, Express.js server setup',
+    'MCP client connects successfully, No timeout errors in logs',
+    'Transport must be connected before listening on port. Default timeout is 30 seconds.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/79703292/',
+    (SELECT id FROM patterns WHERE pattern_name = 'STREAMING_BUFFER_CONFLICT')
+);
+
+-- Supabase: Edge function not found
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Supabase edge function response: Function not found',
+    'supabase',
+    'HIGH',
+    '[
+        {"solution": "Run supabase functions deploy from parent directory of /supabase folder", "percentage": 90, "note": "CLI needs to see supabase/ directory"},
+        {"solution": "Verify function exists: ls supabase/functions/<function-name>/index.ts", "percentage": 80, "note": "Check file structure"},
+        {"solution": "Redeploy with --project-ref flag: npx supabase functions deploy <name> --project-ref <id>", "percentage": 75, "note": "Ensure deploying to correct project"}
+    ]'::jsonb,
+    'Supabase CLI installed, Valid project reference, Function files in correct location',
+    'Function shows as deployed in dashboard, Invoke returns 200 status',
+    'Must run deploy command from directory where supabase/ folder is visible. Not from inside supabase/ or functions/ directory.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77432409/'
+);
+
+-- Postgres RLS: Policy not working
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Postgres RLS policy enabled but not applied',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Do not use superuser (postgres) - RLS does not apply to table owners or superusers", "percentage": 95, "note": "Create and use regular user instead"},
+        {"solution": "Add FORCE ROW LEVEL SECURITY to table: ALTER TABLE <table> FORCE ROW LEVEL SECURITY", "percentage": 85, "note": "Enforces RLS even for table owners"},
+        {"solution": "Remove BYPASSRLS from user: ALTER ROLE <user> NOBYPASSRLS", "percentage": 80, "note": "Superusers bypass RLS by default"}
+    ]'::jsonb,
+    'Postgres database access, Table with RLS enabled, Policy created',
+    'SELECT returns only rows matching policy, Unauthorized rows hidden',
+    'RLS is automatically bypassed for superusers and table owners. Use regular users for testing or FORCE RLS.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/73631019/'
+);
+
+-- CORS: External API blocked
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'CORS error when calling external API from browser',
+    'web-api',
+    'VERY_HIGH',
+    '[
+        {"solution": "Create server-side proxy: Frontend → Your server → External API", "percentage": 90, "note": "Server-to-server requests bypass CORS"},
+        {"solution": "Use Edge Function or serverless function as proxy", "percentage": 85, "note": "Supabase Edge Functions, Vercel, Netlify"},
+        {"solution": "Check if API provides CORS-enabled endpoint or request CORS access", "percentage": 60, "note": "Some APIs have /cors/ prefix"}
+    ]'::jsonb,
+    'Backend server or serverless function capability',
+    'API requests return data without CORS errors, Browser console shows 200 status',
+    'CORS headers must be set by the server, not the client. Cannot be fixed from browser JavaScript alone.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/53684484/'
+);
+
+-- Playwright: Browser install blocked by proxy
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Playwright failed to install browsers - proxy blocking download',
+    'playwright',
+    'MEDIUM',
+    '[
+        {"solution": "Set HTTP proxy: HTTPS_PROXY=http://proxy:port npx playwright install", "percentage": 85, "note": "Corporate networks"},
+        {"solution": "Download browsers manually: npx playwright install --with-deps chromium", "percentage": 75, "note": "Specify single browser"},
+        {"solution": "Configure npm proxy: npm config set https-proxy http://proxy:port", "percentage": 70, "note": "System-wide npm setting"}
+    ]'::jsonb,
+    'Node.js and npm installed, Playwright package installed, Proxy details (if behind firewall)',
+    'playwright install completes successfully, Browsers visible in cache folder',
+    'Corporate proxies block chromium.exe downloads. Get proxy details from IT department.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76611076/'
+);
+
+-- Deno: TypeScript type checking disabled
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Deno not type-checking TypeScript files',
+    'deno',
+    'MEDIUM',
+    '[
+        {"solution": "Pass --check flag: deno run --check script.ts", "percentage": 90, "note": "Type checking disabled by default since v1.23"},
+        {"solution": "Use deno check command: deno check script.ts", "percentage": 85, "note": "Dedicated type-check command"},
+        {"solution": "Add --check=all for remote modules: deno run --check=all script.ts", "percentage": 75, "note": "Includes dependencies"}
+    ]'::jsonb,
+    'Deno v1.23+, TypeScript files',
+    'Type errors are reported, No silent type mismatches',
+    'Deno v1.23+ disabled automatic type checking for performance. Must explicitly enable.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76047846/'
+);
+
+-- MCP: SSE connection not established
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'MCP error: SSE connection not established - stdio transport',
+    'mcp-troubleshooting',
+    'MEDIUM',
+    '[
+        {"solution": "Use MCP Inspector Simple Browser: VS Code → Ctrl+Shift+P → Simple Browser: Show → Paste inspector URL", "percentage": 85, "note": "Avoids token issues"},
+        {"solution": "Copy token from VSCode terminal and paste in inspector config manually", "percentage": 80, "note": "Token shown in terminal output"},
+        {"solution": "Start server first (python server.py) then client separately to debug", "percentage": 70, "note": "Isolate connection issue"}
+    ]'::jsonb,
+    'MCP Inspector running, Python MCP server with stdio transport, VS Code',
+    'Inspector shows connected status, Tools and resources are listed',
+    'Inspector requires token authentication. Token is displayed in terminal when inspector starts.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/79582846/'
+);
+
+-- Docker: Container not running after start
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Docker container exits immediately after start',
+    'docker',
+    'HIGH',
+    '[
+        {"solution": "Check container logs: docker logs <container-id>", "percentage": 95, "note": "Shows why container exited"},
+        {"solution": "Inspect exit code: docker ps -a | grep <container>", "percentage": 90, "note": "Exit code 1 = application error"},
+        {"solution": "Add command to keep container running: CMD [\"tail\", \"-f\", \"/dev/null\"]", "percentage": 70, "note": "For debugging"}
+    ]'::jsonb,
+    'Docker running, Container created',
+    'docker ps shows container with status Up, Container stays running',
+    'Exit code 1 indicates application error or missing file. Exit code 0 means app finished successfully.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/29599632/'
+);
+
+-- API Gateway CORS: Missing header intermittently
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS API Gateway CORS header missing for some users',
+    'aws',
+    'MEDIUM',
+    '[
+        {"solution": "API Gateway converts headers to lowercase for HTTP/2 - use lowercase header names", "percentage": 85, "note": "Access-Control-Allow-Origin becomes access-control-allow-origin"},
+        {"solution": "Enable CORS in API Gateway console: Actions → Enable CORS", "percentage": 80, "note": "Adds OPTIONS method automatically"},
+        {"solution": "Ensure Lambda returns CORS headers in all responses including errors", "percentage": 75, "note": "Error responses must include headers too"}
+    ]'::jsonb,
+    'AWS API Gateway, Lambda function, CORS configuration',
+    'All users receive CORS headers, No intermittent failures, Works for HTTP/1.1 and HTTP/2',
+    'API Gateway uses HTTP/2 for some clients, HTTP/1.1 for others. HTTP/2 lowercases headers.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/35190615/'
+);
+
+-- Supabase: Edge function console.log not printing
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Supabase edge function console.log not appearing in terminal',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Use supabase functions serve --debug to see logs", "percentage": 85, "note": "Debug flag enables log output"},
+        {"solution": "Check Supabase dashboard logs: Project → Edge Functions → Select function → Logs", "percentage": 80, "note": "Deployed function logs"},
+        {"solution": "Use console.error() instead of console.log() - errors always show", "percentage": 70, "note": "Error stream not buffered"}
+    ]'::jsonb,
+    'Supabase CLI, Edge function with logging',
+    'Console output visible in terminal, Logs appear in dashboard',
+    'Logs may be buffered. Use --debug flag for local development.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/79320453/'
+);

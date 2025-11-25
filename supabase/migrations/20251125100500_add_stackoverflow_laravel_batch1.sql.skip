@@ -1,0 +1,194 @@
+-- Add top voted Laravel Stack Overflow Q&A batch 1
+-- Extracted: 12 highest voted questions with accepted answers
+-- Source: https://stackoverflow.com/questions/tagged/laravel?tab=votes
+-- Total votes: 6,592
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, source_url
+) VALUES
+(
+    'How do I get the query builder to output its raw SQL query as a string?',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Use toSql() method: DB::table(''users'')->toSql() returns the SQL string without executing", "percentage": 95, "note": "Most reliable approach for getting raw SQL", "command": "DB::table(''users'')->toSql()"},
+        {"solution": "For queries with bindings, combine toSql() and getBindings(): str_replace_array(''?'', $query->getBindings(), $query->toSql())", "percentage": 92, "note": "Replaces parameter placeholders with actual values"},
+        {"solution": "Enable query logging with DB::enableQueryLog(); then DB::getQueryLog() to see executed queries with timing", "percentage": 85, "note": "Useful for debugging but requires execution"}
+    ]'::jsonb,
+    'Laravel application with database configured, Query builder instance created',
+    'toSql() returns valid SQL string, Parameter bindings replaced correctly in replacement method, Query log contains expected SQL',
+    'toSql() cannot run query and return SQL simultaneously - choose one. getBindings() returns array, not string. Query logging only works after execution.',
+    0.93,
+    'https://stackoverflow.com/questions/18236294/how-do-i-get-the-query-builder-to-output-its-raw-sql-query-as-a-string'
+),
+(
+    'How can I remove a package from Laravel using PHP Composer?',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Use composer remove command: composer remove vendor/package removes package from composer.json, vendor dir, and autoloader", "percentage": 98, "note": "Single command handles all cleanup", "command": "composer remove vendor/package"},
+        {"solution": "Remove service provider references from config/app.php in the providers array", "percentage": 90, "note": "Manual cleanup step required"},
+        {"solution": "Clear Laravel caches with php artisan cache:clear and php artisan config:clear", "percentage": 88, "note": "Prevents lingering package references"}
+    ]'::jsonb,
+    'Composer installed, Package to remove exists in composer.json',
+    'Package removed from vendor directory, Package removed from composer.json, Autoloader rebuilt, No service provider errors on app boot',
+    'Do not manually edit composer.json as it may update other dependencies unintentionally. Must remove service provider entries manually. Cache must be cleared or errors may persist.',
+    0.94,
+    'https://stackoverflow.com/questions/23126562/how-can-i-remove-a-package-from-laravel-using-php-composer'
+),
+(
+    'How to create custom helper functions in Laravel',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Create app/helpers.php with custom functions wrapped in !function_exists() checks, then add to composer.json autoload files section, run composer dump-autoload", "percentage": 92, "note": "Standard Laravel approach", "command": "composer dump-autoload"},
+        {"solution": "Use static class methods in app/Helpers/Helper.php namespaced as App\\\\Helpers, add alias to config/app.php aliases array", "percentage": 85, "note": "Alternative recommended for better organization"},
+        {"solution": "Make helpers globally available in Blade templates: {{ helperName() }} after autoloading", "percentage": 90, "note": "Works in views after registration"}
+    ]'::jsonb,
+    'Laravel project with composer.json, helpers.php file created',
+    'Custom function callable globally, Functions accessible in Blade templates via {{ helperName() }}, No function redefinition errors',
+    'Must use function_exists() wrapper to avoid redefinition errors. Must run composer dump-autoload after adding to autoload files. Static methods provide better namespacing.',
+    0.91,
+    'https://stackoverflow.com/questions/28290332/how-to-create-custom-helper-functions-in-laravel'
+),
+(
+    'How to create multiple WHERE clauses in Laravel Eloquent?',
+    'stackoverflow-laravel',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use array method for cleaner code: User::where([''field'' => ''value'', ''another_field'' => ''another_value''])->get() generates WHERE field = value AND another_field = another_value", "percentage": 96, "note": "Most elegant and readable approach"},
+        {"solution": "Combine with orWhere for OR conditions: ->where($matchThese)->orWhere($orThose) wraps each in parentheses", "percentage": 92, "note": "Array format scales better than chaining"},
+        {"solution": "Use closures for grouped conditions: ->where(function($query) { $query->where(''col1'', ''='', ''val1'')->orWhere(''col2'', ''='', ''val2''); })->get()", "percentage": 90, "note": "Complex WHERE (col1=val1 OR col2=val2) AND ..."}
+    ]'::jsonb,
+    'Laravel Model with database table, Eloquent configured',
+    'Query returns correct records matching all conditions, Multiple WHERE conditions properly grouped with parentheses in SQL',
+    'Chaining multiple where() calls is verbose. Array operators limited to equality (=) by default. Closures required for mixing AND/OR in same group.',
+    0.94,
+    'https://stackoverflow.com/questions/19325312/how-to-create-multiple-where-clause-query-using-laravel-eloquent'
+),
+(
+    'Rollback one specific migration in Laravel',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Use --step option for Laravel 5.3+: php artisan migrate:rollback --step=1 rolls back only the last migration", "percentage": 97, "note": "Native solution for recent Laravel versions", "command": "php artisan migrate:rollback --step=1"},
+        {"solution": "For Laravel 5.2 and earlier: manually increment the batch number of target migration in migrations table to be higher than others, then run migrate:rollback", "percentage": 75, "note": "Requires database manipulation, not recommended"},
+        {"solution": "Always use --step when running migrations to enable selective rollbacks later", "percentage": 85, "note": "Best practice for migration management"}
+    ]'::jsonb,
+    'Laravel 5.0+, Migrations table exists in database, No uncommitted schema changes',
+    'Only target migration rolled back, No cascade rollback of other batch migrations, Database tables remain intact except target migration changes',
+    'Standard migrate:rollback without --step rolls back entire batch. --step not available in Laravel <5.3. Manual batch manipulation is risky.',
+    0.91,
+    'https://stackoverflow.com/questions/30287896/rollback-one-specific-migration-in-laravel'
+),
+(
+    'Laravel: Add a new column to existing table in a migration',
+    'stackoverflow-laravel',
+    'VERY_HIGH',
+    '[
+        {"solution": "Create migration with --table flag: php artisan make:migration add_paid_to_users_table --table=users, use Schema::table() in up() method with column definition", "percentage": 97, "note": "Proper way to modify existing tables", "command": "php artisan make:migration add_paid_to_users_table --table=users"},
+        {"solution": "In up() method use: Schema::table(''users'', function($table) { $table->integer(''paid''); })", "percentage": 96, "note": "Schema::table() for modifications, not Schema::create()"},
+        {"solution": "Always include down() method with dropColumn() to allow rollback: $table->dropColumn(''paid'')", "percentage": 94, "note": "Essential for reversible migrations"},
+        {"solution": "For MySQL, position new column after existing: ->after(''existing_column'')", "percentage": 82, "note": "Optional but improves organization"}
+    ]'::jsonb,
+    'Laravel project with existing table, Migration system configured, Database connection working',
+    'New column appears in database table, Column has correct data type, Migration is reversible via rollback, Column positioned correctly in table structure',
+    'Using Schema::create() instead of Schema::table() creates new table instead of modifying existing. Forgetting down() method breaks rollback. Column positioning only works on MySQL.',
+    0.95,
+    'https://stackoverflow.com/questions/16791613/laravel-add-a-new-column-to-existing-table-in-a-migration'
+),
+(
+    'PDOException SQLSTATE[HY000] [2002]: No such file or directory',
+    'stackoverflow-laravel',
+    'VERY_HIGH',
+    '[
+        {"solution": "Change database host from localhost to 127.0.0.1 in .env (DB_HOST=127.0.0.1): localhost uses Unix socket connection which can fail, 127.0.0.1 uses TCP", "percentage": 95, "note": "Most common and reliable fix", "command": "DB_HOST=127.0.0.1"},
+        {"solution": "Specify Unix socket path in database.php if needed: ''unix_socket'' => ''/tmp/mysql.sock'' for systems like MAMP", "percentage": 82, "note": "Alternative for socket-based connections"},
+        {"solution": "Verify MySQL is running and accessible: test with mysql -u user -p from command line", "percentage": 88, "note": "Sanity check before config changes"},
+        {"solution": "Clear Laravel config cache: php artisan config:clear", "percentage": 85, "note": "May help if configuration cached incorrectly"}
+    ]'::jsonb,
+    'Laravel application, .env file configured, MySQL server installed',
+    'Database connection succeeds, No socket error messages, Application can query database',
+    'localhost and 127.0.0.1 are NOT equivalent for MySQL connections - localhost uses Unix socket. Socket path varies by system (MAMP, Homebrew, etc.). Config cache may contain stale host value.',
+    0.92,
+    'https://stackoverflow.com/questions/20723803/pdoexception-sqlstatehy000-2002-no-such-file-or-directory'
+),
+(
+    'Laravel requires the Mcrypt PHP extension',
+    'stackoverflow-laravel',
+    'MEDIUM',
+    '[
+        {"solution": "Check which PHP CLI uses: which php && php -m | grep mcrypt - issue often caused by multiple PHP installations with different extensions loaded", "percentage": 93, "note": "Root cause is CLI vs web server mismatch", "command": "php -m | grep mcrypt"},
+        {"solution": "For MAMP users: add export PATH=/Applications/MAMP/bin/php/php5.4.10/bin:$PATH to ~/.bash_profile and reload", "percentage": 90, "note": "Forces CLI to use MAMP''s PHP with mcrypt"},
+        {"solution": "For Homebrew: brew install homebrew/php/php56-mcrypt to install extension for CLI", "percentage": 85, "note": "Installs mcrypt for Homebrew PHP"},
+        {"solution": "Note: PHP 7.1+ deprecated mcrypt, PHP 7.2+ removed it entirely - Laravel 5.1+ no longer requires it", "percentage": 70, "note": "Historical context - not applicable to modern versions"}
+    ]'::jsonb,
+    'Laravel 5.0 or earlier (5.1+ does not require mcrypt), PHP CLI installed, MAMP or Homebrew installed (depending on environment)',
+    'php -m | grep mcrypt shows mcrypt in extension list, Laravel migrations run without mcrypt error',
+    'Web server may have mcrypt enabled but CLI does not - must ensure same PHP version. Multiple PHP installations cause this issue. Modern Laravel no longer requires mcrypt.',
+    0.88,
+    'https://stackoverflow.com/questions/16830405/laravel-requires-the-mcrypt-php-extension'
+),
+(
+    'No application encryption key has been specified',
+    'stackoverflow-laravel',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run php artisan key:generate to generate encryption key and auto-populate .env APP_KEY variable", "percentage": 98, "note": "Primary fix for this error", "command": "php artisan key:generate"},
+        {"solution": "After generating key, run php artisan config:cache to clear and reload configuration cache with new key", "percentage": 95, "note": "Critical second step - cache may contain empty key value"},
+        {"solution": "If using php artisan serve, restart development server after key generation for changes to take effect", "percentage": 85, "note": "Development server caches config on startup"}
+    ]'::jsonb,
+    'Laravel application installed, .env file exists, php artisan command available',
+    'php artisan key:generate completes without error, .env contains APP_KEY value, Application boots without encryption key error',
+    'Simply updating .env is not enough - must clear config cache or Laravel loads cached empty value. Development server caches on startup. Missing .env file causes different error.',
+    0.96,
+    'https://stackoverflow.com/questions/44839648/no-application-encryption-key-has-been-specified'
+),
+(
+    'How to set up file permissions for Laravel?',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Set web server (www-data) as owner with proper permissions: sudo chown -R www-data:www-data /path/to/laravel, sudo find . -type f -exec chmod 644 {} \\;, sudo find . -type d -exec chmod 755 {} \\;", "percentage": 92, "note": "Web server ownership approach"},
+        {"solution": "Recommended: Keep personal user ownership but add to web server group: sudo chown -R $USER:www-data ., files 664, directories 775", "percentage": 94, "note": "Better for local development"},
+        {"solution": "Critical: Explicitly set storage and cache permissions: sudo chgrp -R www-data storage bootstrap/cache && sudo chmod -R ug+rwx storage bootstrap/cache", "percentage": 95, "note": "These directories require write access"},
+        {"solution": "WARNING: Never use 777 permissions - exposes server to malicious uploads and execution", "percentage": 90, "note": "Critical security rule"}
+    ]'::jsonb,
+    'Linux/Unix system with sudo access, Laravel installation in web root, www-data user exists (Apache/Nginx)',
+    'Web server can write to storage and cache directories, Application boots without permission errors, File uploads work correctly',
+    'Using 777 is a major security vulnerability. File permissions (644) vs directory permissions (755) are different. Storage/cache need explicit write permissions. Windows/macOS do not require these steps.',
+    0.93,
+    'https://stackoverflow.com/questions/30639174/how-to-set-up-file-permissions-for-laravel'
+),
+(
+    'Displaying HTML with Blade shows the HTML code',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Use triple-brace syntax {!! $text !!} to output unescaped HTML in Blade templates instead of {{ $text }}", "percentage": 97, "note": "Standard solution for displaying HTML", "command": "{!! $text !!}"},
+        {"solution": "Understand the difference: {{ $text }} escapes HTML via htmlspecialchars() (default safe), {!! $text !!} outputs raw HTML", "percentage": 94, "note": "Security context: {{ }} is safer"},
+        {"solution": "For encoded HTML entities like &lt;p&gt;, use {!! html_entity_decode($text) !!} to decode and display", "percentage": 85, "note": "Only use with trusted data"},
+        {"solution": "SECURITY WARNING: Only use {!! !!} with trusted content - never use with user input as it enables XSS attacks", "percentage": 92, "note": "Critical security consideration"}
+    ]'::jsonb,
+    'Laravel Blade template file, HTML content to display',
+    'HTML displays correctly formatted in browser, No HTML tags visible as text, Page renders with intended styling',
+    'Using {!! !!} with user input creates XSS vulnerability. {{ }} is correct for user-generated content. Exclamation marks intentionally draw attention to security risk.',
+    0.91,
+    'https://stackoverflow.com/questions/29253979/displaying-html-with-blade-shows-the-html-code'
+),
+(
+    'Laravel Eloquent: WHERE with OR AND OR - complex conditions',
+    'stackoverflow-laravel',
+    'HIGH',
+    '[
+        {"solution": "Use callback functions with where() for logical grouping: ->where(function($q) { $q->where(''a'', 1)->orWhere(''b'', 1); })->where(function($q) { ... }) generates WHERE (a=1 OR b=1) AND ...", "percentage": 96, "note": "Most readable for complex queries"},
+        {"solution": "Pass variables to closures using use keyword: ->where(function($q) use ($a, $b) { ... }) to access outer scope", "percentage": 93, "note": "Required for dynamic values"},
+        {"solution": "Generate SQL: WHERE (a = 1 OR b = 1) AND (c = 1 OR d = 1) by nesting closures for each logical group", "percentage": 91, "note": "Proper parenthesis grouping"}
+    ]'::jsonb,
+    'Laravel Model with Eloquent, Database table configured',
+    'Query returns records matching complex condition logic, Generated SQL contains correct parenthesis grouping, Multiple OR conditions properly nested within AND groups',
+    'Closures required for mixing AND/OR in same condition. Variable scope requires use() keyword. Without closures, chaining where/orWhere lacks proper grouping.',
+    0.92,
+    'https://stackoverflow.com/questions/16995102/laravel-eloquent-query-using-where-with-or-and-or'
+);

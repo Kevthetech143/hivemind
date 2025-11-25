@@ -1,0 +1,211 @@
+-- Webpack 4→5 Migration Guide - Breaking Changes and New Features
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Webpack 5 error: Cannot resolve module with default Node.js polyfills',
+    'webpack-migration',
+    'VERY_HIGH',
+    '[
+        {"solution": "Manually install and configure polyfills using resolve.fallback for needed Node.js modules (crypto, stream, buffer, etc.)", "percentage": 90, "note": "Webpack 5 removed automatic Node.js polyfills for web targets"},
+        {"solution": "Install node-polyfill-webpack-plugin: npm i node-polyfill-webpack-plugin", "percentage": 85, "command": "npm install --save-dev node-polyfill-webpack-plugin"},
+        {"solution": "Use resolve.fallback: { crypto: require.resolve(''crypto-browserify''), stream: require.resolve(''stream-browserify'') }", "percentage": 80, "note": "Only polyfill what you actually need"}
+    ]'::jsonb,
+    'Webpack 5, Code using Node.js modules in browser context',
+    'Build completes without module resolution errors, Application runs in browser without runtime errors',
+    'Webpack 5 no longer includes automatic polyfills for Node.js core modules. Do not blindly polyfill everything - only add what your code actually uses. Frontend code should avoid Node.js APIs when possible.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Update deprecated optimization configuration options',
+    'webpack-migration',
+    'HIGH',
+    '[
+        {"solution": "Replace optimization.hashedModuleIds: true with optimization.moduleIds: ''hashed''", "percentage": 95, "note": "Direct replacement for deterministic IDs"},
+        {"solution": "Replace optimization.namedChunks: true with optimization.chunkIds: ''named''", "percentage": 95, "note": "For named chunk identifiers"},
+        {"solution": "Replace optimization.namedModules: true with optimization.moduleIds: ''named''", "percentage": 95, "note": "For named module identifiers"},
+        {"solution": "Remove NamedModulesPlugin, NamedChunksPlugin, HashedModuleIdsPlugin - use built-in optimization options instead", "percentage": 90, "note": "These plugins are now deprecated"}
+    ]'::jsonb,
+    'Webpack 4 config using old optimization options',
+    'Build completes without deprecation warnings, Module/chunk IDs match expected naming pattern',
+    'Do not mix old plugins with new optimization options. The new string-based configuration is simpler and more maintainable. Remove unnecessary optimization.moduleIds and optimization.chunkIds in production - defaults are already optimal.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Persistent caching configuration for faster rebuilds',
+    'webpack-migration',
+    'HIGH',
+    '[
+        {"solution": "Enable filesystem caching with cache: { type: ''filesystem'' } in webpack config", "percentage": 95, "note": "Dramatically improves rebuild performance"},
+        {"solution": "Configure cache directory and name: cache: { type: ''filesystem'', cacheDirectory: path.resolve(__dirname, ''.webpack_cache''), name: env.production ? ''prod-cache'' : ''dev-cache'' }", "percentage": 90, "note": "Separate caches for different environments"},
+        {"solution": "Add buildDependencies to invalidate cache on config changes: cache: { type: ''filesystem'', buildDependencies: { config: [__filename] } }", "percentage": 85, "note": "Ensures cache invalidates when webpack config changes"}
+    ]'::jsonb,
+    'Webpack 5, Slow repetitive full builds',
+    'Subsequent builds are significantly faster, Cache directory created and populated, Build times reduced by 60-90%',
+    'Persistent caching trades safety for speed. Cache is stored in node_modules/.cache/webpack by default. Add cache directory to .gitignore. For CI/CD, cache the webpack cache directory between runs for maximum benefit.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Module Federation setup for micro-frontends',
+    'webpack-migration',
+    'HIGH',
+    '[
+        {"solution": "Add ModuleFederationPlugin to expose modules: new ModuleFederationPlugin({ name: ''app'', filename: ''remoteEntry.js'', exposes: { ''./Component'': ''./src/Component'' }, shared: { react: { singleton: true }, ''react-dom'': { singleton: true } } })", "percentage": 90, "note": "Allows sharing code between separately built applications"},
+        {"solution": "Configure remote consumption: new ModuleFederationPlugin({ name: ''host'', remotes: { app1: ''app1@http://localhost:3001/remoteEntry.js'' }, shared: [''react'', ''react-dom''] })", "percentage": 85, "note": "Load remote modules at runtime"},
+        {"solution": "Use dynamic imports to load federated modules: const Component = React.lazy(() => import(''app1/Component''))", "percentage": 80, "note": "Enables code splitting and runtime loading"}
+    ]'::jsonb,
+    'Webpack 5, Micro-frontend architecture or code sharing between apps',
+    'Remote modules load successfully, Shared dependencies are singleton instances, No duplicate React instances',
+    'Module Federation requires careful shared dependency configuration. Mark React and React-DOM as singleton: true to prevent multiple instances. Remote URLs must be accessible at runtime. Test thoroughly with different deployment scenarios.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Asset modules replace file-loader, url-loader, raw-loader',
+    'webpack-migration',
+    'VERY_HIGH',
+    '[
+        {"solution": "Replace file-loader with type: ''asset/resource'' in module rules", "percentage": 95, "note": "Emits separate file and returns URL"},
+        {"solution": "Replace url-loader with type: ''asset/inline'' for data URIs or type: ''asset'' for automatic choice", "percentage": 90, "note": "asset type auto-chooses based on maxSize"},
+        {"solution": "Replace raw-loader with type: ''asset/source'' to import file as string", "percentage": 90, "note": "Returns file content as string"},
+        {"solution": "Configure asset size limit: { test: /\\.(png|jpg|gif)$/, type: ''asset'', parser: { dataUrlCondition: { maxSize: 8 * 1024 } } }", "percentage": 85, "note": "Files smaller than maxSize are inlined"}
+    ]'::jsonb,
+    'Webpack 4 using file-loader, url-loader, or raw-loader',
+    'Assets load correctly, Build completes without loader warnings, File sizes and URLs match expected behavior',
+    'Asset modules are built-in to Webpack 5 - remove old loaders from package.json. The old loaders are deprecated and will be removed. Use type: ''asset'' for automatic inline/resource decision, or be explicit with asset/resource, asset/inline, asset/source.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: JSON module import breaking change',
+    'webpack-migration',
+    'HIGH',
+    '[
+        {"solution": "Change named imports from JSON to default import: import pkg from ''./package.json''; console.log(pkg.version)", "percentage": 95, "note": "Named imports from JSON no longer supported"},
+        {"solution": "Use import assertions for JSON modules: import pkg from ''./data.json'' assert { type: ''json'' }", "percentage": 80, "note": "Modern explicit JSON import syntax"},
+        {"solution": "Enable legacy JSON behavior with module.parser.javascript: { exportsPresence: ''error'', importMeta: false } if migration is blocked", "percentage": 60, "note": "Not recommended - prefer fixing imports"}
+    ]'::jsonb,
+    'Webpack 4 config with named JSON imports',
+    'All JSON imports resolve without errors, Build completes successfully, Runtime accesses correct JSON values',
+    'Named imports like import { version } from package.json are no longer supported. Always use default import. This is a breaking change with no automatic migration. Search codebase for JSON named imports before upgrading.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Update library output configuration',
+    'webpack-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Convert flat library config to object: output: { library: { name: ''MyLibrary'', type: ''commonjs2'' } }", "percentage": 95, "note": "Replace libraryTarget with type"},
+        {"solution": "For UMD libraries: output: { library: { name: ''MyLibrary'', type: ''umd'', umdNamedDefine: true } }", "percentage": 90, "note": "Explicit UMD configuration"},
+        {"solution": "For modern ESM libraries: output: { library: { type: ''module'' } }, experiments: { outputModule: true }", "percentage": 85, "note": "Requires experiments flag for ESM output"}
+    ]'::jsonb,
+    'Webpack 4 library project using output.library and output.libraryTarget',
+    'Library builds with correct output format, Consumers can import library successfully, Module format matches target environment',
+    'The new library configuration is more explicit and flexible. libraryTarget is deprecated. For ESM output, you must enable experiments.outputModule. Check consuming applications work with new output format.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Update IgnorePlugin syntax',
+    'webpack-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Update IgnorePlugin constructor: new webpack.IgnorePlugin({ resourceRegExp: /^\\.\\/locale$/, contextRegExp: /moment$/ })", "percentage": 95, "note": "RegExp arguments must now be in object form"},
+        {"solution": "For simple ignore: new webpack.IgnorePlugin({ resourceRegExp: /\\.test\\.js$/ })", "percentage": 90, "note": "Single regex patterns"},
+        {"solution": "Use checkResource callback for complex logic: new webpack.IgnorePlugin({ checkResource: (resource, context) => { return /unwanted/.test(resource) } })", "percentage": 80, "note": "Dynamic ignore logic"}
+    ]'::jsonb,
+    'Webpack 4 config using IgnorePlugin with positional regex arguments',
+    'Build completes without IgnorePlugin errors, Ignored modules are correctly excluded from bundle',
+    'The old new IgnorePlugin(/regex/) syntax is no longer valid. Must use object configuration with resourceRegExp. This is a hard breaking change that will cause build failures if not updated.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: SplitChunks optimization configuration updates',
+    'webpack-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Rename vendors cache group to defaultVendors: optimization.splitChunks.cacheGroups.defaultVendors instead of vendors", "percentage": 90, "note": "Breaking change in cache group naming"},
+        {"solution": "Use optimization.splitChunks: { chunks: ''all'' } for recommended defaults", "percentage": 95, "note": "Enables optimal code splitting for all chunk types"},
+        {"solution": "Replace name with idHint in custom cache groups to avoid conflicts: cacheGroups.myGroup.idHint: ''myGroup'' instead of name", "percentage": 85, "note": "idHint provides hint for chunk ID without forcing it"}
+    ]'::jsonb,
+    'Webpack 4 config with custom splitChunks configuration',
+    'Code splitting works as expected, Vendor chunks are created correctly, No conflicts in chunk names',
+    'The vendors cache group is now defaultVendors. Using name in cache groups can cause chunk conflicts - prefer idHint. The defaults in Webpack 5 are already well-optimized, only customize if you have specific requirements.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Automatic publicPath configuration',
+    'webpack-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Use output.publicPath: ''auto'' for automatic public path detection from script src", "percentage": 90, "note": "Default in Webpack 5 - automatically determines base URL"},
+        {"solution": "Set output.publicPath: '''' (empty string) if ecosystem tooling is not ready for auto", "percentage": 85, "note": "Fallback for legacy setups"},
+        {"solution": "Use environment-specific publicPath: output.publicPath: process.env.ASSET_PATH || ''auto''", "percentage": 80, "note": "Combine with environment variables for flexibility"}
+    ]'::jsonb,
+    'Webpack 4 config with hardcoded publicPath or CDN configuration',
+    'Assets load from correct URL, Script and style tags have correct src/href attributes, Works across different deployment environments',
+    'publicPath: auto is now default and works for most scenarios. It determines the base URL from the script tag that loaded the bundle. Only override if you have specific CDN or deployment requirements that auto cannot detect.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: IE11 browser compatibility target',
+    'webpack-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Set target to ES5 for IE11: target: [''web'', ''es5'']", "percentage": 90, "note": "Required when browserslist not configured"},
+        {"solution": "Add IE 11 to .browserslistrc if using browserslist: IE 11, > 0.5%, last 2 versions", "percentage": 85, "note": "Webpack will read browserslist config automatically"},
+        {"solution": "Install required polyfills: npm install --save core-js regenerator-runtime", "percentage": 80, "command": "npm install --save core-js regenerator-runtime"}
+    ]'::jsonb,
+    'Webpack 5, Need to support IE11 browser',
+    'Bundle works in IE11, No ES6+ syntax in output, Polyfills loaded correctly',
+    'Webpack 5 defaults to modern JavaScript (ES6+). For IE11 support, you must explicitly set target. This increases bundle size and reduces performance. Consider dropping IE11 support if possible.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+),
+(
+    'Webpack 5: Replace [hash] with [contenthash] for better caching',
+    'webpack-migration',
+    'HIGH',
+    '[
+        {"solution": "Update output.filename: output.filename: ''[name].[contenthash].js'' instead of [hash]", "percentage": 95, "note": "contenthash only changes when file content changes"},
+        {"solution": "Update all asset filenames: output.assetModuleFilename: ''assets/[name].[contenthash][ext]''", "percentage": 90, "note": "Applies to all asset types"},
+        {"solution": "Use contenthash in MiniCssExtractPlugin: new MiniCssExtractPlugin({ filename: ''[name].[contenthash].css'' })", "percentage": 90, "note": "Better cache invalidation for CSS"}
+    ]'::jsonb,
+    'Webpack 4 config using [hash] in filenames',
+    'File hashes only change when content changes, Better browser cache hit rate, No unnecessary cache invalidation on unrelated changes',
+    '[hash] is compilation-wide and changes on every build even if file content did not change. [contenthash] is file-specific and only changes when the file content changes. This dramatically improves long-term caching effectiveness.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://webpack.js.org/migrate/5/'
+);

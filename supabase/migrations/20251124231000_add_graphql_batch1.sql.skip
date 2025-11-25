@@ -1,0 +1,213 @@
+-- Add GraphQL documentation solutions batch 1
+-- DOC-MINER-25: GraphQL errors from Supabase documentation
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'GraphQL permission denied for table in graphql schema',
+    'graphql',
+    'HIGH',
+    '[
+        {"solution": "Grant postgres role permissions to graphql schema: GRANT ALL ON ALL TABLES IN SCHEMA graphql TO postgres, anon, authenticated, service_role;", "percentage": 95, "note": "Required for db pull operations", "command": "grant all on all tables in schema graphql to postgres, anon, authenticated, service_role;"},
+        {"solution": "Grant permissions on functions: GRANT ALL ON ALL FUNCTIONS IN SCHEMA graphql TO postgres, anon, authenticated, service_role;", "percentage": 90, "command": "grant all on all functions in schema graphql to postgres, anon, authenticated, service_role;"},
+        {"solution": "Grant permissions on sequences: GRANT ALL ON ALL SEQUENCES IN SCHEMA graphql TO postgres, anon, authenticated, service_role;", "percentage": 90, "command": "grant all on all sequences in schema graphql to postgres, anon, authenticated, service_role;"}
+    ]'::jsonb,
+    'Supabase project with pg_graphql extension enabled, Database access via CLI or SQL editor',
+    'db pull command succeeds without permission errors, GraphQL queries execute successfully',
+    'This typically occurs in older Supabase projects. All three commands (tables, functions, sequences) must be run together. Error commonly appears as: permission denied for table _type',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/deployment/managing-environments'
+),
+(
+    'pg_graphql extension not enabled or disabled',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Enable pg_graphql extension via Dashboard: Go to Database > Extensions > Search for pg_graphql and enable", "percentage": 95, "note": "Recommended method"},
+        {"solution": "Enable via SQL: CREATE EXTENSION pg_graphql;", "percentage": 90, "command": "create extension pg_graphql;"},
+        {"solution": "Disable pg_graphql extension when exposing custom schema: DROP EXTENSION IF EXISTS pg_graphql;", "percentage": 85, "note": "Required when removing public schema from Data API", "command": "drop extension if exists pg_graphql;"}
+    ]'::jsonb,
+    'Database access, Appropriate permissions to manage extensions',
+    'Extension appears in Database Extensions list, GraphQL queries can be executed via graphql.resolve function',
+    'When hardening Data API by exposing custom schemas instead of public, pg_graphql must be disabled. Extension is in GA status and fully available on self-hosted installations.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/extensions/pg_graphql'
+),
+(
+    'GraphQL schema not reflecting database changes',
+    'graphql',
+    'HIGH',
+    '[
+        {"solution": "Reload the GraphQL schema by reconnecting to the database or restarting the session", "percentage": 85, "note": "pg_graphql reflects schema automatically but may need refresh"},
+        {"solution": "Verify table exists in exposed schema and has proper permissions", "percentage": 90, "note": "Tables must be in schemas exposed to the Data API"},
+        {"solution": "Use schema introspection tools to verify GraphQL schema: Connect GraphQL IDE to inspect available fields and arguments", "percentage": 80, "note": "pg_graphql fully supports schema introspection"}
+    ]'::jsonb,
+    'pg_graphql extension enabled, Tables exist in database, Proper schema permissions',
+    'GraphQL introspection shows new tables and fields, Queries against new schema elements succeed',
+    'pg_graphql automatically reflects SQL schema changes into GraphQL schema. Check that tables are in the public schema or another exposed schema. Row Level Security policies affect GraphQL query results.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/extensions/pg_graphql'
+),
+(
+    'GraphQL query syntax error or invalid query structure',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Use proper GraphQL collection syntax: tableName + Collection suffix for queries", "percentage": 90, "note": "Example: blogCollection instead of blog"},
+        {"solution": "Follow Relay-style connection pattern: Use edges and node structure for results", "percentage": 85, "note": "Standard format: { edges { node { fields } } }"},
+        {"solution": "Consult pg_graphql API docs for correct field names and argument formats", "percentage": 80, "note": "Schema is auto-generated from SQL schema"}
+    ]'::jsonb,
+    'pg_graphql extension enabled, Valid database tables, Understanding of GraphQL query syntax',
+    'Queries execute without syntax errors, Data is returned in expected format with edges and nodes',
+    'Table names are converted to camelCase and suffixed with Collection. All queries use Relay connection spec. Use GraphQL introspection to discover exact field names and available arguments.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/extensions/pg_graphql'
+),
+(
+    'GraphQL resolve function not found or cannot be called',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Verify pg_graphql extension is installed: Check Database > Extensions in Dashboard", "percentage": 95, "note": "Extension must be enabled first"},
+        {"solution": "Call graphql.resolve function via RPC through PostgREST API", "percentage": 90, "note": "Designed to work with PostgREST"},
+        {"solution": "Execute graphql.resolve directly in SQL: SELECT graphql.resolve($$query$$);", "percentage": 85, "command": "select graphql.resolve($${ yourQuery }$$);"}
+    ]'::jsonb,
+    'pg_graphql extension enabled, Database connection established, Valid GraphQL query syntax',
+    'graphql.resolve function executes and returns JSON response, No function not found errors',
+    'The graphql.resolve function is the core SQL function for executing GraphQL queries. It must be called via SQL or RPC. Use dollar-quoted strings ($$) to avoid escaping issues in complex queries.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/extensions/pg_graphql'
+),
+(
+    'PGRST106 schema must be one of the following error with GraphQL',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Update authenticator role pgrst.db_schemas setting to include your schema", "percentage": 90, "command": "ALTER ROLE authenticator SET pgrst.db_schemas = ''''public, your_schema_name'''';"},
+        {"solution": "Reset pgrst.db_schemas to dashboard configuration: ALTER ROLE authenticator RESET pgrst.db_schemas;", "percentage": 95, "note": "Allows dashboard config to take effect automatically", "command": "ALTER ROLE authenticator RESET pgrst.db_schemas;"},
+        {"solution": "Reload PostgREST configuration after changes: NOTIFY pgrst, ''''reload config'''';", "percentage": 85, "command": "NOTIFY pgrst, ''''reload config'''';"}
+    ]'::jsonb,
+    'Database access with ability to alter roles, Exposed schema configured in API settings',
+    'Schema queries via PostgREST API succeed, No PGRST106 errors in responses',
+    'This error occurs when authenticator role settings conflict with Dashboard API settings. Both must include the same schemas. Always reload PostgREST config after role changes.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/orgs/supabase/discussions/40149'
+),
+(
+    'GraphQL Data API returning empty results or null data',
+    'graphql',
+    'HIGH',
+    '[
+        {"solution": "Enable Row Level Security (RLS) policies on tables: Verify policies allow read access for current role", "percentage": 95, "note": "RLS is required for Data API tables"},
+        {"solution": "Check that tables are in exposed schemas: Verify schema is listed in API Settings > Exposed schemas", "percentage": 90, "note": "Default is public schema"},
+        {"solution": "Grant appropriate permissions to anon and authenticated roles", "percentage": 85, "command": "grant select on table your_table to anon, authenticated;"}
+    ]'::jsonb,
+    'Tables exist in database, pg_graphql extension enabled, API keys configured',
+    'GraphQL queries return expected data, RLS policies correctly filter data based on user context',
+    'Empty results are often caused by RLS policies blocking access, not missing data. Use service_role key for testing to bypass RLS. All Data API tables must have RLS enabled for security.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/hardening-data-api'
+),
+(
+    'GraphQL query timeout or performance issues',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Optimize query by selecting only needed fields instead of all columns", "percentage": 85, "note": "Reduces data transfer and processing"},
+        {"solution": "Add database indexes on frequently queried columns", "percentage": 90, "note": "Significantly improves query performance"},
+        {"solution": "Use pagination with first/last arguments to limit result set size", "percentage": 80, "note": "Relay connection spec supports pagination"},
+        {"solution": "Increase statement_timeout for complex queries if needed", "percentage": 75, "note": "Default timeout is 60s for client queries"}
+    ]'::jsonb,
+    'Database with indexed tables, Understanding of GraphQL query optimization, Monitoring tools access',
+    'Queries complete within acceptable time limits, No timeout errors in logs, Database CPU and I/O metrics are normal',
+    'GraphQL queries are translated to SQL by pg_graphql. Slow queries indicate underlying database performance issues. Use EXPLAIN on generated SQL to identify bottlenecks. Default client timeout is 60s and cannot be increased beyond that.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/postgres/timeouts'
+),
+(
+    'GraphQL mutation fails or permission denied on insert/update/delete',
+    'graphql',
+    'HIGH',
+    '[
+        {"solution": "Create RLS policies allowing INSERT/UPDATE/DELETE operations for authenticated users", "percentage": 95, "note": "Mutations require write permissions"},
+        {"solution": "Grant appropriate DML permissions: GRANT INSERT, UPDATE, DELETE ON TABLE your_table TO authenticated;", "percentage": 90, "command": "grant insert, update, delete on table your_table to authenticated;"},
+        {"solution": "Verify user is authenticated with valid JWT token when calling mutation", "percentage": 85, "note": "Use authenticated role, not anon"},
+        {"solution": "Check table ownership: Tables created via Dashboard should be owned by postgres role", "percentage": 80, "note": "Ownership issues can cause permission errors"}
+    ]'::jsonb,
+    'RLS enabled on tables, Valid authentication token, Proper role permissions configured',
+    'Mutations execute successfully, Data is inserted/updated/deleted as expected, No permission errors in response',
+    'Mutations fail silently if RLS policies block the operation. Test with service_role to verify the mutation logic works. anon role typically only has SELECT permissions by default.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/graphql/api'
+),
+(
+    'Error running pg_dump: permission denied for table _type in graphql schema',
+    'graphql',
+    'HIGH',
+    '[
+        {"solution": "Grant all permissions on graphql schema to required roles before db pull", "percentage": 95, "command": "grant all on all tables in schema graphql to postgres, anon, authenticated, service_role; grant all on all functions in schema graphql to postgres, anon, authenticated, service_role; grant all on all sequences in schema graphql to postgres, anon, authenticated, service_role;"},
+        {"solution": "Run permissions grant as part of migration setup for older projects", "percentage": 90, "note": "Required for projects created before graphql schema permission updates"}
+    ]'::jsonb,
+    'Supabase CLI installed, Project linked, Database access with superuser privileges',
+    'supabase db pull command completes successfully, Migration files are generated without errors',
+    'This is a common issue in older Supabase projects where graphql schema permissions were not set by default. The error appears when trying to lock tables during pg_dump. All three grant statements must be executed together.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/deployment/managing-environments'
+),
+(
+    'GraphQL API disabled or not accessible',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Enable Data API in Dashboard: Go to API Settings > Data API Settings > Toggle Enable Data API on", "percentage": 95, "note": "Required for both REST and GraphQL APIs"},
+        {"solution": "Verify pg_graphql extension is enabled in Database > Extensions", "percentage": 90, "note": "Extension must be active"},
+        {"solution": "Check that schema is listed in Exposed schemas setting", "percentage": 85, "note": "Default is public schema"},
+        {"solution": "Ensure network restrictions allow access from your IP if enabled", "percentage": 80, "note": "Check Database Settings for network restrictions"}
+    ]'::jsonb,
+    'Project with database created, API keys available, Network access configured',
+    'GraphQL queries execute via /rest/v1/rpc endpoint, No connection errors, API responds with data or valid errors',
+    'Disabling Data API disables both REST and GraphQL endpoints. This is a security hardening option. If using custom schemas, ensure they are properly exposed and have correct permissions.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/hardening-data-api'
+),
+(
+    'GraphQL introspection not working or schema not visible',
+    'graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Verify tables exist in exposed schemas and have proper grants", "percentage": 90, "note": "Only exposed schemas appear in introspection"},
+        {"solution": "Use GraphQL IDE or tools that support introspection to inspect schema", "percentage": 85, "note": "pg_graphql fully supports schema introspection"},
+        {"solution": "Check that pg_graphql extension version is up to date", "percentage": 75, "note": "Update extension if needed"},
+        {"solution": "Verify Row Level Security is not blocking schema visibility", "percentage": 70, "note": "RLS affects query results but not schema introspection"}
+    ]'::jsonb,
+    'pg_graphql extension enabled, GraphQL client with introspection support, Exposed schemas configured',
+    'Schema introspection returns complete type definitions, All tables and fields are visible, GraphQL IDE autocomplete works',
+    'Introspection shows the schema structure regardless of RLS policies. If tables are missing, check exposed schemas configuration. Connect to the endpoint via /rest/v1/rpc/graphql for introspection.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/database/extensions/pg_graphql'
+);

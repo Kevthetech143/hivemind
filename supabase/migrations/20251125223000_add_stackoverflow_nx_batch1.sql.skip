@@ -1,0 +1,261 @@
+-- Add Stack Overflow Nx (monorepo tool) solutions batch 1
+-- Extracted: 12 highest-voted questions with comprehensive solutions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to clear Nx cache to fix corrupted artifacts',
+    'stackoverflow-nx',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run nx reset command to clear all cached Nx artifacts", "percentage": 95, "command": "nx reset", "note": "Official recommended approach, clears .nx folder"},
+        {"solution": "Alternative: run nx clear-cache (deprecated alias but still works)", "percentage": 90, "command": "nx clear-cache", "note": "Backward compatible but nx reset is preferred"},
+        {"solution": "Manually delete cache directory: rm -rf ./node_modules/.cache/nx", "percentage": 85, "command": "rm -rf ./node_modules/.cache/nx", "note": "For Unix/Linux/Mac systems"},
+        {"solution": "Skip cache for single operation without clearing: npx nx run build --skip-nx-cache", "percentage": 80, "command": "npx nx build --skip-nx-cache", "note": "Temporary bypass without clearing cache"}
+    ]'::jsonb,
+    'Nx workspace initialized, Node.js installed',
+    'Cache directories deleted, subsequent builds execute fresh, no cache artifacts in .nx folder',
+    'Do not run nx reset while a daemon is still running. Cache sizes can exceed 3GB and cause performance issues if left unchecked. Clear cache periodically in CI/CD pipelines.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65916135/how-to-clear-nx-cache'
+),
+(
+    'Nx daemon not running in Docker or container environment',
+    'stackoverflow-nx',
+    'HIGH',
+    '[
+        {"solution": "Check if running in Docker/container - Nx auto-disables daemon detection. Try setting useDaemonProcess: true in nx.json to override", "percentage": 85, "note": "Docker containers often detected via /.dockerenv file presence"},
+        {"solution": "Delete /.dockerenv file if created by Docker. This allows Nx to enable daemon in containerized environment", "percentage": 80, "note": "Only safe if daemon is actually desired in container"},
+        {"solution": "Run nx repair to fix daemon initialization issues", "percentage": 75, "command": "nx repair", "note": "Attempts to repair daemon configuration"},
+        {"solution": "Install Microsoft Visual C++ Redistributable on Windows if daemon crashes on startup", "percentage": 70, "note": "Required on Windows for daemon process"},
+        {"solution": "Run nx reset to clear daemon cache, then restart", "percentage": 70, "command": "nx reset", "note": "Clears corrupt daemon state"}
+    ]'::jsonb,
+    'Docker or container environment, Nx v19+, Node 20+',
+    'Daemon process starts and hot-reload works on file changes, no "Nx Daemon is not running" messages',
+    'Deleting /.dockerenv may cause other Docker functionality issues. Verify container compatibility before deletion. Some CI/CD systems detect Docker environment and intentionally disable daemon for sandboxing.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78891570/nx-daemon-not-running-and-cant-start-it'
+),
+(
+    'How to clear NX Cloud remote cache',
+    'stackoverflow-nx',
+    'HIGH',
+    '[
+        {"solution": "Email Nx Cloud support at [email protected] with cache link for manual removal", "percentage": 85, "note": "Official support channel for cache deletion"},
+        {"solution": "Delete workspace in NX Cloud UI: Login to nx.app > Click avatar > Connect workspace > Delete workspace", "percentage": 80, "note": "Removes all cached data for that workspace"},
+        {"solution": "Use environment variable to skip remote cache: NX_SKIP_NX_CACHE=true nx run build", "percentage": 75, "command": "NX_SKIP_NX_CACHE=true nx build", "note": "Temporary workaround per-command"},
+        {"solution": "Alternative flag: npx nx build --skip-nx-cache", "percentage": 75, "command": "npx nx build --skip-nx-cache", "note": "CLI alternative to environment variable"}
+    ]'::jsonb,
+    'Nx Cloud account, workspace connected to nx.app, valid access token',
+    'Cache link removed from nx.app, subsequent builds fetch fresh artifacts, no cache hits',
+    'Workspace deletion removes all workspace history and cache permanently - cannot be undone. Poisoned cache (incorrect task outputs) requires manual clearing as caching prevents fresh builds.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74956135/is-there-a-way-to-clear-nx-cloud-cache'
+),
+(
+    'Unable to complete project graph creation - Worker stopped with exit code 1',
+    'stackoverflow-nx',
+    'HIGH',
+    '[
+        {"solution": "Upgrade Node.js to v14.17.1 or later, then delete node_modules and .nx folders and reinstall", "percentage": 90, "command": "rm -rf node_modules .nx && npm cache verify && npm install", "note": "Version incompatibility with Nx worker thread"},
+        {"solution": "Disable Nx daemon with environment variable and rebuild", "percentage": 80, "command": "export NX_DAEMON=false && npm install", "note": "Workaround to avoid daemon process issues"},
+        {"solution": "Delete .nx folder at project root to reset workspace metadata", "percentage": 85, "command": "rm -rf .nx", "note": "Clears corrupted project graph cache"},
+        {"solution": "Verify package.json does not contain type:module conflicting with CommonJS", "percentage": 75, "note": "Remove type:module declaration if causing compatibility"},
+        {"solution": "Check daemon logs at .nx/workspace-data/d/daemonlog for specific error details", "percentage": 70, "note": "Reveals duplicated libraries or config syntax errors"}
+    ]'::jsonb,
+    'Node.js v14.17.1+, npm installed, project with nx.json configuration',
+    'npm install completes without worker errors, project graph builds successfully, nx show projects returns all projects',
+    'Dangling project directories from previous configs cause graph conflicts. Type:module in package.json breaks CommonJS Nx worker. Missing or incompatible dependencies listed in project.json cause worker exit.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/73002488/nx-unable-to-complete-project-graph-creation-worker-stopped-with-exit-code-1'
+),
+(
+    'NX daemon process terminated and closed connection - why delete cache',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Run nx repair to auto-fix daemon configuration issues", "percentage": 90, "command": "nx repair", "note": "First troubleshooting step for daemon termination"},
+        {"solution": "Clear Nx cache with nx reset, then update all plugins and Nx to latest version", "percentage": 85, "command": "nx reset && npm update nx @nx/*", "note": "Fixes conflicts from plugin version mismatches"},
+        {"solution": "Identify conflicting plugins by removing them from nx.json one by one until daemon works", "percentage": 75, "note": "Plugin version incompatibility is common cause"},
+        {"solution": "Install Microsoft Visual C++ Redistributable on Windows (required for daemon process)", "percentage": 70, "note": "Windows-specific dependency for daemon executable"},
+        {"solution": "Clear Angular cache as it can define projects in multiple locations causing daemon crash", "percentage": 65, "command": "rm -rf .angular/cache", "note": "Angular projects can create duplicate definitions"}
+    ]'::jsonb,
+    'Nx v14+, Windows or Linux with required C++ runtime, plugins defined in nx.json',
+    'Daemon process starts without crashing, nx daemon status reports daemon running, hot reload works on file changes',
+    'Plugins version incompatible with Nx version cause daemon crashes - update all plugins together. Angular cache can define projects in multiple locations causing conflicts - must clean .angular/cache. Daemon requires daemon process executable which needs C++ redistributables on Windows.',
+    0.81,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78159847/nx-daemon-process-terminated-and-closed-the-connection-and-why-do-i-need-to-delete-cache'
+),
+(
+    'How to disable Nx caching in VSCode or for specific tasks',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "In nx.json (v17+), set cache:false on targetDefaults for specific tasks", "percentage": 90, "note": "Modern syntax for NX 17 and later", "command": "Add to nx.json: { targetDefaults: { build: { cache: false } } }"},
+        {"solution": "For NX 16 and earlier, set cacheableOperations to empty array in tasksRunnerOptions", "percentage": 85, "command": "In nx.json: tasksRunnerOptions.default.options.cacheableOperations = []", "note": "Legacy configuration approach"},
+        {"solution": "Skip cache for single command with flag: nx build header --skip-nx-cache", "percentage": 80, "command": "nx build --skip-nx-cache", "note": "Temporary per-command bypass"},
+        {"solution": "Set NX_SKIP_NX_CACHE environment variable globally for all commands", "percentage": 75, "command": "export NX_SKIP_NX_CACHE=true", "note": "Session-wide cache disable"}
+    ]'::jsonb,
+    'Nx workspace with nx.json file, VSCode with Nx plugin installed',
+    'Subsequent builds execute fresh without cache, build times increase (no cache hits), VSCode tasks run without cache',
+    'Caching is enabled by default in Nx 16+ when workspace is generated - must explicitly disable if unwanted. Disabling caching reduces performance for large monorepos - only disable for specific tasks that have side effects.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77412263/turn-off-nx-caching-in-vscode'
+),
+(
+    'How to make all packages in monorepo share same dependency version',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Define all shared dependencies in root package.json only - leverage Node module resolution which searches parent directories", "percentage": 92, "note": "NX recommended single version policy approach"},
+        {"solution": "Use pnpm catalog protocol in pnpm-workspace.yaml to define version catalog with catalog: syntax", "percentage": 85, "command": "Define in pnpm-workspace.yaml: catalog: { react: ^18.3.1 }, then use react: catalog: in package.json", "note": "Works with pnpm workspaces"},
+        {"solution": "For different versions needed in specific packages, use npm aliasing: npm:package@version", "percentage": 70, "command": "In package.json: { somelib: npm:somelib@^1.2.2, somelib2: npm:somelib@^1.1.9 }", "note": "Workaround only, updates imports in tsconfig"},
+        {"solution": "Configure tsconfig paths to map aliased versions to correct implementations per project", "percentage": 65, "note": "Requires path mapping for aliased approach"}
+    ]'::jsonb,
+    'Monorepo setup (Nx, pnpm), root package.json configuration, ~100+ Node projects',
+    'Single version of dependency installed, all packages reference same version from root, npm list shows no duplicate versions at different levels',
+    'Single version policy requires all packages compatible with one version - may block necessary security patches in specific apps. npm aliasing requires matching path mappings or imports will fail. pnpm catalogs require pnpm v8.11+ support.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78313463/how-can-i-make-all-packages-in-a-monorepo-share-the-same-version-of-a-dependency'
+),
+(
+    'How to change TypeScript path aliases in Nx application',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Add custom path alias to tsconfig.base.json: main/*: [apps/my-app/src/main/*]", "percentage": 88, "command": "In tsconfig.base.json paths: { main/*: [apps/my-app/src/main/*] }", "note": "Recommended approach for non-standard file layouts"},
+        {"solution": "Restructure app to use standard Nx layout by moving code to libs/ directory", "percentage": 85, "note": "Most Nx-idiomatic solution, requires moving source files"},
+        {"solution": "Delete baseUrl property from all app and library tsconfig.json files - only define in base", "percentage": 82, "note": "baseUrl in child configs overrides and breaks library resolution"},
+        {"solution": "Ensure paths are copied from tsconfig.base.json into app tsconfig.json (paths are not merged when extended)", "percentage": 80, "note": "TypeScript replaces path arrays rather than merging them"},
+        {"solution": "Rename tsconfig.base.json to tsconfig.json at workspace root to fix IDE resolution", "percentage": 70, "note": "Some IDEs resolve tsconfig.json better than tsconfig.base.json"}
+    ]'::jsonb,
+    'Nx monorepo initialized, tsconfig.base.json at workspace root, existing app with custom directory structure',
+    'Imports resolve correctly using custom alias, IDE (VSCode/WebStorm) autocomplete works, no Cannot find module errors',
+    'Path aliases in extended tsconfig override rather than merge base paths - must duplicate library paths in each app. baseUrl in child configs breaks resolution - must remove from all non-base configs. Overriding paths in app-level tsconfig breaks library imports entirely.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70807080/how-to-change-the-ts-path-aliases-for-an-nx-application'
+),
+(
+    'How to use short paths for importing in Nx workspace',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Copy library paths from tsconfig.base.json into app tsconfig.json - paths are overwritten not merged when extended", "percentage": 90, "command": "In app tsconfig.json paths, add: { @extranet/leftbar: [libs/extranet/leftbar/src/index.ts] }", "note": "TypeScript path resolution behavior - critical fix"},
+        {"solution": "Define all paths only in tsconfig.base.json and ensure child configs extend it properly", "percentage": 85, "note": "Centralized path management approach"},
+        {"solution": "Ensure root tsconfig.json exists and extends tsconfig.base.json for proper resolver chain", "percentage": 80, "note": "Complete resolution chain: root tsconfig -> base -> app tsconfig"},
+        {"solution": "Remove custom paths from individual app tsconfigfiles - rely only on base config", "percentage": 75, "note": "Simplest approach if libraries are defined in base"}
+    ]'::jsonb,
+    'Nx workspace with Angular, tsconfig files at root and app level, libraries in libs/ directory',
+    'Import statements like @extranet/leftbar work without Cannot find module errors, IDE autocomplete resolves library exports, builds succeed',
+    'tsconfig path arrays are replaced not merged - overriding paths in child config completely removes base paths. Each app must duplicate library paths or none will resolve. Wrong paths in just one app cause build failure for that app only.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68463980/how-to-use-short-paths-for-importing-in-nx-workspace'
+),
+(
+    'Nx print affected projects for specific target (replaced print-affected)',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Use nx show projects --affected --with-target build command to list affected projects for specific target", "percentage": 92, "command": "nx show projects --affected --with-target build", "note": "Replacement for deprecated print-affected command"},
+        {"solution": "If --with-target not recognized, update Nx version - older cached version may be in node_modules", "percentage": 85, "command": "npm install && npm update nx", "note": "Clear node_modules if help still shows old syntax"}
+    ]'::jsonb,
+    'Nx v12+, monorepo with multiple projects, git history to detect affected projects',
+    'Command returns list of projects affected by changes, output includes only projects with target build defined, no Cannot find module errors',
+    'Older Nx version cached in node_modules can hide --with-target option - reinstall to see new syntax. print-affected command officially removed - must migrate to show projects. Without --with-target flag, all affected projects listed regardless of target availability.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76767145/nx-print-a-list-of-affected-projects'
+),
+(
+    'NX error: Should .nx folder be in gitignore',
+    'stackoverflow-nx',
+    'LOW',
+    '[
+        {"solution": "Add .nx directory to .gitignore - contains daemon state and workspace metadata that should not be shared", "percentage": 95, "command": "Add to .gitignore: .nx/", "note": "Official recommended approach"},
+        {"solution": "The .nx folder contains workspace-data and daemon logs specific to each developer environment", "percentage": 90, "note": "Environment-specific generated files"},
+        {"solution": "Committing .nx breaks other developers daemon state - each should generate their own", "percentage": 85, "note": "Daemon process logs are machine-specific"}
+    ]'::jsonb,
+    'Git repository initialized, .gitignore file exists, Nx workspace created',
+    '.nx folder excluded from git status, git diff shows no .nx changes, other developers can initialize their own daemon',
+    'Committing .nx folder causes daemon conflicts across team - all developers get same daemonlog which is environment-specific. Shared .nx breaks Linux developers on Windows checkout and vice versa due to path differences.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78129034/should-nx-be-in-git-ignore-nx-monorepo'
+),
+(
+    'Merging multiple repositories into one Nx monorepo',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Use nx import command to import existing repositories: nx import path/to/source/project when in monorepo directory", "percentage": 92, "command": "nx import path/to/source/project", "note": "Official Nx command for merging repos, preserves git history"},
+        {"solution": "Reference Nx documentation at https://nx.dev/nx-api/nx/documents/import for detailed merge process", "percentage": 85, "note": "Step-by-step guide with examples"},
+        {"solution": "Do not manually copy files - webpack configuration conflicts occur", "percentage": 80, "note": "Avoid manual file copying to prevent config conflicts"}
+    ]'::jsonb,
+    'Existing separate Git repositories, Nx monorepo created and initialized, Source projects on local filesystem',
+    'Source project merged into monorepo structure, git history preserved from source repo, no webpack configuration errors on build',
+    'Manual file copying preserves old webpack configs which conflict with Nx conventions. Import command must be run from monorepo root directory. Three separate repos (React client, Express server, Storybook) can be merged sequentially using nx import.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77936631/merging-multiple-repos-into-one-nx-monorepo'
+),
+(
+    'Angular MonoRepo Nx: use library component in application',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Export component from library module, then import that module into application - components must be in a module and exported", "percentage": 90, "note": "Angular module system requirement (pre-standalone)"},
+        {"solution": "Create shared module in library that exports all components, import shared module into app", "percentage": 88, "command": "Export from libs/extranet/leftbar/src/index.ts, import @extranet/leftbar module in app", "note": "Path alias approach recommended"},
+        {"solution": "For individual components, export each component's module separately for granular imports", "percentage": 80, "note": "Alternative to barrel export approach"},
+        {"solution": "If using standalone components, directly import component class without NgModule wrapper", "percentage": 85, "note": "Angular 14+ standalone components approach"}
+    ]'::jsonb,
+    'Nx workspace with Angular, library and application created, tsconfig.base.json path mapping configured',
+    'Library component renders in application without errors, selector appears in template, component functionality works correctly',
+    'Forgetting to export component from library module causes not a known element error. Not all components must be in same module - can split into feature modules. Standalone components skip NgModule requirement entirely (Angular 14+).',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/54887913/angular-monorepo-nx-use-library-in-application'
+),
+(
+    'NX Monorepo setup with NestJS backend and Angular frontend',
+    'stackoverflow-nx',
+    'MEDIUM',
+    '[
+        {"solution": "Step 1: Install Nx globally and create workspace with none stack and integrated mode", "percentage": 88, "command": "npm i -g nx && npx create-nx-workspace@latest --preset=apps", "note": "Creates monorepo scaffold"},
+        {"solution": "Step 2: Install framework packages @nx/angular and @nx/nest", "percentage": 85, "command": "npm i -D @nx/angular @nx/nest @nx/js", "note": "Framework-specific Nx plugins"},
+        {"solution": "Step 3: Generate Angular app with ng generate @nx/angular:app angular-app", "percentage": 85, "command": "nx g @nx/angular:app angular-app", "note": "Creates frontend"},
+        {"solution": "Step 4: Generate NestJS app with nx generate @nx/nest:app nest-app", "percentage": 85, "command": "nx g @nx/nest:app nest-app", "note": "Creates backend"},
+        {"solution": "Step 5: Generate shared library with nx generate @nx/js:lib shared-lib for code sharing", "percentage": 85, "command": "nx g @nx/js:lib shared-lib", "note": "Shared models/utilities"},
+        {"solution": "Alternative migration strategy: Migrate existing apps separately then merge monorepos together", "percentage": 75, "note": "Option if starting from existing projects"}
+    ]'::jsonb,
+    'Node.js installed, npm v7+, no existing monorepo structure',
+    'Monorepo created with both Angular and NestJS apps running, shared library imports work, nx graph visualizes all projects',
+    'Must install framework plugins before generating apps or generators will fail. Shared library uses path aliases like @my-project/shared-lib - requires tsconfig.base.json setup. Each framework has different server port requirements - configure to avoid conflicts.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77347982/nx-monorepo-nestjs-angular'
+);

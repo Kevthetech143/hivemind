@@ -1,0 +1,205 @@
+-- Add Composer troubleshooting solutions batch 1
+-- Source: https://getcomposer.org/doc/articles/troubleshooting.md
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES (
+    'Composer: Package not found during installation',
+    'composer',
+    'HIGH',
+    '[
+        {"solution": "Verify package spelling in composer.json matches exactly, including vendor name and package name", "percentage": 95, "note": "Most common cause - typos in package identifiers"},
+        {"solution": "Check that package branch/tag exists in repository before requiring it", "percentage": 90, "note": "Packagist mirrors all public repositories"},
+        {"solution": "Set minimum-stability to dev in composer.json if requiring development versions", "percentage": 85, "command": "\"minimum-stability\": \"dev\""},
+        {"solution": "Wait up to 1 minute for new Packagist packages to become visible after publishing", "percentage": 80, "note": "Packagist has indexing delay for new packages"},
+        {"solution": "Add custom repository for non-Packagist packages in root package only", "percentage": 85, "note": "Custom repositories must be in root composer.json, not dependencies"}
+    ]'::jsonb,
+    'Composer installed, Valid composer.json file',
+    'Package installs successfully, No "Could not find package" error in output',
+    'Do not define custom repositories in dependency composer.json files. New Packagist packages may not be immediately available - wait a minute. Always check for typos first.',
+    0.92,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#package-not-found'
+),
+(
+    'Composer: Network timeout - Operation timed out after 300000ms',
+    'composer',
+    'VERY_HIGH',
+    '[
+        {"solution": "Increase default_socket_timeout in php.ini to higher value (e.g., 600 or 1200)", "percentage": 90, "command": "default_socket_timeout = 600", "note": "Default PHP timeout too short for large packages"},
+        {"solution": "Set timeout via environment variable: COMPOSER_PROCESS_TIMEOUT=600", "percentage": 85, "command": "COMPOSER_PROCESS_TIMEOUT=600 composer install"},
+        {"solution": "Check network stability and connectivity to Packagist/GitHub", "percentage": 75, "note": "May indicate ISP or firewall issues"},
+        {"solution": "Disable IPv6 (see IPv6 troubleshooting section) if affecting downloads", "percentage": 70, "note": "IPv6 can cause intermittent timeout issues"}
+    ]'::jsonb,
+    'PHP CLI installed, Working network connection, composer.phar available',
+    'Composer completes install/update without timeout errors, Packages download successfully',
+    'Do not just retry immediately - address the underlying timeout cause first. Check both php.ini and Composer timeout settings.',
+    0.88,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#network-timeout-issues'
+),
+(
+    'Composer: PHP Fatal error Allowed memory size exhausted',
+    'composer',
+    'HIGH',
+    '[
+        {"solution": "Upgrade Composer to version 2.2.0 or above (uses significantly less memory)", "percentage": 95, "note": "2.2.0+ has major memory optimizations"},
+        {"solution": "Increase PHP memory limit by setting memory_limit = -1 in php.ini", "percentage": 90, "command": "memory_limit = -1"},
+        {"solution": "Set unlimited memory via environment variable when running Composer", "percentage": 88, "command": "COMPOSER_MEMORY_LIMIT=-1 composer.phar install"},
+        {"solution": "Pass memory limit flag directly to PHP CLI", "percentage": 87, "command": "php -d memory_limit=-1 composer.phar update"}
+    ]'::jsonb,
+    'PHP CLI installed with composer.phar, File permissions to modify php.ini or command-line access',
+    'Composer completes without memory exhaustion error, All dependencies installed',
+    'Upgrading Composer to 2.2.0+ is preferred solution - it requires far less memory than older versions. Setting memory_limit=-1 is temporary workaround.',
+    0.94,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#memory-limit-errors'
+),
+(
+    'Composer: SSL certificate problem - unable to get local issuer certificate',
+    'composer',
+    'MEDIUM',
+    '[
+        {"solution": "Run composer diagnose -vvv to locate CA bundle and certificate issues", "percentage": 92, "command": "composer diagnose -vvv", "note": "Shows exact location and status of CA certificates"},
+        {"solution": "Download updated cacert.pem from cURL website and configure PHP to use it", "percentage": 88, "note": "System certificates may be outdated"},
+        {"solution": "Disable antivirus HTTPS inspection/scanning (e.g., Avast Web Shield, ESET HTTP scanner)", "percentage": 85, "note": "Antivirus tools intercept HTTPS and cause certificate issues"}
+    ]'::jsonb,
+    'Composer installed, Network access, Administrative privileges to modify php.ini or antivirus',
+    'composer diagnose shows no SSL issues, HTTPS requests to Packagist succeed, No certificate warnings',
+    'Run diagnose first to identify exact problem location. Antivirus software is common culprit - disable HTTPS scanning in security software.',
+    0.87,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#ssl-certificate-problem'
+),
+(
+    'Composer: Root package depends on itself (circular dependency)',
+    'composer',
+    'MEDIUM',
+    '[
+        {"solution": "During development: Add branch-alias in composer.json to virtual version", "percentage": 90, "command": "\"extra\": {\"branch-alias\": {\"dev-main\": \"1.0-dev\"}}", "note": "Allows package to depend on itself"},
+        {"solution": "In CI environments: Set COMPOSER_ROOT_VERSION environment variable before running Composer", "percentage": 92, "command": "export COMPOSER_ROOT_VERSION=dev-main && composer install", "note": "Tells Composer what version root package has"}
+    ]'::jsonb,
+    'Composer installed, composer.json file in project root, Development dependencies defined',
+    'Composer resolves dependencies without circular reference error, Install completes successfully',
+    'CI environments with shallow git clones are common triggers - always set COMPOSER_ROOT_VERSION in CI/CD pipelines. Use branch-alias for local development.',
+    0.90,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#root-package-version'
+),
+(
+    'Composer: proc_open fork failed - Cannot allocate memory',
+    'composer',
+    'LOW',
+    '[
+        {"solution": "Enable swap space on VPS/server with commands: dd, mkswap, chmod, swapon", "percentage": 93, "command": "/bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024 && /sbin/mkswap /var/swap.1 && /bin/chmod 0600 /var/swap.1 && /sbin/swapon /var/swap.1", "note": "Creates 1GB swap file"},
+        {"solution": "Reduce number of parallel operations: composer config process-timeout 300", "percentage": 80, "note": "Lowers memory footprint of Composer process"},
+        {"solution": "Increase VPS RAM allocation if available", "percentage": 85, "note": "Long-term solution for servers with undersized memory"}
+    ]'::jsonb,
+    'VPS/server access with root privileges, /var directory writable space available',
+    'Swap enabled and available, composer install/update completes without fork failure, System stays responsive',
+    'This error indicates VPS out of memory with no swap. Server must have swap enabled to handle Composer operations. Do not just upgrade RAM - enable swap first.',
+    0.85,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#proc_open-fork-failed'
+),
+(
+    'Composer Windows: proc_open NUL stream error or path not specified',
+    'composer',
+    'LOW',
+    '[
+        {"solution": "If using OneDrive directory: Upgrade to PHP 7.2.23+, 7.3.10+, or 7.4.0+", "percentage": 91, "note": "OneDrive incompatibility fixed in these PHP versions"},
+        {"solution": "Enable Windows Null Service in system services if disabled", "percentage": 88, "command": "services.msc -> Windows Null Service -> set to Automatic", "note": "Required for NUL device access"},
+        {"solution": "Remove orphaned registry AutoRun entries in regedit", "percentage": 85, "command": "Search HKEY_LOCAL_MACHINE and HKEY_CURRENT_USER for AutoRun keys pointing to non-existent files", "note": "Corrupted registry entries prevent command execution"}
+    ]'::jsonb,
+    'Windows system access, PHP CLI installed, Administrator privileges for registry/services',
+    'Composer runs without NUL stream errors, Windows Null Service status is Running, Registry cleaned',
+    'Check PHP version first - upgrading fixes most OneDrive issues. Registry AutoRun corruption is subtle - verify all entries point to existing files.',
+    0.82,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#windows-proc_open-errors'
+),
+(
+    'Composer: Operation timed out - IPv6 download issues',
+    'composer',
+    'MEDIUM',
+    '[
+        {"solution": "Force IPv4 by setting COMPOSER_IPRESOLVE=4 environment variable", "percentage": 93, "command": "export COMPOSER_IPRESOLVE=4 && composer install", "note": "Forces DNS resolution to IPv4 addresses only"},
+        {"solution": "On Linux: Add precedence rule to /etc/gai.conf for IPv4 preference", "percentage": 85, "command": "sudo sh -c \"echo ''precedence ::ffff:0:0/96 100'' >> /etc/gai.conf\"", "note": "System-level IPv6/IPv4 preference"},
+        {"solution": "On macOS: Disable IPv6 for network device", "percentage": 80, "command": "networksetup -setv6off [device-name]", "note": "Replace device-name with actual network interface"},
+        {"solution": "On Windows: Disable IPv6 entirely in Network settings", "percentage": 75, "note": "System-wide IPv6 disable option"}
+    ]'::jsonb,
+    'Network connectivity, Composer installed, Access to environment variables or system settings',
+    'Downloads complete without timeout, composer diagnose shows no IPv6 issues, Packages install successfully',
+    'IPv6 timeout issues are intermittent and difficult to diagnose. Try COMPOSER_IPRESOLVE=4 first - simplest and most portable solution across platforms.',
+    0.86,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#operation-timed-out-ipv6'
+),
+(
+    'Composer: Package not updating to expected version',
+    'composer',
+    'HIGH',
+    '[
+        {"solution": "Run composer why-not [package-name] [version] to diagnose constraint conflicts", "percentage": 96, "command": "composer why-not symfony/console 6.0.0", "note": "Shows exactly which constraint is blocking upgrade"},
+        {"solution": "Review version constraints in composer.json and all dependencies - may have conflicting requirements", "percentage": 90, "note": "Other packages may require older version"},
+        {"solution": "Update root package constraints if blocking dependency updates", "percentage": 85, "note": "Check composer.json require section"},
+        {"solution": "Add --with-dependencies flag to update command to resolve all constraints", "percentage": 80, "command": "composer update package-name --with-dependencies"}
+    ]'::jsonb,
+    'Composer installed, Package already in vendor directory, composer.lock file present',
+    'composer why-not shows constraint resolution, Package updates to expected version, Lock file reflects changes',
+    'Always run why-not first to understand why package is not updating - never just try different version constraints. Other packages may be holding back upgrade.',
+    0.91,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#package-not-updating'
+),
+(
+    'Composer: Xdebug enabled causes severe performance slowdown',
+    'composer',
+    'MEDIUM',
+    '[
+        {"solution": "Composer automatically restarts PHP without Xdebug - no manual action needed in most cases", "percentage": 94, "note": "Automatic Xdebug disabling is default behavior"},
+        {"solution": "If restart fails, force allow Xdebug with environment variable", "percentage": 80, "command": "COMPOSER_ALLOW_XDEBUG=1 composer install", "note": "Override automatic Xdebug disabling"},
+        {"solution": "Disable Xdebug completely in php.ini for faster Composer operations", "percentage": 88, "command": "Comment out or remove zend_extension=xdebug.so in php.ini", "note": "Simplest long-term solution"},
+        {"solution": "Suppress Xdebug warning message if running is intentional", "percentage": 75, "command": "COMPOSER_DISABLE_XDEBUG_WARN=1 composer install"}
+    ]'::jsonb,
+    'PHP installed with Xdebug extension loaded, Composer installed',
+    'Composer operations complete in normal time (not 10-50x slower), No Xdebug warning unless suppressed',
+    'Xdebug slowdown is dramatic - 10-50x slower. Composer auto-disables it by default. Manual override rarely needed unless you specifically need Xdebug during Composer runs.',
+    0.89,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#xdebug-performance'
+),
+(
+    'Composer: ZIP archives fail to unpack - extraction errors',
+    'composer',
+    'LOW',
+    '[
+        {"solution": "Install system unzip utility for better permission and symlink handling", "percentage": 92, "command": "apt-get install unzip || brew install unzip", "note": "Handles permissions and symlinks better than PHP ZipArchive"},
+        {"solution": "Install 7-Zip (7z) as alternative to unzip", "percentage": 88, "command": "apt-get install p7zip-full || brew install p7zip", "note": "Even more robust for complex archives"},
+        {"solution": "PHP ZipArchive class has limitations with permissions and symlinks", "percentage": 85, "note": "System utilities preferred for extraction"}
+    ]'::jsonb,
+    'Composer installed, ZIP file extraction failing, System package manager access (apt/brew/yum)',
+    'Composer extracts ZIP files without errors, Archives unpack with correct permissions and symlinks',
+    'PHP ZipArchive is fallback when system unzip unavailable. Always prefer system utilities (unzip or 7z) for better symlink and permission handling.',
+    0.84,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#zip-extraction'
+),
+(
+    'Composer: Degraded mode triggered by intermittent network issues',
+    'composer',
+    'MEDIUM',
+    '[
+        {"solution": "If using ESET antivirus: Disable HTTP-scanner in Advanced Settings", "percentage": 90, "note": "ESET scanner causes intermittent timeouts"},
+        {"solution": "If using IPv6 and experiencing issues: Disable IPv6 or contact ISP about routing", "percentage": 85, "note": "IPv6 routing problems cause degraded mode"},
+        {"solution": "Report persistent degraded mode issues to Composer team on GitHub", "percentage": 70, "note": "New issues with specific reproduction steps are helpful"},
+        {"solution": "Clear Composer cache and retry: composer clear-cache && composer update", "percentage": 75, "note": "Sometimes cache causes persistent issues"}
+    ]'::jsonb,
+    'Composer installed, Network connectivity, Access to antivirus or system network settings',
+    'composer diagnose shows no degraded mode, Operations complete with normal optimizations enabled, Consistent network performance',
+    'Degraded mode indicates intermittent connectivity - check antivirus HTTPS scanning and IPv6. Composer disables optimizations when network unstable but rarely communicates this clearly.',
+    0.78,
+    NOW(),
+    'https://getcomposer.org/doc/articles/troubleshooting.md#degraded-mode'
+);

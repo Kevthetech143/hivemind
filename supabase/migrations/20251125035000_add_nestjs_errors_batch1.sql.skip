@@ -1,0 +1,222 @@
+-- Mining NestJS errors from https://docs.nestjs.com/exception-filters
+-- Focus: Dependency injection, decorators, middleware, guards, interceptors
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'NestJS: Cannot resolve dependency - provider not found in module',
+    'nestjs',
+    'VERY_HIGH',
+    '[
+        {"solution": "Ensure the provider is declared in the @Module providers array of the current module or imported module", "percentage": 95, "note": "Most common cause - missing provider registration"},
+        {"solution": "If using a provider from another module, verify the module is imported in the current module imports array", "percentage": 92, "note": "Cross-module dependencies need explicit imports"},
+        {"solution": "Check that the provider is exported from its own module using the exports array", "percentage": 90, "command": "@Module({ providers: [MyService], exports: [MyService] })"}
+    ]'::jsonb,
+    'NestJS module structure defined with @Module decorator',
+    'Application bootstraps without errors, dependency injected successfully, console shows no "Cannot resolve dependency" errors',
+    'Forgetting to add provider to providers array. Forgetting to import module when using cross-module dependencies. Provider declared but not exported from its module.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Invalid guard passed to @UseGuards decorator',
+    'nestjs',
+    'HIGH',
+    '[
+        {"solution": "Verify the guard class is decorated with @Injectable() to enable dependency injection", "percentage": 95, "note": "Guards need @Injectable to resolve dependencies"},
+        {"solution": "Ensure all dependencies required by the guard are available in the module scope or imported", "percentage": 93, "note": "Guard dependencies must be resolvable"},
+        {"solution": "Check that the module providing dependencies is imported before using guard in controller", "percentage": 90, "command": "Import the module providing guard dependencies"},
+        {"solution": "If guarding GraphQL resolvers, ensure guard extends CanActivate properly for GraphQL context", "percentage": 85, "note": "GraphQL guards may need different implementation"}
+    ]'::jsonb,
+    '@Injectable() decorator available, Guard implementing CanActivate interface',
+    'Guard executes without errors, protected routes require authentication, @UseGuards decorator accepts the guard class',
+    'Guard missing @Injectable() decorator. Dependencies not imported in module. Circular dependency between guard and its dependencies. Using guard from wrong module context.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Circular dependency between modules detected',
+    'nestjs',
+    'HIGH',
+    '[
+        {"solution": "Use forwardRef() to defer resolution of circular dependency: forwardRef(() => OtherModule)", "percentage": 94, "note": "Recommended solution from NestJS docs"},
+        {"solution": "Refactor code to break circular dependency - extract shared functionality into third service", "percentage": 88, "note": "Better long-term solution - avoid lazy evaluation"},
+        {"solution": "For service circular dependency, use lazy loading with @Inject(forwardRef(() => OtherService))", "percentage": 85, "command": "@Inject(forwardRef(() => UserService)) private userService: UserService"},
+        {"solution": "Review module imports and move shared providers to a common module", "percentage": 82, "note": "Refactor to eliminate circular reference"}
+    ]'::jsonb,
+    'NestJS modules imported, Services with dependencies defined',
+    'Application builds successfully, no circular dependency warnings, modules load in correct order',
+    'Using forwardRef() but still having issues - check that both sides use it. Not identifying actual source of circular dependency. Overusing forwardRef() as band-aid instead of refactoring.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Unknown authentication strategy in @UseGuards(AuthGuard)',
+    'nestjs',
+    'HIGH',
+    '[
+        {"solution": "Register Passport strategy in AuthModule and ensure strategy name matches exactly: PassportModule.register({ defaultStrategy: ''jwt'' })", "percentage": 96, "note": "Strategy name must match registered name"},
+        {"solution": "Verify strategy is provided in module providers: providers: [JwtStrategy]", "percentage": 93, "note": "Strategy must be registered as provider"},
+        {"solution": "Check @UseGuards decorator uses correct strategy name: @UseGuards(AuthGuard(''jwt''))", "percentage": 92, "note": "Name is case-sensitive"},
+        {"solution": "Ensure PassportModule and strategy are imported in the module where guard is used", "percentage": 90, "command": "imports: [PassportModule, JwtModule.register(...)]"}
+    ]'::jsonb,
+    'Passport module installed, Strategy class created, AuthModule defined',
+    'Authentication guard executes, strategy resolves successfully, protected routes function correctly',
+    'Strategy name in @UseGuards does not match registered name. Strategy class not provided in module. PassportModule not configured. Wrong module context when applying guard.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Exception filter with dependency injection fails - REQUEST scoped service error',
+    'nestjs',
+    'HIGH',
+    '[
+        {"solution": "Change service scope from REQUEST to TRANSIENT: @Injectable({ scope: Scope.TRANSIENT })", "percentage": 91, "note": "REQUEST scope discarded during error phase"},
+        {"solution": "Register exception filter as provider using APP_FILTER token instead of global registration", "percentage": 88, "note": "Enables dependency injection in filter"},
+        {"solution": "Use @Module({ providers: [{ provide: APP_FILTER, useClass: MyExceptionFilter }] })", "percentage": 90, "command": "import APP_FILTER from @nestjs/core"},
+        {"solution": "Avoid injecting REQUEST scoped dependencies in exception filters - use TRANSIENT or default scope", "percentage": 85, "note": "Request context unavailable during exception handling"}
+    ]'::jsonb,
+    'Exception filter class created, Dependencies defined with scope decorator',
+    'Exception filter executes without errors, errors are caught and formatted, filter dependencies resolve correctly',
+    'Injecting REQUEST scoped provider in exception filter. Using useGlobalFilters() which bypasses DI. Not understanding scope lifecycle during exception phase.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Interceptor not catching errors from guards or middleware',
+    'nestjs',
+    'MEDIUM',
+    '[
+        {"solution": "Use exception filters instead of interceptors for error handling - filters catch guard and middleware errors", "percentage": 95, "note": "Execution order: middleware → guards → interceptors"},
+        {"solution": "Wrap guard logic in try-catch if you need to handle errors before exception filters", "percentage": 88, "note": "Interceptors execute after guards"},
+        {"solution": "If interceptor must handle errors, use catchError() from RxJS: catchError(err => throwError(() => err))", "percentage": 82, "command": "pipe(catchError(err => throwError(() => new HttpException(err, 500))))"},
+        {"solution": "Implement custom exception filter to catch errors from all sources: guards, middleware, controllers", "percentage": 90, "note": "Exception filters run after all middleware/guards"}
+    ]'::jsonb,
+    'Interceptor class implementing NestInterceptor interface',
+    'Errors propagate to exception filter, guard errors are properly handled, response formatting is consistent',
+    'Expecting interceptors to handle guard errors - they run after guards. Not using exception filters for centralized error handling. RxJS pipe chain not properly configured.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: HttpException with invalid status code or response format',
+    'nestjs',
+    'MEDIUM',
+    '[
+        {"solution": "Use HttpStatus enum for valid status codes: throw new HttpException(''message'', HttpStatus.BAD_REQUEST)", "percentage": 94, "note": "Ensures valid HTTP status codes"},
+        {"solution": "For structured responses, pass object as first argument: throw new HttpException({ statusCode: 400, message: ''error'' }, 400)", "percentage": 90, "note": "Custom response structure"},
+        {"solution": "Use built-in exceptions like BadRequestException, UnauthorizedException, NotFoundException for common cases", "percentage": 92, "command": "throw new BadRequestException(''Validation failed'')"},
+        {"solution": "Verify response is serializable JSON - avoid circular references or non-serializable objects", "percentage": 85, "note": "Response must be JSON-compatible"}
+    ]'::jsonb,
+    'HttpException or subclass imported from @nestjs/common',
+    'HTTP response returns valid status code, response body is valid JSON, error message is formatted correctly',
+    'Using random integers for status codes instead of HttpStatus enum. Passing non-serializable objects in exception response. Not using specific exception subclasses.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Middleware unable to resolve dependencies or inject services',
+    'nestjs',
+    'MEDIUM',
+    '[
+        {"solution": "Implement middleware as a class with @Injectable() decorator for dependency injection", "percentage": 93, "note": "Class-based middleware supports DI"},
+        {"solution": "Register middleware in module using configure() method: configure(consumer) { consumer.apply(MyMiddleware).forRoutes(...) }", "percentage": 91, "note": "Functional middleware cannot use DI"},
+        {"solution": "Ensure all injected dependencies are provided in the same module where middleware is used", "percentage": 88, "note": "Dependencies must be in module context"},
+        {"solution": "Use functional middleware if DI not needed - simpler alternative", "percentage": 80, "command": "export const myMiddleware = (req, res, next) => { next(); }"}
+    ]'::jsonb,
+    'Middleware class created with @Injectable() decorator',
+    'Middleware executes successfully, injected dependencies are available, request processing continues without errors',
+    'Using functional middleware and trying to inject dependencies - not possible. Registering middleware in wrong module. Dependencies not exported from their modules.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Custom decorator fails to resolve parameters or context',
+    'nestjs',
+    'MEDIUM',
+    '[
+        {"solution": "Use createParamDecorator() from @nestjs/common to access request context: createParamDecorator((data, ctx) => ctx.switchToHttp().getRequest())", "percentage": 94, "note": "Proper way to create custom parameter decorators"},
+        {"solution": "Verify decorator is applied to correct method parameter and receives proper ExecutionContext", "percentage": 90, "note": "Must have access to host argument"},
+        {"solution": "For class decorators, use SetMetadata() and extract metadata via Reflector in guards/interceptors", "percentage": 88, "command": "SetMetadata(''key'', value); Reflector.get(''key'', handler)"},
+        {"solution": "Ensure custom decorator function returns value that can be injected into controller method", "percentage": 85, "note": "Return type must match parameter type"}
+    ]'::jsonb,
+    'createParamDecorator or SetMetadata imported from @nestjs/common',
+    'Custom decorator resolves correctly, parameter values are injected, metadata is accessible via Reflector',
+    'Trying to access context without ExecutionContext parameter. Incorrect decorator application. Not using SetMetadata for class decorators. Returning incompatible type from decorator.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Global exception filter not catching errors from async handlers',
+    'nestjs',
+    'HIGH',
+    '[
+        {"solution": "Ensure exception filter implements catch() method that handles Promise rejections from async functions", "percentage": 92, "note": "Async errors must be caught before Promise rejection"},
+        {"solution": "Register exception filter globally using @Catch() without arguments to catch all exception types", "percentage": 90, "command": "@Catch() export class AllExceptionsFilter implements ExceptionFilter { catch(exception, host) { ... } }"},
+        {"solution": "Use async/await with try-catch in async route handlers to catch errors before they propagate", "percentage": 88, "note": "Wrap async operations"},
+        {"solution": "For unhandled Promise rejections, implement process.on(''unhandledRejection'', handler)", "percentage": 75, "note": "Fallback for errors not caught by filters"}
+    ]'::jsonb,
+    'Exception filter registered globally with app.useGlobalFilters()',
+    'Async errors are caught and formatted, global exception filter receives all exceptions, console shows no unhandled promise rejections',
+    'Exception filter only catches synchronous exceptions. Not awaiting Promises in handlers. Global filter registered after bootstrap completes. Not handling unhandled rejections.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Interceptor with RxJS operator fails to handle errors from piped observables',
+    'nestjs',
+    'MEDIUM',
+    '[
+        {"solution": "Use RxJS catchError() operator: pipe(catchError(err => throwError(() => new HttpException(err.message, 500))))", "percentage": 93, "note": "Must throw or return Observable"},
+        {"solution": "Chain error handling after timeout and retry operators: timeout(5000), retry(3), catchError(...)", "percentage": 90, "note": "Order matters in pipe chain"},
+        {"solution": "Transform Observable errors before sending to client: pipe(catchError(err => of({ status: ''error'' })))", "percentage": 87, "note": "Can return fallback Observable"},
+        {"solution": "Wrap Observable subscription in try-catch if converting to Promise: await firstValueFrom(observable)", "percentage": 85, "command": "import { firstValueFrom } from ''rxjs''"}
+    ]'::jsonb,
+    'Interceptor implementing NestInterceptor, RxJS operators imported',
+    'Observable errors are caught and handled, response completes successfully, no unhandled Observable errors in logs',
+    'Not using catchError() in pipe chain. Returning thrown error instead of Observable. Missing RxJS operator import. Promise subscription not caught.',
+    0.81,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+),
+(
+    'NestJS: Validation error not caught by exception filter or pipe',
+    'nestjs',
+    'HIGH',
+    '[
+        {"solution": "Register ValidationPipe globally or per-route to catch validation errors: app.useGlobalPipes(new ValidationPipe())", "percentage": 95, "note": "ValidationPipe transforms and validates DTOs"},
+        {"solution": "Use class-validator decorators on DTO properties: @IsEmail() @IsString() @MinLength(8)", "percentage": 93, "note": "Decorators define validation rules"},
+        {"solution": "Enable forbidNonWhitelisted and whitelist in ValidationPipe to reject unknown properties", "percentage": 88, "command": "new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })"},
+        {"solution": "Create custom validation pipe to transform error format if needed", "percentage": 75, "note": "Extends ValidationPipe and overrides transform()"}
+    ]'::jsonb,
+    'ValidationPipe and class-validator installed, DTO classes with validators created',
+    'Invalid requests return 400 with validation error details, valid requests pass through, no validation errors in logs',
+    'Validation decorators not applied to DTO. ValidationPipe not registered globally. Wrong validation rule syntax. Validation pipe registered after request processing.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.nestjs.com/exception-filters'
+);

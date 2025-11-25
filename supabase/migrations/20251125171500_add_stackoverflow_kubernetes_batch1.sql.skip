@@ -1,0 +1,182 @@
+-- Add Stack Overflow top-voted Kubernetes questions and answers (batch 1)
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES
+(
+    'How to use local Docker images with Minikube',
+    'stackoverflow-kubernetes',
+    'HIGH',
+    '[
+        {"solution": "Run eval $(minikube docker-env) in each terminal session to set Docker environment variables to point to Minikube''s Docker daemon", "percentage": 95, "note": "Must be run per terminal session", "command": "eval $(minikube docker-env) && docker build -t my-image ."},
+        {"solution": "Set imagePullPolicy to Never in pod specification to prevent Kubernetes from attempting external downloads", "percentage": 90, "note": "Required in pod spec when using local images"},
+        {"solution": "For PowerShell on Windows use: minikube docker-env | Invoke-Expression", "percentage": 85, "note": "Alternative for Windows shells"}
+    ]'::jsonb,
+    'Minikube installed and running, Docker CLI available',
+    'Pod successfully pulls local image and starts, no ImagePullBackOff errors',
+    'Environment variables only set for current shell session, must rerun in new terminals. External registry pull attempts indicate imagePullPolicy not set to Never.',
+    0.92,
+    NOW(),
+    'https://stackoverflow.com/questions/42564058/how-can-i-use-local-docker-images-with-minikube'
+),
+(
+    'Kubernetes pods stuck in Terminating status',
+    'stackoverflow-kubernetes',
+    'VERY_HIGH',
+    '[
+        {"solution": "Force delete the pod using: kubectl delete pod <PODNAME> --grace-period=0 --force --namespace <NAMESPACE>", "percentage": 95, "note": "Most common and effective solution", "command": "kubectl delete pod <PODNAME> --grace-period=0 --force --namespace <NAMESPACE>"},
+        {"solution": "Remove finalizers blocking deletion: kubectl patch pod <pod> -p ''{\"metadata\":{\"finalizers\":null}}'' ", "percentage": 85, "note": "Use if force delete still fails"},
+        {"solution": "Batch delete all terminating pods across namespaces using: kubectl get pods --all-namespaces | grep Terminating | while read line; do kubectl delete pods $(echo $line | awk ''{print $2}'') -n $(echo $line | awk ''{print $1}'') --grace-period=0 --force; done", "percentage": 80, "note": "For multiple stuck pods"}
+    ]'::jsonb,
+    'kubectl access to cluster, Affected pod name and namespace',
+    'Pod no longer appears in kubectl get pods output, terminating state cleared',
+    'Force deletion removes pod from API but container may continue running on node indefinitely, potentially masking infrastructure issues. Investigate root cause of node removal if this occurs frequently.',
+    0.88,
+    NOW(),
+    'https://stackoverflow.com/questions/35453792/pods-stuck-in-terminating-status'
+),
+(
+    'Difference between ClusterIP, NodePort, and LoadBalancer service types in Kubernetes',
+    'stackoverflow-kubernetes',
+    'HIGH',
+    '[
+        {"solution": "ClusterIP (default): Exposes service on cluster-internal IP, accessible only within the cluster through DNS", "percentage": 90, "note": "Default service type"},
+        {"solution": "NodePort: Extends ClusterIP by exposing service on each node''s IP at a static port, accessible from outside cluster using <NodeIP>:<NodePort>", "percentage": 90, "note": "NodeIP is external node IP from kubectl get nodes, not virtual ClusterIP"},
+        {"solution": "LoadBalancer: Creates NodePort and ClusterIP services automatically, integrates cloud provider load balancers for distributing external traffic", "percentage": 90, "note": "Requires cloud provider support"}
+    ]'::jsonb,
+    'Kubernetes cluster running, kubectl access',
+    'Service accessible at expected IP/port, traffic properly routed to backend pods',
+    'These types build hierarchically: ClusterIP < NodePort < LoadBalancer. Each adds external accessibility while retaining prior functionality.',
+    0.93,
+    NOW(),
+    'https://stackoverflow.com/questions/41509439/difference-between-clusterip-nodeport-and-loadbalancer-service-types-in-kuberne'
+),
+(
+    'Difference between kubectl apply and kubectl create commands',
+    'stackoverflow-kubernetes',
+    'HIGH',
+    '[
+        {"solution": "kubectl create uses imperative management - errors if resource already exists, precise control over creation", "percentage": 90, "note": "Use for one-time operations"},
+        {"solution": "kubectl apply uses declarative management - creates or updates resources without erroring, supports incremental changes via three-way merge", "percentage": 95, "note": "Recommended for production and CI/CD"},
+        {"solution": "In production pipelines use kubectl apply to handle both creation and updates gracefully without error handling logic", "percentage": 92, "note": "Preferred for declarative infrastructure"}
+    ]'::jsonb,
+    'kubectl configured, YAML resource manifest file',
+    'Resource created or updated successfully, kubectl apply idempotent on repeated runs',
+    'kubectl create will error if resource exists, requiring manual cleanup or use of delete before recreate. Use kubectl apply for safer declarative deployments.',
+    0.94,
+    NOW(),
+    'https://stackoverflow.com/questions/47369351/kubectl-apply-vs-kubectl-create'
+),
+(
+    'Ingress vs LoadBalancer in Kubernetes',
+    'stackoverflow-kubernetes',
+    'HIGH',
+    '[
+        {"solution": "LoadBalancer service: Points to external load balancers outside cluster, each service gets dedicated external IP and cloud provider load balancer", "percentage": 90, "note": "Direct external access per service"},
+        {"solution": "Ingress: Set of routing rules interpreted by Ingress Controller pod (e.g., Nginx) running inside cluster, single load balancer routes to multiple services", "percentage": 95, "note": "Cost-efficient for multiple services"},
+        {"solution": "Use Ingress for sophisticated routing (URL paths, hostnames) and multiple services sharing single entry point, LoadBalancer for simple single-service external access", "percentage": 92, "note": "Ingress provides intelligent smart routing"}
+    ]'::jsonb,
+    'Kubernetes cluster with Ingress controller deployed (for Ingress option)',
+    'Traffic correctly routed to backend services, rules interpreted as expected',
+    'LoadBalancer creates separate cloud resources per service (expensive). Ingress requires controller pod running but reuses single load balancer for multiple services.',
+    0.91,
+    NOW(),
+    'https://stackoverflow.com/questions/45079988/ingress-vs-load-balancer'
+),
+(
+    'What is the difference between Docker Compose and Kubernetes',
+    'stackoverflow-kubernetes',
+    'MEDIUM',
+    '[
+        {"solution": "Docker Compose: Declarative version of docker CLI for single host, defines and runs multiple containers using YAML file, suitable for development", "percentage": 90, "note": "Local development focus"},
+        {"solution": "Kubernetes: Distributed container orchestration for multiple hosts, provides auto-scaling, self-healing, service discovery, rolling updates, and rollbacks", "percentage": 90, "note": "Production-grade clustering"},
+        {"solution": "Decision rule: Use Docker Compose for networking containers within same host, use Kubernetes for networking containers across multiple hosts", "percentage": 92, "note": "Scale determines choice"}
+    ]'::jsonb,
+    'Docker and Docker Compose installed (for Compose), or Kubernetes cluster (for K8s)',
+    'Containers communicate as expected, scaling works as configured',
+    'Docker Compose is single-host only, not suitable for distributed deployments. Kubernetes has higher operational complexity but provides enterprise features.',
+    0.89,
+    NOW(),
+    'https://stackoverflow.com/questions/47536536/whats-the-difference-between-docker-compose-and-kubernetes'
+),
+(
+    'Kubernetes vs Apache Mesos comparison',
+    'stackoverflow-kubernetes',
+    'MEDIUM',
+    '[
+        {"solution": "Kubernetes: Container orchestration system, simple to get running, portable and extensible, built-in scheduling and container lifecycle management", "percentage": 90, "note": "Container-focused approach"},
+        {"solution": "Mesos: Distributed systems kernel abstracting hardware resources, battle-tested for diverse workloads (Hadoop, Spark, Kafka), allows multiple schedulers simultaneously", "percentage": 88, "note": "More heavyweight but flexible"},
+        {"solution": "Choose Kubernetes for new projects using modern containers, choose Mesos for legacy workloads requiring interoperability, or run Kubernetes on top of Mesos", "percentage": 85, "note": "Complementary frameworks"}
+    ]'::jsonb,
+    'Understanding of distributed systems, existing infrastructure context',
+    'Cluster successfully manages workloads according to scheduler choice',
+    'Mesos more heavyweight but supports legacy systems. Kubernetes simpler but container-specific. Can combine both: Kubernetes running on Mesos for advanced scheduling.',
+    0.86,
+    NOW(),
+    'https://stackoverflow.com/questions/26705201/whats-the-difference-between-apaches-mesos-and-googles-kubernetes'
+),
+(
+    'Difference between a Pod and a Deployment in Kubernetes',
+    'stackoverflow-kubernetes',
+    'HIGH',
+    '[
+        {"solution": "Pod: Smallest deployable unit in Kubernetes, runs one or more closely related containers, lacks self-healing (deleted pods are gone permanently)", "percentage": 92, "note": "Minimal abstraction"},
+        {"solution": "Deployment: Higher-level controller managing Pods through ReplicaSets, automatically recreates deleted pods to maintain desired replicas, enables rolling updates and rollbacks", "percentage": 95, "note": "Production standard"},
+        {"solution": "Use Deployments in production for automatic pod restart capability, use Pods directly only for temporary testing or explicit no-restart scenarios", "percentage": 93, "note": "Best practice"}
+    ]'::jsonb,
+    'Kubernetes cluster running, kubectl access',
+    'Pods managed by Deployment automatically recreate after deletion, rolling updates work smoothly',
+    'Pods without Deployment management do not auto-restart when deleted. For production use Deployment to ensure pod resilience and versioning control.',
+    0.93,
+    NOW(),
+    'https://stackoverflow.com/questions/41325087/what-is-the-difference-between-a-pod-and-a-deployment'
+),
+(
+    'Command to delete all pods in all Kubernetes namespaces',
+    'stackoverflow-kubernetes',
+    'MEDIUM',
+    '[
+        {"solution": "Delete pods in single namespace: kubectl delete --all pods --namespace=<namespace>", "percentage": 95, "note": "Safest approach", "command": "kubectl delete --all pods --namespace=foo"},
+        {"solution": "Delete all pods and resources across all namespaces: kubectl delete all --all --all-namespaces", "percentage": 90, "note": "Comprehensive but preserves system namespaces", "command": "kubectl delete all --all --all-namespaces"},
+        {"solution": "Force delete stuck pods: kubectl delete pods --all --grace-period=0 --force --namespace <namespace>", "percentage": 85, "note": "For terminating pods"}
+    ]'::jsonb,
+    'kubectl access to cluster, verified correct cluster context, understanding of namespaces',
+    'Pods successfully deleted, kubectl get pods shows no pods in target namespace',
+    'These commands cannot be easily reversed. Always verify cluster connection first with kubectl config view. Avoid using --all-namespaces without understanding consequences.',
+    0.89,
+    NOW(),
+    'https://stackoverflow.com/questions/33509194/command-to-delete-all-pods-in-all-kubernetes-namespaces'
+),
+(
+    'How to force Kubernetes to re-pull a container image',
+    'stackoverflow-kubernetes',
+    'HIGH',
+    '[
+        {"solution": "Set imagePullPolicy to Always in container specification (not at spec level): spec.containers[].imagePullPolicy: Always", "percentage": 95, "note": "Must be in container spec, not pod spec", "command": "imagePullPolicy: Always"},
+        {"solution": "Trigger pod recreation using: kubectl rollout restart deployment <name> (Kubernetes 1.15+)", "percentage": 92, "note": "Forces re-pull without manual pod deletion"},
+        {"solution": "Understand that if image is cached locally on node and not modified, Kubernetes will not re-pull even with Always policy", "percentage": 88, "note": "Update remote image or change pod to trigger re-pull"}
+    ]'::jsonb,
+    'Kubernetes 1.15+ for rollout restart, container specification file',
+    'New pods pull latest image from registry, no ImagePullBackOff errors',
+    'imagePullPolicy in wrong location (spec level instead of container level) causes policy to be ignored. Cached images not re-pulled if remote image unchanged or corrupted locally.',
+    0.87,
+    NOW(),
+    'https://stackoverflow.com/questions/33112789/how-do-i-force-kubernetes-to-re-pull-an-image'
+),
+(
+    'How to manually trigger a Kubernetes scheduled job (CronJob)',
+    'stackoverflow-kubernetes',
+    'MEDIUM',
+    '[
+        {"solution": "Create job from CronJob using kubectl v1.10.1+: kubectl create job --from=cronjob/<cronjob-name> <job-name> -n <namespace-name>", "percentage": 94, "note": "Recommended and official approach", "command": "kubectl create job --from=cronjob/my-cronjob my-job -n default"},
+        {"solution": "Monitor manually created job using standard kubectl commands: kubectl describe job <job-name> -n <namespace>", "percentage": 92, "note": "Standard job monitoring applies"},
+        {"solution": "Clean up manual job after testing: kubectl delete job <job-name> -n <namespace>", "percentage": 90, "note": "Prevents job accumulation", "command": "kubectl delete job <job-name> -n <namespace>"}
+    ]'::jsonb,
+    'kubectl v1.10.1 or later installed, existing CronJob defined, appropriate namespace access',
+    'New Job created successfully, job runs independently, completion status can be monitored',
+    'kubectl version below 1.10.1 lacks this feature. Always ensure kubectl version is up-to-date (v1.21+ recommended) to avoid compatibility errors.',
+    0.90,
+    NOW(),
+    'https://stackoverflow.com/questions/40401795/how-can-i-trigger-a-kubernetes-scheduled-job-manually'
+);

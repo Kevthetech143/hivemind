@@ -1,0 +1,204 @@
+-- Add Hono framework common issues and errors batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Hono: Middleware version mismatch between Hono core and adapter middleware',
+    'hono-framework',
+    'HIGH',
+    '[
+        {"solution": "Ensure all imports use the same Hono version across your project. For Deno, verify both Hono core and helper imports reference the same version tag (e.g., @4.4.0)", "percentage": 95, "note": "Critical for Deno runtime", "command": "Check imports: import { Hono } from ''jsr:@hono/hono@4.4.0'' vs import { upgradeWebSocket } from ''jsr:@hono/hono@4.4.0/deno''"},
+        {"solution": "Use a monorepo lock file or version pinning to force consistent versions across dependencies", "percentage": 90, "note": "Prevents accidental version drift"},
+        {"solution": "In package.json, use exact versions instead of caret ranges: ''hono'': ''4.4.0'' instead of ''~4.4.0''", "percentage": 85, "command": "npm install hono@4.4.0 --save"}
+    ]'::jsonb,
+    'Deno runtime, Multiple Hono imports in the codebase',
+    'All middleware functions execute without version-related errors, WebSocket upgrades work correctly',
+    'Most common in Deno where multiple version imports are possible. Check that middleware helpers match core Hono version. Version mismatch causes runtime failures, not compile-time errors.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/middleware'
+),
+(
+    'Hono: JSX requires .tsx file extension, .ts files cannot run',
+    'hono-framework',
+    'VERY_HIGH',
+    '[
+        {"solution": "Rename your file from .ts to .tsx extension to enable JSX parsing and execution", "percentage": 98, "note": "Absolutely required for JSX functionality", "command": "mv app.ts app.tsx"},
+        {"solution": "Verify tsconfig.json has correct JSX settings: ''jsx'': ''react-jsx'' and ''jsxImportSource'': ''hono/jsx''", "percentage": 95, "command": "Check tsconfig.json for jsx configuration"},
+        {"solution": "Restart TypeScript language server if IDE still shows errors after changing extension", "percentage": 85, "note": "Clear cache to ensure changes take effect"}
+    ]'::jsonb,
+    '.tsx file extension, TypeScript configuration, hono/jsx available',
+    'Application runs successfully, JSX components render without syntax errors, IDE shows no JSX errors',
+    'Very common mistake among developers new to Hono. Using .ts extension completely prevents JSX parsing. File extension is more critical than any config change.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/jsx'
+),
+(
+    'Hono: Routing handler execution stops at first match regardless of specificity',
+    'hono-framework',
+    'HIGH',
+    '[
+        {"solution": "Define specific routes before wildcard/catch-all routes. Move app.get(''*'', ...) to the end of route definitions", "percentage": 95, "note": "Hono stops at first match, not best match", "command": "app.get(''/foo'', ...); app.get(''*'', ...);  // wildcard last"},
+        {"solution": "Use route grouping with app.route() to establish clear hierarchy before mounting nested routes", "percentage": 90, "note": "Helps prevent 404 errors on grouped routes"},
+        {"solution": "Consider using middleware before specific routes to handle cross-cutting concerns instead of relying on handler order", "percentage": 80, "note": "Cleaner separation than catch-all handlers"}
+    ]'::jsonb,
+    'Hono application with multiple GET/POST routes defined',
+    'All routes return correct responses, specific routes execute before wildcards, no unexpected 404s',
+    'Developers expect Rails-like routing where most specific wins. In Hono, first match wins. Wildcard routes must be registered last or specific routes will never execute.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/api/routing'
+),
+(
+    'Hono: Request validation fails silently when Content-Type header is missing',
+    'hono-framework',
+    'HIGH',
+    '[
+        {"solution": "Always explicitly set Content-Type header in requests. For JSON: ''Content-Type: application/json'', for forms: ''Content-Type: application/x-www-form-urlencoded''", "percentage": 96, "note": "Request body parsing depends on correct header", "command": "fetch(url, { method: ''POST'', headers: { ''Content-Type'': ''application/json'' }, body: JSON.stringify(data) })"},
+        {"solution": "In tests using app.request(), always pass headers with correct Content-Type before body payload", "percentage": 94, "command": "app.request(req, {}, { headers: { ''Content-Type'': ''application/json'' } })"},
+        {"solution": "Debug by logging the validated object - it will be empty {} if Content-Type is missing or wrong", "percentage": 85, "note": "No error thrown, validation just returns empty object"}
+    ]'::jsonb,
+    'Hono app with validation middleware, request being sent with body data',
+    'Validation receives expected data, validated object is not empty, form/JSON data parses correctly',
+    'Validation fails silently with empty object instead of throwing error. Headers are critical but not always obvious. Development tools may not show missing headers clearly.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/validation'
+),
+(
+    'Hono: Header validation requires lowercase key names',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "Use lowercase header names in validation callbacks. For ''Idempotency-Key'' header, validate as ''idempotency-key''", "percentage": 97, "note": "HTTP headers are case-insensitive but Hono requires lowercase", "command": "c.req.valid(''header'')[''idempotency-key''] instead of [''Idempotency-Key'']"},
+        {"solution": "Add a comment in code reminding team of lowercase requirement for headers: // Headers must be lowercase in Hono validation", "percentage": 80, "note": "Prevents future mistakes"}
+    ]'::jsonb,
+    'Hono app with header validation, HTTP request with custom headers',
+    'Headers parse correctly, validated header values are not undefined, custom headers are accessible',
+    'Developers naturally use Pascal case for headers (HTTP standard), but Hono''s validator requires lowercase. This returns undefined values instead of throwing an error.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/validation'
+),
+(
+    'Hono: RPC type inference fails with "Type instantiation is excessively deep"',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure backend and frontend Hono versions match exactly. Use the same version in all imports to prevent deep type recursion", "percentage": 93, "note": "Most common cause of instantiation depth errors"},
+        {"solution": "Split large app definitions across multiple files and use TypeScript project references to reduce type instantiation scope", "percentage": 88, "note": "Helps IDE performance and prevents deep recursion"},
+        {"solution": "Compile TypeScript before using IDE for RPC development to reduce language server load", "percentage": 85, "note": "IDE may struggle with massive type instantiations for large apps"}
+    ]'::jsonb,
+    'Hono app with RPC enabled, TypeScript 5+, Multiple route definitions',
+    'Client app compiles without type instantiation errors, hc() returns properly typed methods, IDE responds without lag',
+    'Occurs when Hono performs massive type instantiations for RPC type inference on large apps. Version mismatch accelerates the problem. Monorepo setups may have version drift.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/rpc'
+),
+(
+    'Hono: RPC client fails with "Failed to construct ''URL'': Invalid URL" error',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "Pass absolute URL to hc() constructor, not relative URLs. Use complete URL with protocol: hc(''https://example.com'') instead of hc(''/'') or hc(''/api'')", "percentage": 96, "note": "hc requires full URL for proper construction", "command": "const client = hc(''https://example.com/api'')"},
+        {"solution": "Ensure baseUrl environment variable is set to absolute URL before constructing hc() in client code", "percentage": 90, "command": "const client = hc(process.env.VITE_API_URL || ''https://localhost:3000'')"}
+    ]'::jsonb,
+    'Hono RPC client setup, Browser/Node environment with URL constructor',
+    'hc() client initializes without URL construction errors, API calls execute successfully',
+    'Developers often pass relative URLs expecting them to work in browser context. URL() constructor requires absolute URLs. Local development often uses relative paths.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/rpc'
+),
+(
+    'Hono: RPC path parameters are not URL-encoded by hc() client',
+    'hono-framework',
+    'LOW',
+    '[
+        {"solution": "Pre-encode path parameters before passing them to hc() methods. For parameters with slashes or special chars, use encodeURIComponent()", "percentage": 92, "note": "hc() client does not automatically encode param values", "command": "client.items[encodeURIComponent(itemName)].get() instead of client.items[itemName].get()"},
+        {"solution": "Avoid using path parameters with slashes or special URL characters. Move them to query parameters instead", "percentage": 85, "note": "Query params auto-encode, path params do not"}
+    ]'::jsonb,
+    'Hono RPC client with path parameters containing special characters or slashes',
+    'Path parameters with special chars route correctly, API calls match intended routes, no 404 errors',
+    'hc() passes path params as-is without URL encoding. Parameters with slashes, spaces, or special chars cause routing mismatches. Most developers expect auto-encoding like query params.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/rpc'
+),
+(
+    'Hono: Middleware not reusable when embedded directly in app.use() without createMiddleware()',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "Use createMiddleware() helper to wrap middleware functions for type safety and reusability: const myMW = createMiddleware(async (c, next) => { ... })", "percentage": 94, "note": "Enables proper type inference and reusability across apps", "command": "import { createMiddleware } from ''hono/factory''"},
+        {"solution": "Export middleware separately and import them in multiple app files instead of defining inline", "percentage": 88, "note": "Prevents code duplication and maintains type definitions"},
+        {"solution": "If middleware must be inline, ensure Context types are explicitly specified to preserve downstream type safety", "percentage": 75, "note": "Less ideal but can work with proper typing"}
+    ]'::jsonb,
+    'Hono application with custom middleware, Multiple app instances that need shared middleware',
+    'Middleware functions work across multiple apps, TypeScript context types are preserved in handlers, code compiles without type errors',
+    'Embedding middleware directly loses type definitions and makes reuse difficult. createMiddleware() is often skipped because inline middleware appears to work initially.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/middleware'
+),
+(
+    'Hono: RPC client receives unknown type when using c.notFound()',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "Replace c.notFound() with explicit status codes and typed JSON response: c.json({ error: ''not found'' }, 404) instead of c.notFound()", "percentage": 96, "note": "c.notFound() prevents proper type inference on client side", "command": "return c.json({ error: ''Resource not found'' }, 404)"},
+        {"solution": "Type the response explicitly if using c.notFound(): return c.json<{ error: string }>(body, 404)", "percentage": 80, "note": "Type annotation helps but is less reliable than explicit handlers"}
+    ]'::jsonb,
+    'Hono RPC setup with notFound responses, TypeScript client consuming API',
+    'Client type inference shows correct response type, TypeScript compiler shows no ''unknown'' type errors, client code has autocomplete',
+    'c.notFound() is convenient but breaks RPC type chain, returning ''unknown'' type to clients. Developers expect convenience helper to preserve types. Explicit responses are more verbose but type-safe.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/guides/rpc'
+),
+(
+    'Hono: HTTPException.getResponse() is not aware of Context and loses context headers',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "In app.onError handler, create a new Response object and manually copy headers from context if HTTPException is thrown", "percentage": 90, "note": "getResponse() returns generic response without context", "command": "if (err instanceof HTTPException) { const res = err.getResponse(); /* manually add c.header values */ }"},
+        {"solution": "Set response headers before throwing HTTPException using c.header() to ensure they persist", "percentage": 75, "note": "Workaround if custom error handler is not possible"},
+        {"solution": "For custom responses with headers, use HTTPException constructor with res option instead of getResponse()", "percentage": 85, "command": "new HTTPException(401, { res: new Response(...) })"}
+    ]'::jsonb,
+    'Hono application with custom error handling and HTTPException usage',
+    'Error responses include expected headers from context, cookie headers persist through exceptions, custom headers appear in error responses',
+    'HTTPException.getResponse() ignores context state, causing loss of headers set in middleware or handlers. Developers expect getResponse() to be context-aware.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/api/exception'
+),
+(
+    'Hono: Route grouping returns 404 when nested routes added after mounting parent route',
+    'hono-framework',
+    'MEDIUM',
+    '[
+        {"solution": "Define all nested routes on a sub-app before calling app.route() to mount it to parent app", "percentage": 97, "note": "Complete route hierarchy first, mount second", "command": "const two = new Hono(); two.get(''/three/hi'', ...); app.route(''/two'', two);  // routes defined before mounting"},
+        {"solution": "Use separate route definition files and import them before any app.route() calls to ensure all routes exist", "percentage": 94, "note": "Helps with organization and prevents accidental additions after mounting"}
+    ]'::jsonb,
+    'Hono app with route grouping using app.route() and sub-apps',
+    'Nested routes return 200 with correct response, no 404 errors on grouped routes, all request paths resolve',
+    'Most difficult mistake to notice because code appears correct and compiles. Routes added after app.route() are never registered. Hono mounts app state at registration time, not dynamically.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://hono.dev/docs/api/routing'
+);

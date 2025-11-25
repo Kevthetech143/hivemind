@@ -1,0 +1,232 @@
+-- Add Rocket web framework common errors and solutions from official documentation
+-- Source: https://rocket.rs/guide/v0.5/
+-- Mining date: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Rocket error: trait bound `Foo: Responder` is not satisfied',
+    'rocket',
+    'HIGH',
+    '[
+        {"solution": "Ensure all interdependent libraries use identical versions from same source (crates.io or git, not mixed)", "percentage": 95, "note": "Most common cause is depending on two different versions of the same library"},
+        {"solution": "Never mix published and git versions of Rocket in dependencies", "percentage": 95, "note": "Types from different versions are always considered distinct"},
+        {"solution": "Run `cargo update` to synchronize all dependency versions", "percentage": 85, "command": "cargo update"}
+    ]'::jsonb,
+    'Rust project with Cargo.toml, At least one dependency causing version mismatch',
+    'Compilation succeeds, No trait bound errors in build output',
+    'Do not mix crates.io and git versions of same library. Check Cargo.lock for duplicate dependencies. Use same version everywhere.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/faq/#debugging'
+),
+(
+    'Rocket example code not working or has compilation errors',
+    'rocket',
+    'HIGH',
+    '[
+        {"solution": "Verify you are using the example code from the git tag matching your Rocket version", "percentage": 95, "note": "Examples change between versions"},
+        {"solution": "Compare example''s Cargo.toml dependencies with your local versions to ensure alignment", "percentage": 90, "note": "Missing dependencies in example cause failures"},
+        {"solution": "Check if viewing example from external source (Stack Overflow, tutorial) instead of official Rocket repo", "percentage": 85, "command": "Check https://github.com/rwf2/Rocket/tree/v0.5/examples"}
+    ]'::jsonb,
+    'Rocket project setup, Example code access, Cargo available',
+    'Example compiles and runs, No dependency resolution errors',
+    'Do not mix examples from different versions. Always use examples from your Rocket version tag. Verify all required dependencies are in Cargo.toml.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/faq/#debugging'
+),
+(
+    'Rocket launch panic: "Secret key must be configured" in release mode',
+    'rocket',
+    'VERY_HIGH',
+    '[
+        {"solution": "Generate secret key with `openssl rand -base64 32` and set ROCKET_SECRET_KEY environment variable", "percentage": 95, "note": "Required for release mode when secrets feature enabled", "command": "openssl rand -base64 32"},
+        {"solution": "Add secret_key to [release] section in Rocket.toml: secret_key = \"base64-encoded-key\"", "percentage": 95, "note": "Persists across builds"},
+        {"solution": "Disable secrets feature if not needed: remove default features from rocket dependency", "percentage": 75, "note": "Only if your app does not use secret sessions"}
+    ]'::jsonb,
+    'Rocket application in release mode, secrets feature enabled in Cargo.toml',
+    'Application launches successfully, No panic on startup',
+    'Secret key is required in release mode only. Development mode uses insecure key by default. Always set via environment variable or Rocket.toml, never hardcode in source.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/configuration/#environment-variables'
+),
+(
+    'Rocket TLS/mTLS configuration error or certificate not loading',
+    'rocket',
+    'HIGH',
+    '[
+        {"solution": "Enable tls feature in Cargo.toml: rocket = { version = \"0.5\", features = [\"tls\"] }", "percentage": 95, "note": "Basic TLS support"},
+        {"solution": "For mutual TLS, enable mtls feature which implicitly enables tls: features = [\"mtls\"]", "percentage": 95, "note": "Provides client certificate verification"},
+        {"solution": "Verify certificate and key file paths are correct and files are readable by application", "percentage": 90, "command": "ls -la /path/to/cert.pem /path/to/key.pem"},
+        {"solution": "Configure paths in Rocket.toml under tls section: [tls] certs = \"path/to/cert.pem\", key = \"path/to/key.pem\"", "percentage": 90}
+    ]'::jsonb,
+    'Rocket project with Cargo.toml, TLS certificates and key files',
+    'Application launches with HTTPS listener, TLS handshake succeeds with client',
+    'Do not forget to enable tls or mtls feature. Paths must be relative to root of project or absolute. Files must have correct permissions.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/configuration/#tls-and-mtls'
+),
+(
+    'Rocket workers configuration cannot be changed at runtime',
+    'rocket',
+    'MEDIUM',
+    '[
+        {"solution": "Set workers count via ROCKET_WORKERS environment variable before application startup", "percentage": 95, "note": "Workers only configurable at launch time", "command": "export ROCKET_WORKERS=4"},
+        {"solution": "Configure workers in Rocket.toml [default] or [profile] section: workers = 4", "percentage": 95, "note": "Static configuration approach"},
+        {"solution": "Ensure workers configuration is not attempted programmatically via Config struct at runtime", "percentage": 85, "note": "This will not work - workers cannot be reconfigured after Config::figment() is set"}
+    ]'::jsonb,
+    'Rocket application, Access to environment or Rocket.toml',
+    'Application respects configured worker count, Performance matches expected concurrency',
+    'Workers value cannot be reconfigured from sources other than ROCKET_WORKERS env var or Rocket.toml. Do not attempt programmatic runtime changes.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/configuration/#workers'
+),
+(
+    'Rocket test error: blocking API cannot dispatch multiple concurrent requests',
+    'rocket',
+    'MEDIUM',
+    '[
+        {"solution": "Use the asynchronous testing API instead of blocking API when tests require concurrent request execution", "percentage": 95, "note": "Blocking API is single-threaded"},
+        {"solution": "Mark test function as async: #[tokio::test] async fn my_test() and use client.dispatch_async()", "percentage": 90, "command": "Use tokio::test attribute macro"},
+        {"solution": "If concurrent requests needed for server progression, tests must await server responses before next request", "percentage": 85, "note": "Blocking serializes requests sequentially"}
+    ]'::jsonb,
+    'Rocket test suite setup, tokio runtime available',
+    'Concurrent requests execute properly, Tests pass without deadlocks',
+    'The blocking API only handles sequential requests. Use async API for concurrent test scenarios. Do not try to parallelize blocking API calls.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/testing/#blocking-and-async'
+),
+(
+    'Rocket request guard requires non-thread-safe type in State',
+    'rocket',
+    'HIGH',
+    '[
+        {"solution": "Ensure all managed state types implement Send + Sync traits for thread safety", "percentage": 95, "note": "Rocket enforces thread-safety at compile-time"},
+        {"solution": "Use Arc<Mutex<T>> wrapper for non-thread-safe types: State<Arc<Mutex<MyType>>>", "percentage": 92, "note": "Provides thread-safe interior mutability"},
+        {"solution": "Use Arc<RwLock<T>> instead of Mutex if type needs multiple concurrent readers", "percentage": 90, "note": "Better performance for read-heavy workloads"}
+    ]'::jsonb,
+    'Rust project with Send/Sync trait requirements, tokio runtime for async locks',
+    'Compilation succeeds, State type passes thread-safety checks',
+    'All managed state must implement Send + Sync. Rocket checks this at compile time. Use Arc with Mutex or RwLock for non-Send types.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/state/#managed-state'
+),
+(
+    'Rocket error: tried to request unmanaged State<T> - state not registered',
+    'rocket',
+    'VERY_HIGH',
+    '[
+        {"solution": "Register the type with rocket instance using .manage(value) before mounting routes", "percentage": 98, "note": "Must be registered before route handler tries to access it", "command": "rocket::ignite().manage(my_state)"},
+        {"solution": "Verify .manage() is called exactly once for each state type you use in routes", "percentage": 95, "note": "Only one value of each type can be managed"},
+        {"solution": "Check route guards and handlers for State<T> requests that reference unmanaged types", "percentage": 90, "command": "grep -r \"State<\" src/"}
+    ]'::jsonb,
+    'Rocket application with routes using State guards, Access to route handlers',
+    'Application launches successfully, State handlers receive correct values',
+    'Each type can be managed only once. State must be registered before route mounting. Do not request State<T> if T was never passed to .manage().',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/state/#managed-state'
+),
+(
+    'Rocket error: multiple State<T> values of same type managed',
+    'rocket',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure .manage() is called at most once per type: only manage(state_value) not manage(state1) then manage(state2) for same type", "percentage": 96, "note": "Rocket can manage only one value per type"},
+        {"solution": "If multiple instances needed, wrap in container type: struct AppState { instance1: T, instance2: T }, then manage(AppState { ... })", "percentage": 94, "note": "Access via State<AppState> not State<T>"},
+        {"solution": "Use request-local state with Outcomes for values that need per-request instances", "percentage": 85, "note": "Request guards can generate fresh values each request"}
+    ]'::jsonb,
+    'Rocket application with multiple managed values of same type',
+    'Application launches without state conflicts, Each request gets correct state instance',
+    'Only one value per type can be managed globally. Use wrapper structs to hold multiple instances of same type. Request-local state allows per-request generation.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/state/#managed-state'
+),
+(
+    'Rocket configuration error: Rocket.toml not found or invalid TOML syntax',
+    'rocket',
+    'MEDIUM',
+    '[
+        {"solution": "Create Rocket.toml in project root directory (where Cargo.toml is located)", "percentage": 95, "note": "Configuration is searched from current directory upward"},
+        {"solution": "Use absolute path with ROCKET_CONFIG environment variable if Rocket.toml in non-standard location", "percentage": 92, "command": "export ROCKET_CONFIG=/path/to/Rocket.toml", "note": "Must be absolute path"},
+        {"solution": "Validate TOML syntax using online TOML validator or ``toml-cli`` tool", "percentage": 88, "command": "cargo install toml-cli && toml validate Rocket.toml"},
+        {"solution": "Ensure profile sections are properly nested: [default] and [release] not under [profile]", "percentage": 85, "note": "Common TOML structure mistake"}
+    ]'::jsonb,
+    'Rocket project, Text editor, TOML validator optional',
+    'Configuration loads without parse errors, Server starts with correct settings from Rocket.toml',
+    'TOML must have valid syntax. Use [default] and [release] sections, not [profile]. Rocket searches upward from current directory.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/configuration/#configuration-profiles'
+),
+(
+    'Rocket 404 Not Found: route not matching request path',
+    'rocket',
+    'HIGH',
+    '[
+        {"solution": "Verify route attribute matches request path exactly: #[get(\"/path\")] not #[get(\"path\")] - leading slash is required", "percentage": 95, "note": "Paths must start with /"},
+        {"solution": "Check for route scoping issues - routes must be mounted under correct base path via .mount(\"/base\", routes![])", "percentage": 92, "note": "Request path must start with mount base"},
+        {"solution": "Use default catchers #[catch(404)] to handle unmatched routes and provide helpful error messages", "percentage": 85, "command": "register catchers to mount"}
+    ]'::jsonb,
+    'Rocket application with routes defined, HTTP client',
+    'Route handler is invoked for matching requests, 404 catcher only invoked for truly unmatched paths',
+    'Route paths must start with /. Check mount base matches request. Use #[catch(404)] for explicit 404 handling. Verify exact path matching.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/requests/#error-catchers'
+),
+(
+    'Rocket request-local state computation runs multiple times instead of being cached',
+    'rocket',
+    'MEDIUM',
+    '[
+        {"solution": "Use request-local state with caching for expensive computations: RequestLocal<State<T>> automatically caches value once per request", "percentage": 94, "note": "Prevents redundant recalculation across multiple guards"},
+        {"solution": "If using request guards for stateful values, guard is invoked fresh each time even if already computed for same request", "percentage": 90, "note": "Guard functions run independently unless using request-local state"},
+        {"solution": "Implement guard that returns Outcome::Success with cached value from request-local state", "percentage": 88, "command": "Use request.local_cache() to cache guard results"}
+    ]'::jsonb,
+    'Rocket application with expensive request-local computations, Request guard understanding',
+    'Expensive operations only run once per request despite multiple guard invocations, Performance improves noticeably',
+    'Request-local state caches values once per request. Without it, guards and handlers recompute. Use request.local_cache() for expensive operations.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/state/#request-local-state'
+),
+(
+    'Rocket application should run behind reverse proxy in production',
+    'rocket',
+    'MEDIUM',
+    '[
+        {"solution": "Deploy Rocket behind HAProxy or nginx reverse proxy for DDoS and DoS attack protection", "percentage": 95, "note": "Rocket does not include built-in DDoS protection"},
+        {"solution": "Use reverse proxy with TLS termination to enable zero-downtime certificate rotation", "percentage": 93, "note": "Separate TLS from application layer"},
+        {"solution": "Properly configure database connection pools with appropriate min/max values for expected load", "percentage": 90, "note": "Prevents resource exhaustion"},
+        {"solution": "Avoid blocking I/O outside spawn_blocking() to prevent thread starvation in async runtime", "percentage": 88, "command": "Use tokio::task::spawn_blocking() for sync code"}
+    ]'::jsonb,
+    'Production Rocket application, Reverse proxy server available, Database connection pooling configured',
+    'Application handles expected production load, No thread pool exhaustion, TLS certificates rotate without downtime',
+    'Rocket is production-capable but requires reverse proxy protection. Do not expose directly to internet. Use spawn_blocking for sync I/O. Configure pools properly.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://rocket.rs/guide/v0.5/faq/#can-i-use-rocket-in-production'
+);

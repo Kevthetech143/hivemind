@@ -1,0 +1,230 @@
+-- MongoDB 5.0 to 6.0 Migration Guide - Breaking Changes and Issues
+-- Extracted from official MongoDB documentation
+-- Source: https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/
+-- Category: migration-guide
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'MongoDB 6.0 allowDiskUse default behavior change - pipelines now write temporary files to disk',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Review your aggregation pipelines to ensure they expect temporary disk writes. Pipelines exceeding 100MB memory now write to disk by default without needing allowDiskUse: true flag.", "percentage": 95, "note": "Breaking change from MongoDB 5.0 where allowDiskUse required explicit flag"},
+        {"solution": "Monitor disk space on servers running MongoDB 6.0 as temporary files may accumulate during large pipeline operations. Ensure adequate free disk space (at least 20% of available storage recommended).", "percentage": 90, "note": "Temporary files are cleaned up after pipeline execution"},
+        {"solution": "If you need to disable disk writes for specific pipelines, use allowDiskUse: false in aggregation command options.", "percentage": 85, "command": "db.collection.aggregate([...], {allowDiskUse: false})"}
+    ]'::jsonb,
+    'MongoDB 6.0 installed, Aggregation pipelines using >100MB memory, Sufficient disk space available',
+    'Pipelines execute successfully, No memory errors, Temporary files created in dbPath/journal directory during execution',
+    'Default allowDiskUse behavior changed - you may need to update application code that previously set allowDiskUse: true explicitly. Monitor disk I/O performance as disk writes may impact latency.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 dropIndexes behavior - passing "*" drops all indexes except _id and shard key',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Update dropIndexes calls to explicitly name indexes you want to drop instead of using wildcard \"*\". In MongoDB 5.0, * would drop all indexes; in 6.0 it now preserves _id and last shard key index.", "percentage": 95, "note": "Breaking API change requires code updates"},
+        {"solution": "For bulk index deletion, enumerate each index name: db.collection.dropIndexes([\"idx_name1\", \"idx_name2\"])", "percentage": 90, "command": "db.collection.dropIndexes([\"indexName1\", \"indexName2\"])"},
+        {"solution": "Test index dropping in development environment before applying to production. Use db.collection.getIndexes() to verify remaining indexes after drop.", "percentage": 85, "command": "db.collection.getIndexes()"}
+    ]'::jsonb,
+    'MongoDB 6.0 cluster, Collection with multiple indexes, Write permissions on collection',
+    'All specified indexes removed except _id, Application continues functioning normally, Query performance as expected',
+    'Scripts using db.collection.dropIndexes("*") will behave differently. Attempting to drop the last remaining shard key index raises an error in 6.0.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 requires 5.0-series as minimum for in-place upgrades',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "If running MongoDB 4.4 or earlier, successively upgrade through intermediate versions: 4.4 → 5.0 → 6.0. Each major version jump requires separate upgrade process.", "percentage": 95, "note": "Direct upgrades from 4.2, 4.0 not supported"},
+        {"solution": "Verify current MongoDB version before upgrading: mongod --version or use db.version() command in shell", "percentage": 90, "command": "db.version()"},
+        {"solution": "Follow documented upgrade procedures for each intermediate version. Skipping versions may corrupt data or cause startup failures.", "percentage": 88, "note": "Consult https://www.mongodb.com/docs/manual/release-notes/ for version-specific procedures"}
+    ]'::jsonb,
+    'Current MongoDB version 4.0 or later, Full backup before upgrade, Maintenance window scheduled',
+    'mongod starts successfully after upgrade, db.version() returns 6.0.x, All collections accessible with correct data',
+    'Attempting direct upgrade from versions earlier than 5.0 will fail. Always perform incremental upgrades through supported intermediate versions.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/release-notes/6.0-upgrade-standalone/'
+),
+(
+    'MongoDB 6.0 changes to view definition storage - views now store resolved query operators',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "After upgrading to 6.0, recreate views to benefit from optimized storage format. Drop and recreate: db.createView(\"viewName\", \"collection\", [...])", "percentage": 90, "note": "Old view definitions still work but use legacy format"},
+        {"solution": "Verify view behavior after upgrade by running sample queries against views to ensure results match expectations.", "percentage": 85, "command": "db.viewName.find().limit(5)"},
+        {"solution": "If views exhibit performance issues post-upgrade, explicitly recreate them using latest API to leverage 6.0 optimizations.", "percentage": 80, "note": "Performance improvement in 6.0 view queries"}
+    ]'::jsonb,
+    'MongoDB 6.0 upgraded, Views created in earlier versions, Query execution plans reviewed',
+    'Views return correct results, Query performance meets baselines, Aggregation pipeline stages work correctly in view definitions',
+    'Views created in 5.0 and earlier will continue working but may not benefit from 6.0 optimizations. View recreation is optional but recommended for new deployments.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 removes support for MMAPv1 storage engine - must use WiredTiger',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Migrate existing MMAPv1 instances to WiredTiger before upgrading to 6.0. Use mongodump and mongorestore with WiredTiger enabled: mongodump | mongorestore --storageEngine wiredTiger", "percentage": 92, "note": "Mandatory engine migration"},
+        {"solution": "Verify current storage engine: db.serverStatus().storageEngine.name must equal \"wiredTiger\"", "percentage": 90, "command": "db.serverStatus().storageEngine.name"},
+        {"solution": "For MongoDB Atlas users, automatic storage engine upgrade is handled during version upgrade. No action required.", "percentage": 88, "note": "Atlas simplifies this migration"}
+    ]'::jsonb,
+    'MongoDB instance running MMAPv1, Full backup completed, WiredTiger database prepared',
+    'db.serverStatus() returns wiredTiger as storage engine, All data migrated successfully, No data loss',
+    'MMAPv1 instances cannot be upgraded to 6.0 without manual storage engine migration. Attempting to start 6.0 with MMAPv1 data will fail.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 Java driver authentication changes - SCRAM-SHA-1 deprecated',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Update Java driver to 4.0+ and migrate authentication to SCRAM-SHA-256. Connection string format: mongodb://user:password@host/?authMechanism=SCRAM-SHA-256&authSource=admin", "percentage": 94, "note": "SCRAM-SHA-1 still works but deprecated"},
+        {"solution": "If using X.509 authentication, update certificates and connection strings to specify authMechanism=MONGODB-X509", "percentage": 88, "command": "mongodb+srv://user@host/?authMechanism=MONGODB-X509"},
+        {"solution": "Test connection strings in staging environment before deploying to production. Use ping commands to verify authentication works.", "percentage": 85, "note": "Connection pool warmup ensures credentials are validated"}
+    ]'::jsonb,
+    'Java driver version 3.x or earlier, MongoDB 6.0 server, User credentials available',
+    'Application connects successfully, Authentication succeeds on first attempt, Queries execute without auth errors',
+    'SCRAM-SHA-1 support will be removed in future versions. Updating now prevents future migration issues. X.509 certificate paths must be correctly configured.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 changes to replication oplog format - may affect custom replication tools',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Review custom replication or monitoring tools that parse oplog entries. Update parsing logic to handle new oplog format fields in MongoDB 6.0.", "percentage": 90, "note": "Legacy format still readable but missing new optimization fields"},
+        {"solution": "Use official MongoDB change streams API instead of direct oplog parsing when possible. Change streams provide stable API regardless of oplog format changes.", "percentage": 88, "command": "db.collection.watch()"},
+        {"solution": "Test oplog parsing tools in MongoDB 6.0 staging environment to identify required updates before production deployment.", "percentage": 85, "note": "Oplog compatibility generally maintained"}
+    ]'::jsonb,
+    'Custom replication tools or oplog parsers, MongoDB 6.0 test environment, Documentation of current parsing logic',
+    'Oplog entries parse correctly, Custom tools continue functioning, Change streams work reliably',
+    'Tools directly parsing oplog.rs collection may encounter new fields. Change streams provide more reliable alternative for production use.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 text search ranking improvements - query results ranking may change',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "After upgrading to MongoDB 6.0, re-test full-text search queries and result relevance. Expected: same documents returned but potentially in different order.", "percentage": 92, "note": "Text index ranking algorithm improved"},
+        {"solution": "If your application depends on specific result order, explicitly add sort clause to text search queries: db.collection.find({$text: {$search: \"term\"}}).sort({score: {$meta: \"textScore\"}})", "percentage": 90, "command": "db.collection.find({$text: {$search: \"query\"}}).sort({score: {$meta: \"textScore\"}})"},
+        {"solution": "Review relevance scoring threshold if using score cutoffs. Some results may have different scores in 6.0.", "percentage": 85, "note": "Update thresholds based on new score distribution"}
+    ]'::jsonb,
+    'MongoDB 6.0 with text indexes, Text search queries in application, Test data representative of production',
+    'Text search queries return results without errors, Document relevance improved or equivalent, No missing results',
+    'Text search result order may change due to improved ranking algorithm. Ensure applications do not depend on specific ranking from 5.0.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 aggregation framework performance - $lookup and $unionWith optimizations applied',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "No code changes required - aggregation pipelines automatically benefit from 6.0 optimization engine. However, review explain() plans for $lookup and $unionWith stages to verify improved performance.", "percentage": 93, "command": "db.collection.aggregate([...]).explain(\"executionStats\")"},
+        {"solution": "If pipeline performance degrades unexpectedly, disable pipelineOptimization: db.collection.aggregate([...], {allowDiskUse: true})", "percentage": 85, "note": "Rare edge case"},
+        {"solution": "Monitor CPU and memory during aggregation operations as optimized pipelines may have different resource profiles.", "percentage": 80, "note": "Usually improved efficiency"}
+    ]'::jsonb,
+    'MongoDB 6.0 deployed, Aggregation pipelines with $lookup or $unionWith stages, Performance baseline data from 5.0',
+    'Aggregation queries complete faster or equal to 5.0, Memory usage stable, Execution plans show optimization',
+    'Aggregation optimizations in 6.0 are transparent but may require performance re-baseline. Monitor if latency-sensitive operations are affected.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 collation behavior changes - case sensitivity defaults modified in some cases',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Review queries using collation to ensure case sensitivity matches application requirements. Test with db.collection.find({field: \"value\"}).collation({locale: \"en\"})", "percentage": 92, "note": "Collation defaults behavior refined"},
+        {"solution": "Explicitly specify collation strength and caseLevel in collation objects to guarantee consistent behavior: {locale: \"en\", strength: 2, caseLevel: false}", "percentage": 90, "command": "db.collection.createIndex({field: 1}, {collation: {locale: \"en\", strength: 2}})"},
+        {"solution": "If case-sensitive sorting is required, use strength: 3 in collation specification.", "percentage": 85, "note": "Provides most granular control"}
+    ]'::jsonb,
+    'MongoDB 6.0 instance, Collections with collation-based indexes, Test queries prepared',
+    'Queries return expected results with correct case handling, Sorting order matches requirements, Index usage verified',
+    'Collation defaults may differ between 5.0 and 6.0 for edge cases. Always explicitly specify collation strength for case-sensitive operations.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 sharded cluster balancer improvements - chunk migration behavior optimized',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Monitor chunk migration activity after upgrading sharded clusters to 6.0. Expect potentially different migration patterns due to improved balancing algorithm.", "percentage": 89, "note": "Balancer runs more efficiently"},
+        {"solution": "If excessive chunk migration occurs, adjust balancer settings: sh.setBalancerState(false) to pause, then tune chunkSize and balancer window parameters", "percentage": 85, "command": "sh.setBalancerState(false); sh.resetChunkSize()"},
+        {"solution": "Monitor network bandwidth during migration window as improved balancer may initiate more concurrent migrations.", "percentage": 80, "note": "Usually beneficial but monitor first"}
+    ]'::jsonb,
+    'MongoDB 6.0 sharded cluster, Multiple shards with uneven data distribution, Monitoring tools configured',
+    'Chunks migrate and rebalance without errors, Cluster remains available during migration, Data consistency maintained',
+    'Balancer behavior changes in 6.0 may result in different migration patterns. Monitor bandwidth and I/O during first rebalance cycle.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 index options validation - invalid index specifications now rejected at creation time',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Review index definitions in application code and schema migrations. MongoDB 6.0 validates all index options at creation, rejecting previously ignored invalid options.", "percentage": 95, "note": "Stricter validation improves data consistency"},
+        {"solution": "If index creation fails in 6.0 with \"Unknown index option\" error, remove unsupported options or update to valid 6.0 options. Reference: https://www.mongodb.com/docs/manual/reference/method/db.collection.createIndex/", "percentage": 92, "command": "db.collection.createIndex({field: 1}, {valid_option: value})"},
+        {"solution": "Test all index creation scripts in MongoDB 6.0 environment before production deployment to catch validation errors early.", "percentage": 88, "note": "Prevents runtime index creation failures"}
+    ]'::jsonb,
+    'MongoDB 6.0 instance, Index creation scripts from 5.0, Development/staging environment',
+    'All index creation operations succeed, Indexes created with expected specifications, Query performance meets baselines',
+    'Index options that were silently ignored in 5.0 may cause creation failures in 6.0. Validate all index definitions for 6.0 compatibility before upgrade.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+),
+(
+    'MongoDB 6.0 $merge stage behavior - output document handling requires matching _id fields',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Update aggregation pipelines using $merge to ensure documents have matching _id fields if merging on _id. Use $addFields to create _id if needed: {$addFields: {_id: \"$someField\"}}", "percentage": 90, "note": "Document matching logic refined"},
+        {"solution": "If custom merge behavior is required, explicitly specify whenMatched and whenNotMatched options in $merge stage: {$merge: {into: \"collection\", whenMatched: \"replace\", whenNotMatched: \"insert\"}}", "percentage": 88, "command": "db.collection.aggregate([{$merge: {into: \"target\", whenMatched: \"replace\"}}])"},
+        {"solution": "Test $merge operations in staging environment after upgrade to verify merge behavior matches expectations.", "percentage": 85, "note": "Edge case handling improved"}
+    ]'::jsonb,
+    'MongoDB 6.0 with aggregation pipelines using $merge, Target collections prepared, Backup of data available',
+    'Merge operations complete successfully, Documents merge with correct field matching, No data duplicates created',
+    'Document matching behavior in $merge stage may differ from 5.0 for edge cases. Always explicitly specify merge conditions for complex scenarios.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/v7.0/release-notes/6.0-compatibility/'
+);

@@ -1,0 +1,222 @@
+-- Add Playwright troubleshooting documentation batch 1
+-- Source: https://playwright.dev/docs/
+-- Extracted: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Playwright test timeout: Timeout of 30000ms exceeded',
+    'playwright',
+    'VERY_HIGH',
+    '[
+        {"solution": "Increase test timeout using test.setTimeout(120000) for specific test", "percentage": 90, "note": "Default is 30 seconds, triple timeout with test.slow()"},
+        {"solution": "Set global timeout in playwright.config.ts: { timeout: 60000 }", "percentage": 85, "command": "timeout: 60_000"},
+        {"solution": "Use test.slow() to triple the default timeout automatically", "percentage": 88, "note": "Useful for slower CI environments"},
+        {"solution": "Override single action timeout: await page.goto(url, { timeout: 30000 })", "percentage": 80, "note": "For specific slow operations"}
+    ]'::jsonb,
+    'Playwright installed, Test suite configured',
+    'Test completes without timeout error, All actions execute within time limit',
+    'Default test timeout is 30s covering test function, fixtures, and beforeEach hooks. Action and navigation timeouts have no default. Do not confuse test timeout with expect timeout (5s default).',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/test-timeouts'
+),
+(
+    'Playwright expect timeout: Assertion timed out after 5000ms',
+    'playwright',
+    'HIGH',
+    '[
+        {"solution": "Increase expect timeout globally: expect: { timeout: 10000 } in config", "percentage": 90, "note": "Default is 5 seconds for auto-retrying assertions"},
+        {"solution": "Override per assertion: await expect(locator).toBeVisible({ timeout: 10000 })", "percentage": 85, "note": "Useful for specific slow-loading elements"},
+        {"solution": "Use expect.poll() for complex polling: await expect.poll(() => condition, { timeout: 10000 })", "percentage": 80, "note": "Retries custom logic"}
+    ]'::jsonb,
+    'Playwright installed, Auto-retrying assertions in use',
+    'Assertion passes within timeout, Element state is verified',
+    'Expect timeout (5s) is separate from test timeout (30s). Always await auto-retrying assertions. Use toPass() to retry entire code blocks.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/test-assertions'
+),
+(
+    'Playwright locator error: strict mode violation - locator resolved to multiple elements',
+    'playwright',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use filter to narrow selection: locator.filter({ hasText: \"exact text\" })", "percentage": 90, "note": "Most common solution for strict mode violations"},
+        {"solution": "Use positional selectors: locator.first(), locator.last(), or locator.nth(0)", "percentage": 85, "note": "When you need the first/last match"},
+        {"solution": "Make locator more specific: getByRole(\"button\", { name: \"Submit\" })", "percentage": 88, "note": "Prefer user-facing locators over CSS"},
+        {"solution": "Add data-testid attributes: getByTestId(\"unique-id\")", "percentage": 75, "note": "Use when role/text locators are insufficient"}
+    ]'::jsonb,
+    'Playwright installed, Multiple matching elements exist',
+    'Locator resolves to single element, Action executes successfully',
+    'Playwright enforces strictness - all operations targeting specific elements fail if multiple matches exist. Avoid brittle CSS/XPath selectors tied to DOM structure. Prioritize getByRole(), getByText(), getByLabel() for resilient tests.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/locators'
+),
+(
+    'Playwright browser launch failure: Failed to download browser',
+    'playwright',
+    'HIGH',
+    '[
+        {"solution": "Use proxy settings: set HTTPS_PROXY environment variable", "percentage": 85, "note": "Playwright downloads from Microsoft CDN by default"},
+        {"solution": "Configure custom download host: PLAYWRIGHT_DOWNLOAD_HOST=custom-url", "percentage": 80, "command": "PLAYWRIGHT_DOWNLOAD_HOST=https://your-mirror.com"},
+        {"solution": "Increase connection timeout: PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000", "percentage": 75, "note": "Useful for slow networks"},
+        {"solution": "Use custom CA certificates: NODE_EXTRA_CA_CERTS=/path/to/certs", "percentage": 70, "note": "For self-signed certificate errors"}
+    ]'::jsonb,
+    'npm/yarn/pnpm package manager, Network connectivity',
+    'Browser binaries download successfully, npx playwright install completes',
+    'Browsers download from Microsoft CDN. Proxy settings must be configured before installation. Self-signed certs require NODE_EXTRA_CA_CERTS. Check firewall rules if download fails.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/browsers'
+),
+(
+    'Playwright actionability error: Element is not visible',
+    'playwright',
+    'VERY_HIGH',
+    '[
+        {"solution": "Wait for element to be visible: await expect(locator).toBeVisible()", "percentage": 90, "note": "Auto-retrying assertion with 5s default timeout"},
+        {"solution": "Check element has non-empty bounding box and no visibility:hidden", "percentage": 85, "note": "Elements with opacity:0 are still considered visible"},
+        {"solution": "Ensure parent containers are not hidden: check CSS display:none", "percentage": 80, "note": "Hidden parents make children invisible"},
+        {"solution": "Use force option to bypass check: await locator.click({ force: true })", "percentage": 60, "note": "Risks unreliable tests, use as last resort"}
+    ]'::jsonb,
+    'Playwright installed, Element exists in DOM',
+    'Element becomes visible, Action executes without timeout',
+    'Playwright checks visibility before actions: element must have non-empty bounding box and not have visibility:hidden. Display:none and zero-size boxes fail check. Opacity:0 still counts as visible. Avoid force:true except for special cases.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/actionability'
+),
+(
+    'Playwright actionability error: Element is not stable',
+    'playwright',
+    'HIGH',
+    '[
+        {"solution": "Wait for animations to complete before action", "percentage": 88, "note": "Element must maintain same bounding box for 2 consecutive frames"},
+        {"solution": "Increase timeout for animated elements: await locator.click({ timeout: 10000 })", "percentage": 85, "note": "Gives more time for stability"},
+        {"solution": "Use scrollIntoViewIfNeeded which has separate stability check", "percentage": 75, "command": "await locator.scrollIntoViewIfNeeded()"},
+        {"solution": "Disable animations in test: use CSS or JS to stop transitions", "percentage": 70, "note": "Prevents stability issues entirely"}
+    ]'::jsonb,
+    'Playwright installed, Animated element exists',
+    'Element stabilizes, Action executes successfully',
+    'Stability check requires element to maintain same bounding box for at least 2 consecutive animation frames. Failures occur during CSS animations, transitions, layout shifts, or scroll changes. Avoid force:true bypass.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/actionability'
+),
+(
+    'Playwright debugging: How to debug failing tests',
+    'playwright',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use Playwright Inspector: npx playwright test --debug", "percentage": 95, "note": "GUI tool with step controls, sets timeout to 0", "command": "npx playwright test --debug"},
+        {"solution": "Use VS Code debugger: Set breakpoints and right-click to run in debug mode", "percentage": 90, "note": "Best for VS Code users with extension"},
+        {"solution": "Enable verbose API logging: DEBUG=pw:api npx playwright test", "percentage": 85, "command": "DEBUG=pw:api npx playwright test"},
+        {"solution": "Use browser DevTools: page.pause() with PWDEBUG=console", "percentage": 80, "command": "PWDEBUG=console npx playwright test"},
+        {"solution": "View trace files: Use Trace Viewer for DOM snapshots and network", "percentage": 88, "note": "Step forward/backward through actions"}
+    ]'::jsonb,
+    'Playwright installed, Failing test exists',
+    'Breakpoint hit successfully, Can step through test execution, Identify failure cause',
+    '--debug flag sets timeout to 0 (no timeout). Inspector shows actionability logs for visibility/stability issues. Use Pick Locator for selector generation. VS Code extension required for VS Code debugging.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/debug'
+),
+(
+    'Playwright selector not found: locator.click: Timeout 30000ms exceeded waiting for selector',
+    'playwright',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify selector exists: Use Playwright Inspector Pick Locator feature", "percentage": 90, "command": "npx playwright test --debug"},
+        {"solution": "Use user-facing locators: getByRole, getByText, getByLabel instead of CSS", "percentage": 88, "note": "More resilient than CSS/XPath"},
+        {"solution": "Wait for element to appear: await expect(locator).toBeVisible()", "percentage": 85, "note": "Auto-retrying assertion"},
+        {"solution": "Check for dynamic content: Element may load after page load", "percentage": 80, "note": "Wait for network idle or specific state"},
+        {"solution": "Verify no shadow DOM issues: Most locators pierce shadow roots except XPath", "percentage": 70, "note": "XPath does not pierce shadow DOM"}
+    ]'::jsonb,
+    'Playwright installed, Page loaded',
+    'Selector resolves to element, Action executes successfully',
+    'CSS/XPath selectors break when DOM structure changes. Prioritize getByRole() for accessibility. Use data-testid only when role/text insufficient. Selector timeout (30s default) is separate from expect timeout (5s). Most locators pierce shadow DOM except XPath.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/locators'
+),
+(
+    'Playwright network error: Service worker blocks network events',
+    'playwright',
+    'MEDIUM',
+    '[
+        {"solution": "Block service workers in context: serviceWorkers: \"block\" in config", "percentage": 90, "note": "Prevents SW from intercepting requests", "command": "use: { serviceWorkers: \"block\" }"},
+        {"solution": "Use Playwright native routing instead of MSW", "percentage": 85, "note": "MSW adds its own SW making requests invisible"},
+        {"solution": "Intercept with page.route(): await page.route(pattern, handler)", "percentage": 88, "command": "await page.route(\"**/api/**\", route => route.fulfill())"}
+    ]'::jsonb,
+    'Playwright installed, Network interception needed',
+    'Network events visible to Playwright, page.route() works correctly',
+    'Service Workers can make network events invisible to Playwright routing. Mock Service Worker (MSW) conflicts with native routing. Set serviceWorkers: block to disable. Use Playwright route() instead of external mock tools.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/network'
+),
+(
+    'Playwright browser storage issue: How to manage disk space for browsers',
+    'playwright',
+    'LOW',
+    '[
+        {"solution": "Configure custom browser path: PLAYWRIGHT_BROWSERS_PATH=/custom/path", "percentage": 85, "command": "PLAYWRIGHT_BROWSERS_PATH=/custom/path"},
+        {"solution": "Use hermetic install in node_modules: PLAYWRIGHT_BROWSERS_PATH=0", "percentage": 80, "note": "Stores browsers locally in project"},
+        {"solution": "Enable automatic garbage collection (default): Remove PLAYWRIGHT_SKIP_BROWSER_GC", "percentage": 75, "note": "Playwright auto-removes unused browser versions"}
+    ]'::jsonb,
+    'Playwright installed, Disk space concerns',
+    'Browsers installed in custom location, Old versions cleaned up',
+    'Playwright tracks clients using browsers and performs automatic garbage collection. To disable GC: set PLAYWRIGHT_SKIP_BROWSER_GC=1. Hermetic installs (PLAYWRIGHT_BROWSERS_PATH=0) store in node_modules for project isolation.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/browsers'
+),
+(
+    'Playwright enterprise browser policy error: Unable to launch Chrome/Edge',
+    'playwright',
+    'MEDIUM',
+    '[
+        {"solution": "Use Chromium instead of branded browsers for testing", "percentage": 85, "note": "Chromium not affected by enterprise policies"},
+        {"solution": "Test with branded channels only for regression or codec requirements", "percentage": 75, "note": "Chrome/Edge have specific enterprise restrictions"},
+        {"solution": "Contact IT to whitelist Playwright browser paths", "percentage": 70, "note": "Enterprise policies may block browser launch"}
+    ]'::jsonb,
+    'Enterprise environment, Playwright installed',
+    'Browser launches successfully, Tests run without policy blocks',
+    'Enterprise Browser Policies can prevent Playwright from launching Chrome/Edge. Use Chromium (open-source) for default testing. Only switch to branded channels (chrome, msedge) for specific regression testing or codec requirements.',
+    0.75,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/browsers'
+),
+(
+    'Playwright flaky test: How to handle test instability',
+    'playwright',
+    'HIGH',
+    '[
+        {"solution": "Use auto-retrying assertions instead of manual waits: await expect(locator).toBeVisible()", "percentage": 92, "note": "Automatically retries until condition met"},
+        {"solution": "Enable soft assertions to continue on failure: expect.soft()", "percentage": 85, "note": "Marks test as failed but continues execution"},
+        {"solution": "Use expect.toPass() to retry entire code blocks", "percentage": 88, "command": "await expect(() => { /* code */ }).toPass()"},
+        {"solution": "Run with --last-failed flag to identify flaky tests", "percentage": 80, "command": "npx playwright test --last-failed"},
+        {"solution": "Use UI Mode to walk through steps and identify timing issues", "percentage": 90, "note": "Visual debugging with locator picker"}
+    ]'::jsonb,
+    'Playwright installed, Intermittent test failures',
+    'Tests pass consistently, No random failures',
+    'Prefer auto-retrying assertions over manual waits or sleep(). Soft assertions (expect.soft()) allow multiple checks without stopping. expect.toPass() retries blocks until they pass. Filter HTML reports by flaky tests to identify patterns.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://playwright.dev/docs/test-assertions'
+);

@@ -1,0 +1,208 @@
+-- Update vote tracking to use contributor system
+
+-- Function: Record solution vote (replaces old report_solution_outcome logic)
+CREATE OR REPLACE FUNCTION record_solution_vote(
+    p_ip_address TEXT,
+    p_solution_query TEXT,
+    p_vote_type TEXT, -- 'success' or 'failure'
+    p_copied_command BOOLEAN DEFAULT FALSE
+)
+RETURNS JSONB AS $$
+DECLARE
+    v_contributor_id INTEGER;
+    v_solution_id INTEGER;
+    v_existing_vote TEXT;
+    v_is_banned BOOLEAN;
+BEGIN
+    -- Get or create contributor
+    v_contributor_id := get_or_create_contributor(p_ip_address, NULL, NULL);
+
+    -- Check if banned
+    v_is_banned := is_contributor_banned(v_contributor_id);
+    IF v_is_banned THEN
+        RETURN jsonb_build_object('error', 'Account banned');
+    END IF;
+
+    -- Find solution by query
+    SELECT id INTO v_solution_id
+    FROM knowledge_entries
+    WHERE query = p_solution_query
+    LIMIT 1;
+
+    IF v_solution_id IS NULL THEN
+        RETURN jsonb_build_object('error', 'Solution not found');
+    END IF;
+
+    -- Check if already voted
+    SELECT vote_type INTO v_existing_vote
+    FROM solution_votes
+    WHERE contributor_id = v_contributor_id AND solution_id = v_solution_id;
+
+    IF v_existing_vote IS NOT NULL THEN
+        RETURN jsonb_build_object(
+            'error', 'Already voted',
+            'previous_vote', v_existing_vote
+        );
+    END IF;
+
+    -- Insert vote
+    INSERT INTO solution_votes (contributor_id, solution_id, vote_type)
+    VALUES (v_contributor_id, v_solution_id, p_vote_type);
+
+    -- Update solution thumbs
+    IF p_vote_type = 'success' THEN
+        UPDATE knowledge_entries
+        SET thumbs_up = thumbs_up + 1
+        WHERE id = v_solution_id;
+    ELSE
+        UPDATE knowledge_entries
+        SET thumbs_down = thumbs_down + 1
+        WHERE id = v_solution_id;
+    END IF;
+
+    -- Update contributor stats
+    UPDATE contributors
+    SET
+        total_votes = total_votes + 1,
+        last_seen_at = NOW()
+    WHERE id = v_contributor_id;
+
+    -- If voting on a solution from a specific contributor, update their reputation
+    UPDATE contributors c
+    SET
+        votes_received = votes_received + 1,
+        positive_votes = CASE WHEN p_vote_type = 'success' THEN positive_votes + 1 ELSE positive_votes END,
+        negative_votes = CASE WHEN p_vote_type = 'failure' THEN negative_votes + 1 ELSE negative_votes END
+    WHERE c.id = (SELECT contributor_id FROM knowledge_entries WHERE id = v_solution_id)
+    AND c.id IS NOT NULL;
+
+    -- Update reputation score for the solution's contributor
+    PERFORM update_contributor_reputation(
+        (SELECT contributor_id FROM knowledge_entries WHERE id = v_solution_id)
+    );
+
+    RETURN jsonb_build_object(
+        'success', TRUE,
+        'vote', p_vote_type,
+        'message', 'Thank you for your feedback!'
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: Update resolve_ticket to track contributor
+CREATE OR REPLACE FUNCTION resolve_ticket_with_contributor(
+    p_ticket_id TEXT,
+    p_solution_data JSONB,
+    p_ip_address TEXT
+) RETURNS JSONB AS $$
+DECLARE
+    v_ticket RECORD;
+    v_knowledge_id INTEGER;
+    v_enhanced_pitfalls TEXT;
+    v_contributor_id INTEGER;
+    v_is_banned BOOLEAN;
+BEGIN
+    -- Get or create contributor
+    v_contributor_id := get_or_create_contributor(p_ip_address, NULL, NULL);
+
+    -- Check if banned
+    v_is_banned := is_contributor_banned(v_contributor_id);
+    IF v_is_banned THEN
+        RETURN jsonb_build_object('error', 'Account banned');
+    END IF;
+
+    -- Get ticket info
+    SELECT * INTO v_ticket
+    FROM troubleshooting_sessions
+    WHERE ticket_id = p_ticket_id AND status != 'resolved';
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('error', 'Ticket not found or already resolved');
+    END IF;
+
+    -- Auto-enhance common_pitfalls from failed attempts
+    v_enhanced_pitfalls := COALESCE(p_solution_data->>'common_pitfalls', '');
+
+    IF (v_enhanced_pitfalls = '' OR v_enhanced_pitfalls IS NULL) AND v_ticket.steps_tried IS NOT NULL THEN
+        SELECT string_agg(
+            CASE
+                WHEN lower(step->>'result') LIKE '%failed%' OR
+                     lower(step->>'result') LIKE '%error%' OR
+                     lower(step->>'result') LIKE '%doesn''t%' OR
+                     lower(step->>'result') LIKE '%not%'
+                THEN 'Avoid: ' || (step->>'step') || ' (' || (step->>'result') || ')'
+                ELSE NULL
+            END,
+            '; '
+        ) INTO v_enhanced_pitfalls
+        FROM jsonb_array_elements(v_ticket.steps_tried) AS step
+        WHERE lower(step->>'result') LIKE '%failed%' OR
+              lower(step->>'result') LIKE '%error%' OR
+              lower(step->>'result') LIKE '%doesn''t%' OR
+              lower(step->>'result') LIKE '%not%';
+    END IF;
+
+    -- Update ticket status
+    UPDATE troubleshooting_sessions
+    SET
+        status = 'resolved',
+        solution = p_solution_data->>'solution',
+        solution_data = p_solution_data,
+        resolved_at = NOW(),
+        contributor_id = v_contributor_id
+    WHERE ticket_id = p_ticket_id;
+
+    -- Auto-contribute to knowledge base with contributor tracking
+    INSERT INTO knowledge_entries (
+        query,
+        category,
+        hit_frequency,
+        solutions,
+        failed_attempts,
+        common_pitfalls,
+        success_rate,
+        claude_version,
+        last_verified,
+        source_ticket_id,
+        thumbs_up,
+        contributor_id
+    ) VALUES (
+        v_ticket.problem,
+        v_ticket.category,
+        'MEDIUM (from ticket)',
+        p_solution_data->'solutions',
+        COALESCE(v_ticket.steps_tried, '[]'::jsonb),
+        COALESCE(v_enhanced_pitfalls, ''),
+        COALESCE((p_solution_data->>'success_rate')::NUMERIC, 0.90),
+        'sonnet-4',
+        NOW(),
+        p_ticket_id,
+        1, -- Auto thumbs up for resolved ticket
+        v_contributor_id
+    )
+    RETURNING id INTO v_knowledge_id;
+
+    -- Update contributor stats
+    UPDATE contributors
+    SET
+        approved_count = approved_count + 1,
+        total_tickets = total_tickets + 1,
+        last_seen_at = NOW()
+    WHERE id = v_contributor_id;
+
+    -- Update reputation
+    PERFORM update_contributor_reputation(v_contributor_id);
+
+    -- Mark as auto-contributed
+    UPDATE troubleshooting_sessions
+    SET auto_contributed = TRUE
+    WHERE ticket_id = p_ticket_id;
+
+    RETURN jsonb_build_object(
+        'success', TRUE,
+        'ticket_id', p_ticket_id,
+        'knowledge_id', v_knowledge_id,
+        'message', 'Solution verified and added to knowledge base with thumbs up'
+    );
+END;
+$$ LANGUAGE plpgsql;

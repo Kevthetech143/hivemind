@@ -1,0 +1,313 @@
+-- Stack Overflow Testing Framework Solutions - Batch 15
+-- Mined from Stack Overflow on 2025-11-24
+-- Domain: Testing Frameworks (Jest, Pytest, JUnit, Mocha, Cypress, Selenium)
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Jest gives Cannot find module when importing components with absolute paths',
+    'jest',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add moduleDirectories to Jest config with src folder", "percentage": 90, "note": "Add ''moduleDirectories'': [''node_modules'', ''src''] to jest.config.js or package.json"},
+        {"solution": "Configure modulePaths with rootDir", "percentage": 85, "note": "Set ''modulePaths'': [''<rootDir>''] in Jest config"}
+    ]'::jsonb,
+    'Jest installed, Package.json or jest.config.js exists',
+    'Tests run without module resolution errors, Absolute imports work correctly',
+    'Jest module resolution differs from app. Check both jest.config.js and package.json - conflicting configs cause issues.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/50863312/jest-gives-cannot-find-module-when-importing-components-with-absolute-paths'
+),
+(
+    'Jest TypeScript: Test suite failed to run Cannot find module or its corresponding type declarations',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Clear Jest cache to remove stale module data", "percentage": 95, "command": "npx jest --clearCache"},
+        {"solution": "Add moduleNameMapper for path aliases in jest.config.js", "percentage": 85, "note": "Map TypeScript paths: ''moduleNameMapper'': {''~src/(.*)'': ''<rootDir>/src/$1''}"},
+        {"solution": "Use relative imports instead of absolute", "percentage": 70, "note": "Change from ''src/app/module'' to ''../../../module''"}
+    ]'::jsonb,
+    'Jest installed with TypeScript, Git repository initialized',
+    'Tests resolve modules correctly, No type declaration errors',
+    'Jest caches module resolution. After branch changes or file moves, always clear cache. Config split between package.json and jest.config.js causes moduleNameMapper to be ignored.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/62672119/test-suite-failed-to-run-cannot-find-module-or-its-corresponding-type-declaratio'
+),
+(
+    'Jest cannot find module react and other node_modules',
+    'jest',
+    'MEDIUM',
+    '[
+        {"solution": "Move peerDependencies to devDependencies for testing", "percentage": 88, "note": "Copy all peerDependencies into devDependencies section", "command": "npm install"},
+        {"solution": "Install peer dependencies explicitly", "percentage": 85, "command": "npm install <peer-dependency-name>"}
+    ]'::jsonb,
+    'Jest configured, package.json exists with peerDependencies',
+    'Jest finds all required modules, Tests run successfully',
+    'Peer dependencies are not auto-installed. Testing frameworks need them in devDependencies to access during test execution.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/64365016/jest-cannot-find-module-react-and-other-node-modules'
+),
+(
+    'Jest manual mock not working with ES6 imports',
+    'jest',
+    'MEDIUM',
+    '[
+        {"solution": "Use require() instead of import within test and access .default", "percentage": 85, "note": "const Module = require(''../src/Module'').default;"},
+        {"solution": "Check for cyclic dependencies in files", "percentage": 80, "note": "Circular imports prevent jest.mock() from working correctly"},
+        {"solution": "Place jest.mock() at module level outside beforeEach", "percentage": 90, "note": "jest.mock() is hoisted only at module level, not inside lifecycle hooks"}
+    ]'::jsonb,
+    'Jest installed, Manual mocks in __mocks__ directory',
+    'Mocks are applied correctly, Tests use mocked behavior not actual implementation',
+    'jest.mock() inside beforeEach/beforeAll does not work with imports due to hoisting. ES6 imports are hoisted before beforeEach runs.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/49694366/manual-mock-not-working-in-with-jest'
+),
+(
+    'jest.mock() does not work inside tests only outside tests',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Move jest.mock() to module level and use mockReturnValue() inside tests", "percentage": 95, "note": "Define mock at top: jest.mock(''module'', () => ({fn: jest.fn()})); then use fn.mockReturnValue(''value'') in tests"},
+        {"solution": "Use jest.doMock() for dynamic mocking inside tests", "percentage": 75, "note": "jest.doMock() is not hoisted and works inside test blocks"}
+    ]'::jsonb,
+    'Jest installed, Mock functions defined',
+    'Mocks work correctly, Different mock behaviors per test',
+    'jest.mock() calls are hoisted to top of file. Cannot be used inside describe/it blocks. Use mockReturnValue for per-test configuration.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70566676/jest-mock-doesnt-work-inside-tests-only-outside-tests'
+),
+(
+    'Jest manual mocking using __mocks__ not working for user modules',
+    'jest',
+    'MEDIUM',
+    '[
+        {"solution": "Add explicit jest.mock() call for user modules", "percentage": 90, "note": "User modules require jest.mock(''./moduleName'') even with __mocks__ directory", "command": "jest.mock(''../firebase/fb'')"},
+        {"solution": "Verify __mocks__ folder is in correct location relative to module", "percentage": 85, "note": "Place __mocks__ next to the module being mocked or at project root for node_modules"},
+        {"solution": "Check Jest root directory configuration includes source folder", "percentage": 80, "note": "Set roots: [''<rootDir>''] in jest.config.js"}
+    ]'::jsonb,
+    'Jest installed, __mocks__ directory created',
+    'Manual mocks are used instead of actual modules, Tests run with mocked behavior',
+    'Node modules auto-mock from __mocks__, but user modules need explicit jest.mock() calls. The __mocks__ directory location matters.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/55571012/manual-mocking-using-mocks-not-working'
+),
+(
+    'Cypress: How to click an element that is not visible',
+    'cypress',
+    'HIGH',
+    '[
+        {"solution": "Use force: true option to bypass visibility check", "percentage": 92, "command": "cy.get(''selector'').click({force: true})"},
+        {"solution": "Scroll element into view before clicking", "percentage": 85, "command": "cy.get(''selector'').scrollIntoView().click()"},
+        {"solution": "Wait for element to become visible", "percentage": 80, "command": "cy.get(''selector'').should(''be.visible'').click()"}
+    ]'::jsonb,
+    'Cypress installed, Test file configured',
+    'Click succeeds on hidden elements, Test passes without visibility errors',
+    'Cypress enforces actionability checks. {force: true} bypasses all checks - use only when element truly does not need to be visible.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/67440620/how-to-click-an-element-thats-not-visible-in-cypress'
+),
+(
+    'Cypress: How to know if element is visible or not for conditional logic',
+    'cypress',
+    'HIGH',
+    '[
+        {"solution": "Use jQuery :visible selector with .then() callback", "percentage": 90, "note": "cy.get(''selector'').then($el => { if ($el.is('':visible'')) { ... } })"},
+        {"solution": "Check element existence first then visibility", "percentage": 85, "note": "cy.get(''body'').then($body => { if ($body.find(''selector'').length > 0) { check visibility } })"},
+        {"solution": "Use should with callback for conditional assertions", "percentage": 75, "note": "cy.get(''selector'').should($el => { expect($el.is('':visible'')).to.be.true })"}
+    ]'::jsonb,
+    'Cypress installed, jQuery available in test context',
+    'Conditional logic executes based on element visibility, No false positives/negatives',
+    'Cypress commands are asynchronous. Use .then() to access actual element. Cannot use standard if/else outside .then() callbacks.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/57737783/cypress-how-to-know-if-element-is-visible-or-not-in-using-if-condition'
+),
+(
+    'Selenium WebDriver: How to set get timeout to prevent indefinite blocking',
+    'selenium',
+    'HIGH',
+    '[
+        {"solution": "Set implicit wait timeout", "percentage": 85, "command": "driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);"},
+        {"solution": "Set page load timeout", "percentage": 80, "command": "driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);"},
+        {"solution": "Use WebDriverWait with explicit conditions", "percentage": 90, "note": "WebDriverWait wait = new WebDriverWait(driver, 30); wait.until(ExpectedConditions.elementToBeClickable(element));"}
+    ]'::jsonb,
+    'Selenium WebDriver installed, Driver instance initialized',
+    'Timeouts prevent indefinite blocking, Tests fail gracefully after timeout period',
+    'implicitlyWait affects all element lookups globally. pageLoadTimeout does not work with bad proxies. Use explicit waits for reliability.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/9731291/how-do-i-set-the-selenium-webdriver-get-timeout'
+),
+(
+    'Selenium: HTTP request to remote WebDriver timed out after 60 seconds',
+    'selenium',
+    'MEDIUM',
+    '[
+        {"solution": "Increase driver initialization timeout to 3 minutes", "percentage": 90, "note": "For Firefox: new FirefoxDriver(new FirefoxBinary(), new FirefoxProfile(), TimeSpan.FromMinutes(3))"},
+        {"solution": "Add --no-sandbox argument for Chrome under restricted accounts", "percentage": 85, "note": "ChromeOptions options = new ChromeOptions(); options.AddArgument(''no-sandbox'');"},
+        {"solution": "Use Submit() instead of Click() for form submissions", "percentage": 70, "note": "element.Submit() is more reliable than element.Click() for submit buttons"}
+    ]'::jsonb,
+    'Selenium installed, WebDriver executable available',
+    'Driver initializes successfully, Commands complete within timeout, No HTTP timeout errors',
+    'Default 60s timeout insufficient for slow systems or CI environments. Running under TeamCity/IIS requires --no-sandbox. Browser/driver version mismatches cause timeouts.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/22322596/selenium-error-the-http-request-to-the-remote-webdriver-timed-out-after-60-sec'
+),
+(
+    'Jest finds tests but does not collect coverage in watch mode',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Use --watchAll flag instead of default watch", "percentage": 92, "command": "react-scripts test --coverage --watchAll"},
+        {"solution": "Set watchAll to false to disable watch mode", "percentage": 88, "command": "npm test -- --coverage --watchAll=false"},
+        {"solution": "Clear Jest cache before collecting coverage", "percentage": 80, "command": "npx jest --no-cache --coverage"},
+        {"solution": "Verify collectCoverageFrom includes correct paths", "percentage": 85, "note": "Set ''collectCoverageFrom'': [''<rootDir>/src/**/*.{js,jsx,ts,tsx}'']"}
+    ]'::jsonb,
+    'Jest installed, Git repository initialized',
+    'Coverage report generates for all files, HTML report created in coverage directory',
+    'Watch mode only collects coverage for changed files. --watchAll forces full coverage. Check jest rootDir setting points to correct source folder.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/57451028/jest-finds-tests-but-doesnt-collect-coverage'
+),
+(
+    'Jest: How to get code coverage report',
+    'jest',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run Jest with --coverage flag", "percentage": 95, "command": "npx jest --coverage"},
+        {"solution": "Add coverage to npm test script", "percentage": 92, "note": "In package.json scripts: ''test'': ''jest --coverage''"},
+        {"solution": "Set collectCoverage: true in jest config", "percentage": 88, "note": "In jest.config.js or package.json jest section"}
+    ]'::jsonb,
+    'Jest installed, Test files exist',
+    'Coverage report displays in console, HTML report generated at coverage/lcov-report/index.html',
+    'Coverage slows down test execution. Do not enable by default in watch mode. Use npm test -- --coverage to pass flag through npm.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/24825860/code-coverage-for-jest'
+),
+(
+    'Mocha: How to increase timeout for a single test case',
+    'mocha',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use this.timeout() with regular function", "percentage": 92, "note": "it(''test'', function(done) { this.timeout(5000); ... })"},
+        {"solution": "Chain .timeout() method with arrow function", "percentage": 88, "note": "it(''test'', (done) => { ... }).timeout(5000);"},
+        {"solution": "Set timeout in describe block for all tests", "percentage": 85, "note": "describe(''suite'', function() { this.timeout(5000); ... })"}
+    ]'::jsonb,
+    'Mocha installed, Test file configured',
+    'Long-running tests complete without timeout errors, Custom timeout respected',
+    'Arrow functions do not have their own this binding. Use .timeout() chaining with arrows or regular functions with this.timeout().',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/15971167/how-to-increase-timeout-for-a-single-test-case-in-mocha'
+),
+(
+    'Mocha: Change default timeout for all tests',
+    'mocha',
+    'HIGH',
+    '[
+        {"solution": "Use --timeout flag on command line", "percentage": 95, "command": "mocha --timeout 5000"},
+        {"solution": "Add timeout to package.json mocha config", "percentage": 90, "note": "In package.json: ''mocha'': { ''timeout'': 5000 }"},
+        {"solution": "Create .mocharc.json config file", "percentage": 88, "note": "Create .mocharc.json with { ''timeout'': 5000 }"},
+        {"solution": "Set timeout in describe at test suite level", "percentage": 80, "note": "describe(''suite'', function() { this.timeout(5000); })"}
+    ]'::jsonb,
+    'Mocha installed, Tests configured',
+    'All tests use new default timeout, Slow tests complete successfully',
+    'mocha.opts is deprecated. Use .mocharc.json or package.json config. Command line --timeout overrides config files.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/23492043/change-default-timeout-for-mocha'
+),
+(
+    'JUnit assertion error: expected and actual showing same thing but test fails',
+    'junit',
+    'MEDIUM',
+    '[
+        {"solution": "Use isEqualToComparingFieldByField for object comparison", "percentage": 90, "note": "AssertJ: assertThat(actual).isEqualToComparingFieldByField(expected)"},
+        {"solution": "Override equals() and hashCode() in custom classes", "percentage": 85, "note": "Implement proper equals method to compare object values not references"},
+        {"solution": "Compare specific fields individually instead of objects", "percentage": 75, "note": "assertEquals(expected.getName(), actual.getName())"}
+    ]'::jsonb,
+    'JUnit installed, Test class configured',
+    'Object comparisons pass when field values match, No false failures from reference inequality',
+    'assertEquals compares object references not values. Two objects with identical fields are not equal unless equals() is overridden.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/56566401/junit-assertion-error-expected-and-actual-showing-the-same-thing'
+),
+(
+    'JUnit test failing but showing identical expected and actual results',
+    'junit',
+    'MEDIUM',
+    '[
+        {"solution": "Compare same data types not String vs Object", "percentage": 92, "note": "Use assertEquals(Arrays.asList(23.0), actual) not assertEquals(''[23.0]'', actual)"},
+        {"solution": "Call .toString() explicitly on both sides if comparing string representations", "percentage": 80, "note": "assertEquals(expected.toString(), actual.toString())"},
+        {"solution": "Check data types match in assertion", "percentage": 85, "note": "Verify both parameters are List or both are String"}
+    ]'::jsonb,
+    'JUnit installed, Test methods defined',
+    'Assertions compare correct data types, Tests pass when values actually match',
+    'assertEquals(Object, Object) compares types first. Comparing String to List always fails even if toString() looks identical.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/21700088/junit-test-failing-but-showing-identical-expected-and-actual-results'
+),
+(
+    'Pytest conftest.py ImportError: No module named',
+    'pytest',
+    'MEDIUM',
+    '[
+        {"solution": "Move import statement inside fixture function", "percentage": 88, "note": "@pytest.fixture\\ndef foo():\\n    from Foo.Foo import Foo\\n    return Foo()"},
+        {"solution": "Add project root to sys.path in conftest.py", "percentage": 80, "note": "import sys\\nsys.path.insert(0, str(Path(__file__).parent))"},
+        {"solution": "Install package in development mode", "percentage": 85, "command": "pip install -e ."}
+    ]'::jsonb,
+    'Pytest installed, conftest.py exists',
+    'Fixtures load without import errors, Tests discover and use fixtures correctly',
+    'conftest.py is loaded before tests run. Module-level imports fail if Python cannot find the module. Defer imports to fixture execution.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/46203090/conftest-py-importerror-no-module-named-foo'
+),
+(
+    'Pytest: How to use fixtures without importing them',
+    'pytest',
+    'HIGH',
+    '[
+        {"solution": "Place fixtures in conftest.py for automatic discovery", "percentage": 95, "note": "Fixtures in conftest.py are auto-discovered without imports"},
+        {"solution": "Create conftest.py at project or subdirectory level", "percentage": 90, "note": "conftest.py makes fixtures available to all tests in that directory and subdirectories"},
+        {"solution": "Import fixtures into conftest.py from separate modules", "percentage": 80, "note": "For organization: define in fixtures.py, import into conftest.py"}
+    ]'::jsonb,
+    'Pytest installed, Test directory structure created',
+    'Fixtures work without explicit imports, Tests can use fixtures by name in parameters',
+    'Fixtures in test_*.py files are file-scoped only. Use conftest.py for shared fixtures. Do not import conftest.py - pytest loads it automatically.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/36452363/how-to-use-py-test-fixtures-without-importing-them'
+);

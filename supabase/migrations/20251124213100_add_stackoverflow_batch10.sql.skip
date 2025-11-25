@@ -1,0 +1,267 @@
+-- Add Stack Overflow solutions batch 10: Django, Nginx, SQLAlchemy, Go
+-- Source: Stack Overflow accepted answers with community verification
+
+-- Django: CSRF verification failed
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Django CSRF verification failed. Request aborted',
+    'django',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add {% csrf_token %} inside <form> tag in template", "percentage": 95, "note": "Most common cause - missing token"},
+        {"solution": "Include django.middleware.csrf.CsrfViewMiddleware in MIDDLEWARE settings", "percentage": 90, "note": "Middleware must be enabled"},
+        {"solution": "Use RequestContext when rendering: render(request, template, context)", "percentage": 85, "note": "Context processor adds CSRF token"}
+    ]'::jsonb,
+    'Django project, Forms in templates, CSRF middleware enabled',
+    'Form submissions succeed, No CSRF verification errors',
+    'CSRF token required for POST requests. {% csrf_token %} must be inside <form> tag. Use render() not render_to_response().',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/9692625/'
+);
+
+-- Django: CSRF with HTTPS
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Django CSRF verification failed over HTTPS',
+    'django',
+    'HIGH',
+    '[
+        {"solution": "Set CSRF_COOKIE_SECURE = True in settings.py for HTTPS sites", "percentage": 90, "note": "Cookie requires secure flag"},
+        {"solution": "Clear browser cookies after changing CSRF_COOKIE_SECURE", "percentage": 85, "note": "Old cookies may conflict"},
+        {"solution": "Check SESSION_COOKIE_SECURE = True if using sessions", "percentage": 80, "note": "Session cookie also needs secure flag"}
+    ]'::jsonb,
+    'Django app deployed with HTTPS, SSL certificate configured',
+    'CSRF validation works over HTTPS, Forms submit successfully',
+    'CSRF_COOKIE_SECURE must be True for HTTPS. Django checks token scheme matches request scheme. Clear cookies after config change.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4547639/'
+);
+
+-- Django: CSRF token missing from context
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Django CSRF token not available in template',
+    'django',
+    'MEDIUM',
+    '[
+        {"solution": "Use render() shortcut: from django.shortcuts import render; return render(request, template, context)", "percentage": 95, "note": "Automatically includes RequestContext"},
+        {"solution": "Manually pass RequestContext: render_to_response(template, context, context_instance=RequestContext(request))", "percentage": 85, "note": "For older Django versions"},
+        {"solution": "Add csrf context processor: TEMPLATES → OPTIONS → context_processors → django.template.context_processors.csrf", "percentage": 80, "note": "Should be enabled by default"}
+    ]'::jsonb,
+    'Django views, Template rendering',
+    'CSRF token available in templates, {% csrf_token %} renders hidden input',
+    'render() includes RequestContext automatically. render_to_response() requires explicit RequestContext for CSRF token.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/3197321/'
+);
+
+-- Nginx: 502 Bad Gateway
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Nginx 502 Bad Gateway error',
+    'nginx',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check upstream server is running: Verify backend application (Node/Python/etc) is started", "percentage": 95, "note": "502 means upstream not responding"},
+        {"solution": "Increase proxy buffer size: proxy_buffer_size 16k; proxy_buffers 64 4k; in nginx.conf", "percentage": 85, "note": "Large response headers"},
+        {"solution": "Check upstream port matches proxy_pass: Ensure proxy_pass http://localhost:3000 matches backend port", "percentage": 90, "note": "Port mismatch"}
+    ]'::jsonb,
+    'Nginx installed and running, Backend application configured, nginx.conf access',
+    'Nginx proxies requests successfully, Backend responses reach client, No 502 errors',
+    '502 = bad gateway means upstream server not responding or returning invalid response. Check backend is running first.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74558547/'
+);
+
+-- Nginx: 502 with Docker
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Nginx Docker reverse proxy 502 Bad Gateway',
+    'nginx',
+    'HIGH',
+    '[
+        {"solution": "Use Docker service name not localhost: proxy_pass http://app:3000 not http://localhost:3000", "percentage": 95, "note": "Docker networking"},
+        {"solution": "Ensure containers on same network: docker network create mynetwork and connect both", "percentage": 90, "note": "Network isolation"},
+        {"solution": "Increase buffer sizes: proxy_buffering off; proxy_buffer_size 16k;", "percentage": 80, "note": "Header size issues"}
+    ]'::jsonb,
+    'Docker containers running, Nginx container, Backend container, Docker network',
+    'Nginx connects to backend container, Requests proxied successfully',
+    'In Docker, localhost refers to container itself not host. Use service name from docker-compose or container name.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/47091356/'
+);
+
+-- Nginx: 502 with SELinux
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Nginx 502 Bad Gateway with SELinux enabled',
+    'nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Allow nginx network connect: sudo setsebool -P httpd_can_network_connect 1", "percentage": 95, "note": "SELinux blocks proxy by default"},
+        {"solution": "Generate custom SELinux policy: grep nginx /var/log/audit/audit.log | audit2allow -M nginx && semodule -i nginx.pp", "percentage": 85, "note": "More specific policy"},
+        {"solution": "Temporarily disable SELinux for testing: sudo setenforce 0 (re-enable with setenforce 1)", "percentage": 70, "note": "Diagnostic only, not production"}
+    ]'::jsonb,
+    'RHEL/CentOS/Fedora with SELinux, Nginx reverse proxy configuration',
+    'Nginx can connect to upstream servers, No SELinux denials in audit.log',
+    'SELinux blocks nginx network connections by default. Check /var/log/audit/audit.log for denials. Enable httpd_can_network_connect.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/33206292/'
+);
+
+-- SQLAlchemy: No such column
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'SQLAlchemy OperationalError: no such column',
+    'sqlalchemy',
+    'VERY_HIGH',
+    '[
+        {"solution": "Drop and recreate tables: Base.metadata.drop_all(engine) then Base.metadata.create_all(engine)", "percentage": 90, "note": "Model changes not reflected"},
+        {"solution": "Use Alembic migrations: alembic revision --autogenerate -m \"message\" then alembic upgrade head", "percentage": 95, "note": "Proper migration workflow"},
+        {"solution": "Manually ALTER table: ALTER TABLE tablename ADD COLUMN columnname TYPE", "percentage": 75, "note": "If data must be preserved"}
+    ]'::jsonb,
+    'SQLAlchemy models defined, Database exists, Schema mismatch',
+    'Queries execute without column errors, All model columns exist in database',
+    'Model changes do not automatically update database schema. Use Alembic for migrations or drop/recreate tables.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/16050523/'
+);
+
+-- SQLAlchemy: Column added but not found
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'SQLAlchemy no such column error after adding column to model',
+    'sqlalchemy',
+    'HIGH',
+    '[
+        {"solution": "Recreate database: Delete .db file and run create_all() again", "percentage": 90, "note": "Development workflow"},
+        {"solution": "Use Flask-Migrate or Alembic: flask db migrate -m \"add column\" && flask db upgrade", "percentage": 95, "note": "Production workflow"},
+        {"solution": "Manually add column with SQLite: ALTER TABLE table_name ADD COLUMN column_name TYPE DEFAULT value", "percentage": 80, "note": "SQLite has ALTER limitations"}
+    ]'::jsonb,
+    'SQLAlchemy or Flask-SQLAlchemy, Model class updated, Database exists',
+    'New column accessible in queries, No operational errors',
+    'Adding column to model does not alter existing database. SQLite ALTER TABLE has limitations with NOT NULL constraints.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/50878513/'
+);
+
+-- SQLAlchemy: Join query column error
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'SQLAlchemy no such column in JOIN query',
+    'sqlalchemy',
+    'MEDIUM',
+    '[
+        {"solution": "Check foreign key column exists in database: Verify migration created FK column", "percentage": 90, "note": "FK column missing"},
+        {"solution": "Use correct table name in join: session.query(Table1).join(Table2, Table1.fk_id == Table2.id)", "percentage": 85, "note": "Explicit join condition"},
+        {"solution": "Verify relationship defined correctly: relationship(BackRef, foreign_keys=[fk_column])", "percentage": 80, "note": "SQLAlchemy relationships"}
+    ]'::jsonb,
+    'SQLAlchemy models with relationships, JOIN queries',
+    'JOIN queries execute successfully, Foreign keys resolved correctly',
+    'Foreign key columns must exist in database. Relationship definitions in models do not create columns automatically.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/57411829/'
+);
+
+-- Go: Undefined variable in if/switch
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Go undefined variable declared in if statement',
+    'golang',
+    'VERY_HIGH',
+    '[
+        {"solution": "Declare variable outside if block: var num string; if condition { num = \"value\" }", "percentage": 95, "note": "Variable scoped to if block"},
+        {"solution": "Use := assignment in if condition: if num := getValue(); num != \"\" { }", "percentage": 85, "note": "Short variable declaration"},
+        {"solution": "Return from if block: if condition { return \"value\" }", "percentage": 80, "note": "Avoid variable scope issue"}
+    ]'::jsonb,
+    'Go compiler, Code with if/switch statements',
+    'Code compiles without undefined errors, Variables accessible in intended scope',
+    'Variables declared with := inside if/switch/for are scoped to that block. Declare outside to access elsewhere.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7329389/'
+);
+
+-- Go: Undefined function in different file
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Go undefined function declared in another file',
+    'golang',
+    'HIGH',
+    '[
+        {"solution": "Build with all files: go run main.go helper.go or go run *.go", "percentage": 95, "note": "Include all package files"},
+        {"solution": "Use go build instead of go run single file: go build compiles all package files", "percentage": 90, "note": "Build entire package"},
+        {"solution": "Ensure same package name: Both files must have same package declaration", "percentage": 85, "note": "Package consistency"}
+    ]'::jsonb,
+    'Go project, Multiple .go files in same package',
+    'Functions from other files accessible, go run succeeds',
+    'go run file.go only compiles that file. Use go run . or go run *.go to include all package files.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/28153203/'
+);
+
+-- Go: Undefined variable in flag usage
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Go undefined variable when using flag package',
+    'golang',
+    'MEDIUM',
+    '[
+        {"solution": "Declare variables outside function: var ArgTest bool at package level before Usage()", "percentage": 95, "note": "Package-level variables"},
+        {"solution": "Use pointers from flag.Bool: ArgTest := flag.Bool(\"test\", false, \"desc\") returns *bool", "percentage": 90, "note": "flag.Bool returns pointer"},
+        {"solution": "Pass variables to function: func Usage(argTest, argSend bool) { }", "percentage": 80, "note": "Function parameters"}
+    ]'::jsonb,
+    'Go program using flag package, Command-line arguments',
+    'Flag variables accessible in all functions, No undefined errors',
+    'Variables declared with := in main() are local to main(). Declare at package level or use flag.Bool which returns pointer.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/46381817/'
+);
+

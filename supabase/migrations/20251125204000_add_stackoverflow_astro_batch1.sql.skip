@@ -1,0 +1,210 @@
+-- Add Stack Overflow Astro framework solutions batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How do I pass a server variable to client-side JS in Astro?',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Use Astro''s define:vars directive on script tags to pass variables from frontmatter to client-side JavaScript", "percentage": 95, "note": "Official Astro directive, variables become globally available in script", "command": "<script define:vars={{ message }}>console.log(message);</script>"},
+        {"solution": "Store values in data-* attributes on DOM elements and read them via JavaScript", "percentage": 85, "note": "Useful for multiple values or non-sensitive data"},
+        {"solution": "Use custom HTML elements with data attributes for type-safe variable passing", "percentage": 80, "note": "Avoids inline script pollution, supports custom elements"}
+    ]'::jsonb,
+    'Astro component with frontmatter section defined',
+    'Variables are accessible in browser console without errors, Page renders without TypeError',
+    'Do not use templating syntax directly in script tags. Remember define:vars implies is:inline. Sensitive data like API keys should not be passed to client side.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/73511984/how-do-i-pass-a-server-variable-to-client-side-js-in-astro'
+),
+(
+    'How to get the querystring parameters with Astro',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Use Astro.url.searchParams.get() in SSR mode (available in v1.0.0-rc+)", "percentage": 95, "note": "Only works with Server-Side Rendering output, not static generation", "command": "const search = Astro.url.searchParams.get(''search'') || '''';"},
+        {"solution": "Use client-side JavaScript with window.location.search for static sites", "percentage": 90, "note": "Works in static generation but requires client JS", "command": "const urlSearchParams = new URLSearchParams(window.location.search);"},
+        {"solution": "Configure output: ''server'' with appropriate adapter in astro.config.mjs", "percentage": 85, "note": "Enables SSR mode required for server-side query parameter access"}
+    ]'::jsonb,
+    'Astro.url object available (SSR mode), Or client-side JavaScript access for static sites',
+    'Query parameters correctly extracted in console log, Page displays correct filtered results',
+    'Static site generation pre-renders at build time - runtime query parameters unavailable without SSR. Do not expect Astro.request.search to work, use Astro.url instead.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70173939/how-to-get-the-querystring-parameters-with-astro'
+),
+(
+    'How can I render a astro component to a HTML string?',
+    'stackoverflow-astro',
+    'MEDIUM',
+    '[
+        {"solution": "Use Astro.slots.render() with a wrapper component to capture HTML output", "percentage": 88, "note": "Wrapper pattern allows HTML string extraction from child components", "command": "const html = await Astro.slots.render(''default'');"},
+        {"solution": "Use Framework-specific renderToString from Solid.js or React for framework components", "percentage": 82, "note": "Workaround for framework-specific components, not native Astro"},
+        {"solution": "Make HTTP requests to your own server endpoint that returns rendered HTML", "percentage": 70, "note": "Functional but considered hacky approach, creates extra HTTP overhead"}
+    ]'::jsonb,
+    'Astro component structure with slots, Or framework library that supports renderToString',
+    'HTML string successfully captured and logged, Custom wrapper component renders child content correctly',
+    'Astro lacks native renderToString function like React. Wrapper components are the recommended pattern. Framework integration workarounds may introduce complexity.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/73382889/how-can-i-render-a-astro-component-to-a-html-string'
+),
+(
+    'Import SVG file in Astro and use it without the <img /> tag',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Use ?raw import modifier with Fragment and set:html directive to inline SVGs", "percentage": 95, "note": "Most reliable approach, imports SVG as raw string", "command": "import Logo from ''./logo.svg?raw''; <Fragment set:html={Logo} />"},
+        {"solution": "Enable experimental SVG support in astro.config.mjs with svg: true", "percentage": 88, "note": "Native component import support, requires Astro 1.x+"},
+        {"solution": "Use astro-icon package to manage SVG icons in src/icons/ directory", "percentage": 85, "note": "Convenient package for managing multiple SVG icons"}
+    ]'::jsonb,
+    'SVG file in project directory, Astro component file',
+    'SVG renders as inline HTML in browser, No image loading errors in console, Styles can be applied to SVG elements',
+    'The ?raw modifier is required for raw SVG imports. Using img tag defeats the purpose of inlining. Some SVG attributes may need adjustment for direct rendering.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76052260/import-svg-file-in-astro-and-use-it-without-the-img-tag'
+),
+(
+    'How to customize markdown with Astro components',
+    'stackoverflow-astro',
+    'MEDIUM',
+    '[
+        {"solution": "Parse markdown to Abstract Syntax Tree (AST) and render via recursive Astro component that handles custom nodes", "percentage": 92, "note": "Accepted solution, uses mdast-util-from-markdown for parsing", "command": "const tree = await parseMarkdown(content); // Pass to recursive component"},
+        {"solution": "Convert markdown to JSON-structured AST and route specific node types to custom components", "percentage": 88, "note": "Allows conditional rendering of custom Astro components based on node type"},
+        {"solution": "Use rehype plugin configuration in astro.config.mjs for markdown processing", "percentage": 80, "note": "Alternative approach using Astro''s build-in rehype support"}
+    ]'::jsonb,
+    'Markdown files in src/content/ directory, Astro components for custom rendering',
+    'Custom components render correctly for specific markdown nodes, No parse errors in build output',
+    'Do not rename all files to .mdx to avoid intrusive workarounds. AST parsing approach requires understanding mdast structure. Avoid unnecessary rehype plugins for simple customization.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74919230/how-to-customize-markdown-with-astro-components'
+),
+(
+    'OnClick event not working for React Component in Astro',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Add client:load hydration directive to React components in Astro files", "percentage": 96, "note": "Official solution - Astro ships zero framework JS by default", "command": "<InteractiveButton client:load />"},
+        {"solution": "Use client:idle directive to defer hydration until browser is idle", "percentage": 90, "note": "Better performance than client:load for non-critical interactive components"},
+        {"solution": "Use client:visible directive to hydrate only when component enters viewport", "percentage": 88, "note": "Best for below-fold interactive content"}
+    ]'::jsonb,
+    'React component imported in Astro file, React integration configured',
+    'onClick handler fires when button clicked, Console logs events, No errors in browser DevTools',
+    'Astro renders framework components as static HTML by default - hydration directives are required for interactivity. Without client:* directive, event handlers will not function. Islands Architecture requires explicit hydration.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74875277/onclick-event-not-working-for-react-component-in-astro'
+),
+(
+    'Astro - react useEffect hook is not working',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Add client:load directive to React component to enable JavaScript hydration", "percentage": 96, "note": "React hooks only work with hydration enabled", "command": "<SecondSection client:load />"},
+        {"solution": "Use client:idle for hooks that do not need immediate execution", "percentage": 88, "note": "Defers hydration until browser idle time, better for performance"},
+        {"solution": "Verify React integration is installed: astro add react", "percentage": 85, "note": "Ensure React adapter is properly configured in astro.config.mjs"}
+    ]'::jsonb,
+    'React integration configured, React component with useState/useEffect hooks',
+    'useEffect callback executes in browser, Console logs appear, State updates trigger re-renders',
+    'React hooks require JavaScript hydration - they cannot run at build time. Astro ships zero JS by default. Do not use hooks in non-hydrated components. Hydration directives control when JS loads.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74578397/astro-react-useeffect-hook-is-not-working'
+),
+(
+    'Can I pass additional classes to an Astro component from parent?',
+    'stackoverflow-astro',
+    'MEDIUM',
+    '[
+        {"solution": "Accept class prop in child component and combine with class:list directive", "percentage": 94, "note": "Recommended approach - use destructuring to handle reserved class keyword", "command": "const { class: className, ...rest } = Astro.props; <div class:list={[''child-component'', className]}>"},
+        {"solution": "Use spread operator to pass all props including classes from parent", "percentage": 88, "note": "Ensures scoped styling works correctly per Astro documentation"},
+        {"solution": "Define prop interface to accept className as string prop", "percentage": 82, "note": "More explicit than using reserved class keyword"}
+    ]'::jsonb,
+    'Child Astro component with styling, Parent component passing classes',
+    'Parent-provided classes appear in rendered HTML, Component styling and custom classes both apply correctly',
+    'The class keyword is reserved in JavaScript - must use destructuring: { class: className }. The class:list directive properly merges arrays of class names. Scoped styling requires proper rest parameter usage.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75933212/can-i-pass-additional-classes-to-an-astro-component-from-parent'
+),
+(
+    'Import Bootstrap in Astro',
+    'stackoverflow-astro',
+    'MEDIUM',
+    '[
+        {"solution": "Install Bootstrap via npm and import CSS/JS directly in Astro component", "percentage": 96, "note": "Most aligned with modern Astro practices", "command": "npm install bootstrap; import ''bootstrap/dist/css/bootstrap.min.css'';"},
+        {"solution": "Add Bootstrap CDN links in head and body sections of layout", "percentage": 88, "note": "Quick setup but less optimized than npm approach"},
+        {"solution": "Install react-bootstrap and use Bootstrap React components with React integration", "percentage": 82, "note": "Use if building React-heavy Astro site with React integration"}
+    ]'::jsonb,
+    'Astro project initialized, Node.js and npm installed',
+    'Bootstrap styles apply to elements, Bootstrap JavaScript components work (dropdowns, modals, etc.)',
+    'CDN approach works but does not benefit from Astro bundling optimization. Use npm import for better asset handling. React-bootstrap requires separate React integration setup.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/73879494/import-bootstrap-in-astro'
+),
+(
+    'Astro JS if statement - conditional rendering',
+    'stackoverflow-astro',
+    'MEDIUM',
+    '[
+        {"solution": "Filter array before mapping: const filtered = items.filter(item => item === ''Dog''); then render filtered array", "percentage": 93, "note": "Cleanest approach - separates logic from markup in frontmatter"},
+        {"solution": "Use filter() inline within map: {items.filter(item => item === ''Dog'').map(item => <li>{item}</li>)}", "percentage": 88, "note": "Concise but less readable for complex conditions"},
+        {"solution": "Use conditional AND operator: {items.map(item => item === ''Dog'' && <li>{item}</li>)}", "percentage": 82, "note": "Quick solution but can return false values in output"}
+    ]'::jsonb,
+    'Array of items to render, Astro component with JSX syntax',
+    'Only matching items render in HTML, No false/undefined values appear in output',
+    'Do not render boolean values directly in JSX - they will appear as text. Filter before mapping for cleaner code. AND operator returns false which renders as empty string, not ideal for complex logic.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75430282/astro-js-if-statement'
+),
+(
+    'How to use document and window element in astro JS',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Use <script is:inline></script> tags to access window and document objects", "percentage": 94, "note": "Accepted solution - prevents Astro processing, includes directly in HTML"},
+        {"solution": "Use regular <script></script> tags without is:inline for most use cases", "percentage": 90, "note": "Simpler alternative that works fine, avoids potential script duplication"},
+        {"solution": "Access Astro.site.pathname for current page path instead of window.location", "percentage": 75, "note": "Server-side alternative when page info is needed"}
+    ]'::jsonb,
+    'Astro component file, Need to access browser APIs (window, document)',
+    'Browser APIs accessible without errors, console.log outputs expected values, Page pathname correctly retrieved',
+    'Do not try to access window/document in frontmatter - they only exist in browser. The is:inline directive prevents optimization but ensures proper script inclusion. Regular script tags usually work fine without is:inline.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71495318/how-to-use-document-and-window-element-in-astro-js'
+),
+(
+    'How to pass variable from frontmatter to script in Astro JS',
+    'stackoverflow-astro',
+    'HIGH',
+    '[
+        {"solution": "Use define:vars directive to pass frontmatter variables to script tags", "percentage": 95, "note": "Official Astro solution, variables become global in script scope", "command": "<script define:vars={{title}}>alert(title);</script>"},
+        {"solution": "Use data-* HTML attributes to store frontmatter values and read via dataset property", "percentage": 88, "note": "Alternative approach that supports Vite bundling and TypeScript"},
+        {"solution": "Define variables in inline script block to make them globally accessible", "percentage": 82, "note": "Less elegant but works without special directives"}
+    ]'::jsonb,
+    'Astro component with frontmatter variables defined',
+    'Variables accessible and logged correctly in browser console, Script executes without errors',
+    'The define:vars directive implies is:inline behavior - scripts become inline instead of bundled. Do not pass sensitive data this way. Use data-* attributes as alternative for complex data structures.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76714410/how-to-pass-variable-from-frontmatter-to-script-in-astro-js'
+);

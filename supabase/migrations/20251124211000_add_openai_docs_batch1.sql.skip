@@ -1,0 +1,223 @@
+-- Add OpenAI API documentation solutions batch 1
+-- Extracted from official OpenAI documentation and community resources
+-- Date: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'OpenAI API error 401: Invalid API key provided',
+    'ai-api',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify API key is correct and active in OpenAI dashboard under API keys section", "percentage": 95, "note": "Most common cause of 401 errors"},
+        {"solution": "Generate a new API key and replace the old one in your application", "percentage": 90, "note": "Required if key was generated before upgrading to paid plan"},
+        {"solution": "Check if API key is properly formatted with Bearer prefix in Authorization header", "percentage": 85, "command": "Authorization: Bearer YOUR_API_KEY"},
+        {"solution": "Ensure account is associated with correct organization if using organization-based access", "percentage": 80, "note": "Organization membership required for some API access"}
+    ]'::jsonb,
+    'OpenAI account created, Valid billing method (for paid features)',
+    'API returns 200 status code, Successful response with expected data',
+    'Do not expose API keys in client-side code. Keys must be activated before use. Old keys from free tier may not work after upgrading to paid plan.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 429: Rate limit exceeded',
+    'ai-api',
+    'VERY_HIGH',
+    '[
+        {"solution": "Implement exponential backoff retry logic starting at 1 second delay", "percentage": 95, "note": "Official OpenAI recommended approach"},
+        {"solution": "Check rate limits for your tier in OpenAI dashboard and optimize request frequency", "percentage": 90, "note": "Free tier: 3 RPM, Paid tiers vary"},
+        {"solution": "Batch multiple operations into single requests when possible to reduce request count", "percentage": 85, "note": "Reduces total API calls"},
+        {"solution": "Monitor rate limit headers (x-ratelimit-remaining) and proactively slow requests", "percentage": 80, "command": "Check response headers for rate limit info"}
+    ]'::jsonb,
+    'Valid OpenAI API key, Active account',
+    'Requests succeed with 200 status, No 429 errors in logs, Response headers show remaining quota',
+    'Rate limits apply per minute and per day depending on tier. Do not retry immediately - always use exponential backoff. Free tier has very low limits (3 RPM).',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 429: You exceeded your current quota insufficient_quota',
+    'ai-api',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add payment method and purchase credits in OpenAI billing dashboard", "percentage": 95, "note": "Required for continued API access"},
+        {"solution": "Check usage dashboard to verify free credits have not expired (3 month limit)", "percentage": 90, "note": "Free $5 credits expire after 3 months"},
+        {"solution": "Generate new API key after upgrading to paid plan if key was created during free tier", "percentage": 85, "note": "Old keys may not work with paid plan"},
+        {"solution": "Set up usage limits in billing dashboard to prevent unexpected quota exhaustion", "percentage": 80, "note": "Helps manage spending"}
+    ]'::jsonb,
+    'OpenAI account with billing access, Valid payment method',
+    'API requests succeed after adding credits, Usage dashboard shows available quota, Billing page shows active payment method',
+    'Free tier credits ($5) expire after 3 months from signup. All new accounts require prepaid credits since February 2024 policy change. Monthly spending limits must be set above $0.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 400: This models maximum context length is exceeded',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Reduce prompt length to fit within model token limit (GPT-3.5: 4097, GPT-4: 8192/32768)", "percentage": 90, "note": "Check model-specific limits"},
+        {"solution": "Decrease max_tokens parameter for completion to leave room for prompt", "percentage": 85, "command": "max_tokens should be: model_limit - prompt_tokens - buffer"},
+        {"solution": "Implement token counting before API call using tiktoken library", "percentage": 85, "note": "Prevents exceeding limits", "command": "pip install tiktoken"},
+        {"solution": "Split large inputs into smaller chunks and process sequentially", "percentage": 75, "note": "For documents exceeding model limits"}
+    ]'::jsonb,
+    'Valid OpenAI API key, tiktoken library for token counting (optional)',
+    'API accepts request with 200 status, Token count stays within model limits, Response contains expected completion',
+    'Token limits include both input prompt and output completion. Different models have different limits (GPT-3.5: 4K, GPT-4: 8K-32K). Always account for completion tokens when calculating prompt size.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 403: Forbidden - Country not supported or request blocked',
+    'ai-api',
+    'MEDIUM',
+    '[
+        {"solution": "Verify your country is supported by OpenAI services (check supported regions list)", "percentage": 85, "note": "Some countries are restricted"},
+        {"solution": "Review request content for policy violations - may have triggered moderation filter", "percentage": 80, "note": "OpenAI blocks requests violating usage policies"},
+        {"solution": "Check if model access requires higher account tier or special permissions", "percentage": 75, "note": "Some models restricted by tier"},
+        {"solution": "Ensure organization membership and permissions are correctly configured", "percentage": 70, "note": "Organization-level access control"}
+    ]'::jsonb,
+    'OpenAI account in supported region, Appropriate account tier for model access',
+    'API returns 200 status, No moderation blocks in response, Successful access to requested model',
+    'OpenAI is not available in all countries. Requests with content violating usage policies return 403. Model access varies by account tier. VPN usage may trigger blocks.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 404: Model not found or no access model_not_found',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Verify model name is spelled correctly and matches current OpenAI model list", "percentage": 90, "note": "Common typos: gpt-4o vs gpt-4"},
+        {"solution": "Check account tier has access to requested model (GPT-4 requires paid tier)", "percentage": 85, "note": "Model access varies by account type"},
+        {"solution": "Update to currently available model names as OpenAI may deprecate older versions", "percentage": 80, "note": "Models like text-davinci-003 deprecated"},
+        {"solution": "Review API documentation for current model availability and naming conventions", "percentage": 75, "note": "Model catalog changes over time"}
+    ]'::jsonb,
+    'Valid OpenAI API key, Paid account tier (for advanced models)',
+    'API accepts model name, Returns 200 status, Model responds with expected output format',
+    'Model names are case-sensitive and version-specific. New models (like o3-mini) may require waitlist access. Free tier only has access to basic models. Check platform.openai.com/docs/models for current availability.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 500: Internal server error',
+    'ai-api',
+    'MEDIUM',
+    '[
+        {"solution": "Retry request with exponential backoff (start 1s, double each retry, max 5 attempts)", "percentage": 90, "note": "Server-side issue, not client fault"},
+        {"solution": "Wait 60 seconds and retry - OpenAI servers may be experiencing high load", "percentage": 85, "note": "Common during peak usage times"},
+        {"solution": "Check OpenAI status page for ongoing incidents or maintenance", "percentage": 80, "note": "status.openai.com", "command": "curl https://status.openai.com"},
+        {"solution": "Implement fallback to alternative model or cached response if available", "percentage": 70, "note": "For production resilience"}
+    ]'::jsonb,
+    'Valid OpenAI API key, Network connectivity',
+    'Retry succeeds with 200 status, No recurring 500 errors, OpenAI status page shows operational',
+    'Error 500 indicates OpenAI server problem, not your code. Do not modify request parameters. Always implement retry logic with exponential backoff. If persists after retries, check status page.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 503: Service unavailable or overloaded',
+    'ai-api',
+    'MEDIUM',
+    '[
+        {"solution": "Implement retry logic with exponential backoff (1s, 2s, 4s, 8s, 16s delays)", "percentage": 90, "note": "Server at capacity, needs time to recover"},
+        {"solution": "Check Retry-After header in response and wait specified duration before retry", "percentage": 85, "command": "Parse response.headers[Retry-After]"},
+        {"solution": "Reduce request rate and spread API calls over longer time period", "percentage": 80, "note": "Helps distribute server load"},
+        {"solution": "Monitor OpenAI status page for service degradation announcements", "percentage": 75, "note": "Check status.openai.com"}
+    ]'::jsonb,
+    'Valid OpenAI API key, Retry logic implemented in application',
+    'Request succeeds after retry, Response includes expected data, No repeated 503 errors',
+    'Error 503 means OpenAI servers are overloaded with requests from all users. Very common during peak times. Do not increase request rate - use exponential backoff. Retry-After header indicates minimum wait time.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API timeout error: Request timed out',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Increase timeout setting in API client configuration (default: 20s, try 60s)", "percentage": 85, "command": "timeout=60.0", "note": "Longer prompts need more time"},
+        {"solution": "Enable streaming responses to receive partial results before timeout", "percentage": 90, "note": "Prevents timeout on long completions", "command": "stream=True"},
+        {"solution": "Reduce completion length by lowering max_tokens parameter", "percentage": 80, "note": "Shorter outputs complete faster"},
+        {"solution": "Implement retry logic with max_retries parameter in client", "percentage": 85, "command": "max_retries=3"}
+    ]'::jsonb,
+    'OpenAI API client with configurable timeout, Network connectivity',
+    'Request completes within timeout period, Full response received, No timeout errors in logs',
+    'Default timeout (20s) may be too short for large prompts or long completions. Streaming prevents timeouts by sending incremental results. Network issues can also cause timeouts - check connectivity.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error 400: Invalid request error - malformed JSON or missing parameters',
+    'ai-api',
+    'HIGH',
+    '[
+        {"solution": "Validate JSON request body syntax using JSON validator before sending", "percentage": 90, "note": "Check for missing commas, quotes, brackets"},
+        {"solution": "Ensure all required parameters are included: model, messages/prompt", "percentage": 95, "note": "Missing required fields cause 400 errors"},
+        {"solution": "Check parameter types match API specification (strings, integers, arrays)", "percentage": 85, "note": "Type mismatches rejected"},
+        {"solution": "Review API documentation for correct endpoint and parameter names", "percentage": 80, "note": "Parameter names are case-sensitive"}
+    ]'::jsonb,
+    'Valid OpenAI API key, Properly formatted JSON request body',
+    'API accepts request without 400 error, Returns 200 status with valid response, Request matches API schema',
+    'OpenAI API is strict about JSON formatting and required parameters. Common issues: missing model parameter, incorrect message format, invalid parameter types. Use type checking and validation before API calls.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API authentication error: Invalid organization ID',
+    'ai-api',
+    'MEDIUM',
+    '[
+        {"solution": "Verify organization ID in OpenAI dashboard under Settings > Organization", "percentage": 90, "note": "Copy exact org ID string"},
+        {"solution": "Set OpenAI-Organization header with correct org ID if using multiple orgs", "percentage": 85, "command": "OpenAI-Organization: org-XXXXXXXXX"},
+        {"solution": "Ensure API key belongs to the organization you are trying to access", "percentage": 85, "note": "Keys are org-specific"},
+        {"solution": "Remove organization header if using personal account without organization", "percentage": 80, "note": "Only required for org accounts"}
+    ]'::jsonb,
+    'OpenAI account with organization membership, API key belonging to organization',
+    'API accepts requests with 200 status, Correct organization resources accessible, No authentication errors',
+    'Organization ID format: org-XXXXXXXXX (case-sensitive). Personal accounts do not need org header. API keys are tied to specific organizations. Must be member with appropriate permissions.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+),
+(
+    'OpenAI API error: Incorrect Content-Type header',
+    'ai-api',
+    'MEDIUM',
+    '[
+        {"solution": "Set Content-Type header to application/json for all API requests", "percentage": 95, "command": "Content-Type: application/json"},
+        {"solution": "Ensure request body is valid JSON format matching Content-Type header", "percentage": 90, "note": "Body must be proper JSON string"},
+        {"solution": "For file uploads (fine-tuning), use multipart/form-data Content-Type", "percentage": 85, "command": "Content-Type: multipart/form-data"},
+        {"solution": "Check HTTP client library automatically sets correct Content-Type for JSON", "percentage": 80, "note": "Some libraries set this automatically"}
+    ]'::jsonb,
+    'HTTP client configured to send proper headers, Valid JSON request body',
+    'API accepts request with 200 status, No content-type errors, Response contains expected data',
+    'OpenAI API requires application/json for most endpoints. Missing or incorrect Content-Type causes 400/415 errors. File upload endpoints need multipart/form-data. Always set explicitly.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://platform.openai.com/docs/guides/error-codes'
+);

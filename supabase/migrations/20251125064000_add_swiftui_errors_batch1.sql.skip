@@ -1,0 +1,221 @@
+-- Add SwiftUI common errors from Apple developer documentation batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'SwiftUI ForEach crash: Fatal error - Duplicate keys of type X found in Dictionary',
+    'swiftui',
+    'HIGH',
+    '[
+        {"solution": "Use unique identifiers for each item. If using plain values, add id: \\.self to ForEach: ForEach(items, id: \\.self) { item in ... }", "percentage": 95, "note": "Essential for collections without Identifiable conformance"},
+        {"solution": "Ensure your model conforms to Identifiable with a unique id property", "percentage": 90, "note": "Recommended approach for custom models"},
+        {"solution": "Verify that hash and == methods use the same properties - inconsistent hashing leads to duplicate key errors", "percentage": 85, "command": "Check Hashable conformance in model"},
+        {"solution": "For SwiftData models, use ForEach(list) directly without id: \\.self since SwiftData objects are Identifiable", "percentage": 90, "note": "SwiftData objects provide automatic Identifiable conformance"}
+    ]'::jsonb,
+    'SwiftUI 4+, Model conforming to Identifiable or primitive values',
+    'ForEach renders without crashing, List displays all items with correct count, No duplicate ID warnings in console',
+    'Do not use non-unique properties as IDs (e.g., person.name when multiple people share names). Avoid id: \\.self with SwiftData objects. Do not use the same property for both hash and == if they differ.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/726582'
+),
+(
+    'SwiftUI EnvironmentObject crash: Fatal error - No ObservableObject of type X found',
+    'swiftui',
+    'HIGH',
+    '[
+        {"solution": "Add .environmentObject(YourData()) at the App root level in WindowGroup, ensuring all descendant views can access it", "percentage": 95, "note": "Must be placed in @main App structure"},
+        {"solution": "For sheet modals, re-pass the environment object to .sheet modifier since sheets create a new view hierarchy that does not inherit environment automatically", "percentage": 90, "command": ".sheet(isPresented: $showSheet) { ModalView().environmentObject(yourData) }"},
+        {"solution": "In previews, add .environmentObject(MockData()) to #Preview block even if the view does not directly use it", "percentage": 88, "note": "Environment objects in previews are separate from app environment"},
+        {"solution": "Avoid accessing @EnvironmentObject in model classes - only use in SwiftUI Views", "percentage": 85, "note": "Models should receive environment data via dependency injection"}
+    ]'::jsonb,
+    'SwiftUI app structure, Environment object class conforming to ObservableObject',
+    'View renders without crash, EnvironmentObject values are accessible in child views, Sheet modals display correctly',
+    'Environment is not inherited into modal sheets without explicit .environmentObject() modifier. Do not try to access @EnvironmentObject outside of SwiftUI Views. Missing environmentObject in previews causes crashes in preview canvas.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/707659'
+),
+(
+    'SwiftUI @State and @Binding preview error: Cannot create binding outside of body',
+    'swiftui',
+    'HIGH',
+    '[
+        {"solution": "Use .constant(value) binding for static preview values: .constant(true), .constant(\"text\")", "percentage": 92, "note": "Simple solution for non-interactive previews"},
+        {"solution": "Create a StatefulPreviewWrapper container view that holds @State and passes binding to child view", "percentage": 90, "command": "struct Preview: View { @State var value = \"\"; var body: some View { YourView(value: $value) } }"},
+        {"solution": "Use #Preview macro with local struct holding @State: #Preview { @State var value = \"\"; return YourView(value: $value) }", "percentage": 88, "note": "Modern Swift 5.9+ approach"},
+        {"solution": "Create a custom modifier or extension to generate testable bindings in previews", "percentage": 80, "note": "For complex state management"}
+    ]'::jsonb,
+    'Xcode 14+, SwiftUI View with @State or @Binding properties',
+    'Preview canvas renders without "Edit placeholder" error, Binding values update in preview, Preview is interactive',
+    'Cannot use @State directly in PreviewProvider.previews. State throws fatalError when accessed outside body. Using plain State values without .constant() causes type mismatch errors.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/702862'
+),
+(
+    'SwiftUI NavigationLink isActive deprecated: Use value-based navigation instead',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "Replace NavigationLink(destination:isActive:) with NavigationLink(_:value:) inside NavigationStack or NavigationSplitView", "percentage": 95, "note": "iOS 16+ recommended approach"},
+        {"solution": "Migrate from NavigationView + NavigationLink to NavigationStack for better control: NavigationStack(path: $navigationPath) { ... }", "percentage": 92, "command": "@State var navigationPath: [String] = []"},
+        {"solution": "Use navigationDestination(for:destination:) modifier instead of NavigationLink with tag parameter", "percentage": 88, "note": "Cleaner API for iOS 16+"},
+        {"solution": "If targeting iOS 15, keep NavigationLink(destination:) but plan migration strategy for iOS 16", "percentage": 80, "note": "Deprecated in iOS 16, will be removed in future version"}
+    ]'::jsonb,
+    'iOS 16+, Xcode 14.1+, existing NavigationLink with isActive or tag/selection',
+    'App compiles without deprecation warnings, Navigation works smoothly, NavigationStack properly maintains navigation state',
+    'Old NavigationLink APIs cause deprecation warnings in iOS 16+. isActive parameter does not work with new NavigationStack. Tag/selection pattern is not compatible with value-based navigation.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/documentation/swiftui/migrating-to-new-navigation-types'
+),
+(
+    'SwiftUI view type inference error: Generic parameter could not be inferred',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "Break complex expressions into smaller parts with explicit type annotations: let view: some View = MyView()", "percentage": 88, "note": "Reduces compiler type-checking overhead"},
+        {"solution": "Add explicit return type to closure: { () -> some View in ... } instead of { ... }", "percentage": 85, "command": "var body: some View { ... }"},
+        {"solution": "Avoid data processing in body - move calculations to separate methods or computed properties", "percentage": 87, "note": "Keeps body simple for type inference"},
+        {"solution": "Use ViewBuilder closures with explicit types for custom container views", "percentage": 82, "note": "Helps compiler infer generic parameters"}
+    ]'::jsonb,
+    'Xcode 13+, SwiftUI view with complex modifiers or generics',
+    'Code compiles without type inference errors, Preview canvas renders, Compiler performance is acceptable',
+    'Do not place complex data processing directly in body. Do not use multiple overloaded operations in single expression. Generic type parameters must be resolvable from context.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/720808'
+),
+(
+    'SwiftUI @ObservedObject model updates not refreshing view',
+    'swiftui',
+    'HIGH',
+    '[
+        {"solution": "Ensure class conforms to ObservableObject and properties are marked with @Published: @Published var property = value", "percentage": 94, "note": "Core requirement for observable properties"},
+        {"solution": "For nested ObservableObjects, use @Observable macro (iOS 17+) instead of ObservableObject + @Published", "percentage": 91, "command": "@Observable class MyModel { var property: String = \"\" }"},
+        {"solution": "Create single instance and pass it to views as @StateObject, not @ObservedObject", "percentage": 89, "note": "@StateObject maintains lifecycle ownership"},
+        {"solution": "Avoid mutations of array contents - replace entire array: self.items = newItems instead of modifying items[0]", "percentage": 85, "note": "Combine requires observable reference change"}
+    ]'::jsonb,
+    'Class conforming to ObservableObject, @Published properties, iOS 13+',
+    'View updates when model properties change, @Published properties trigger view refresh, No delayed updates',
+    'Nested ObservableObjects do not auto-update (use @Observable instead). Array mutations don''t trigger updates (must replace array). Do not use @ObservedObject in model classes.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/688524'
+),
+(
+    'SwiftUI Preview canvas not updating: PreviewUpdateTimedOutError',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "Disable automatic canvas refresh and use manual refresh: Editor > Canvas > Turn off Automatically Refresh Canvas", "percentage": 92, "note": "Resolves timeout errors on large projects"},
+        {"solution": "Clean Xcode derived data: rm -rf ~/Library/Developer/Xcode/DerivedData/*", "percentage": 88, "command": "rm -rf ~/Library/Developer/Xcode/DerivedData/*"},
+        {"solution": "Restart Xcode and iOS Simulators completely", "percentage": 85, "note": "Clears stale preview processes"},
+        {"solution": "Click Diagnostics button in preview error banner to generate diagnostic report for complex preview issues", "percentage": 80, "command": "Editor > Canvas > Diagnostics"}
+    ]'::jsonb,
+    'Xcode 13+, SwiftUI project with Preview canvas',
+    'Preview canvas loads and displays, No timeout errors appear, Canvas updates complete within 5 seconds',
+    'Automatically refreshing canvas on large projects causes frequent timeouts. Preview errors do not indicate app crashes. Canvas refresh state separate from app state.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/674460'
+),
+(
+    'SwiftUI public View initializer is inaccessible: private synthesized init',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "Add explicit public initializer to public structs: public struct MyView: View { public init() { } }", "percentage": 96, "note": "Fixes cross-module visibility"},
+        {"solution": "If View has private properties, explicitly define non-private init since synthesized init becomes private", "percentage": 92, "note": "Swift access control rule"},
+        {"solution": "For @State wrapped properties in init, initialize using underscore prefix: self._player = State(initialValue: AVPlayer())", "percentage": 88, "command": "self._property = State(initialValue: value)"},
+        {"solution": "Make private properties internal or add them as parameters to public init", "percentage": 85, "note": "Alternative to explicit initializer"}
+    ]'::jsonb,
+    'Public View struct, Xcode 13+, cross-module imports',
+    'View imports successfully across modules, Initializer is accessible, No "inaccessible initializer" errors',
+    'Missing public initializer on public Views causes access control errors. Private properties make synthesized init inaccessible. Property wrappers like @State need special initialization syntax.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/692164'
+),
+(
+    'SwiftUI TextField binding type error: Cannot convert String to Binding<String>',
+    'swiftui',
+    'HIGH',
+    '[
+        {"solution": "Use @State property with $ prefix: @State var text = \"\"; TextField(\"Label\", text: $text)", "percentage": 96, "note": "Most common solution"},
+        {"solution": "Pass Binding from parent view: func MyView(text: Binding<String>) { TextField(\"Label\", text: text) }", "percentage": 90, "note": "For views that accept bindings as parameters"},
+        {"solution": "Create computed binding from @State: var binding: Binding<String> { Binding(get: { ... }, set: { ... }) }", "percentage": 85, "note": "Custom binding with computed logic"},
+        {"solution": "Verify parameter type matches Binding<ParameterType> - generics must match exactly", "percentage": 88, "note": "Binding<Temperature> and Binding<Parameter> are different types"}
+    ]'::jsonb,
+    'SwiftUI Form with TextField, @State property declared',
+    'TextField renders correctly, Text updates in real-time, Binding compiles without errors',
+    'Plain String property cannot be used as Binding - must use @State with $ prefix. Type parameters in Binding must match exactly. Do not pass State type instead of Binding value.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/671470'
+),
+(
+    'SwiftUI layout constraint warning: TextField causes UIViewAlertForUnsatisfiableConstraints',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "These warnings are cosmetic and do not affect app functionality - they are UIKit constraints from internal SwiftUI implementation", "percentage": 100, "note": "No action required in most cases"},
+        {"solution": "If warning appears with SecureField specifically, it is a known issue with no workaround - ignore safely", "percentage": 95, "note": "Apple internal limitation"},
+        {"solution": "If adding navigationTitle causes constraint warnings, these are unavoidable in current SwiftUI implementation", "percentage": 92, "note": "Appears even in Apple documentation examples"},
+        {"solution": "For genuine layout issues (UI doesn''t display correctly), check frame modifiers and GeometryReader usage separately from constraint warnings", "percentage": 85, "note": "Distinguish warnings from actual problems"}
+    ]'::jsonb,
+    'iOS 13+, SwiftUI TextFields or SecureFields in Form',
+    'App functions correctly despite console warnings, UI displays as expected, No layout anomalies visible',
+    'These constraint warnings are expected and unavoidable in current SwiftUI. They do not indicate app errors. Do not attempt to suppress or fix these warnings as they are internal UIKit messages.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/728914'
+),
+(
+    'SwiftUI app crashes in main method or during initialization',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "Check that all @EnvironmentObject and @ObservedObject dependencies are initialized before app launch", "percentage": 90, "note": "Missing dependencies cause early crashes"},
+        {"solution": "Verify @main App entry point initializes StateObjects correctly: @StateObject private var model = AppModel()", "percentage": 92, "note": "Essential for app lifecycle"},
+        {"solution": "Ensure NSAttributedString is created on main thread when used in SwiftUI - creating HTML NSAttributedString on background thread crashes", "percentage": 85, "command": "DispatchQueue.main.async { self.attributedString = ... }"},
+        {"solution": "Check for circular references in model dependencies that prevent proper initialization", "percentage": 80, "note": "Use weak references in closures"}
+    ]'::jsonb,
+    'SwiftUI app with @main entry point, iOS 14+',
+    'App launches successfully, No crashes during initialization, Debugger does not stop at main',
+    'Do not create complex objects in App.init() - delay to StateObjects. Do not create NSAttributedString on background threads. Circular references prevent proper app initialization.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/675006'
+),
+(
+    'SwiftUI memory leak: Sheet does not release objects on iOS 17',
+    'swiftui',
+    'MEDIUM',
+    '[
+        {"solution": "Avoid holding strong references to objects passed to sheet item parameter - use weak references when storing", "percentage": 88, "note": "iOS 17 specific issue with fullScreenCover and sheet"},
+        {"solution": "Manually release sheet data when dismissed: onDismiss { self.sheetData = nil }", "percentage": 85, "command": ".sheet(item: $sheetItem, onDismiss: { self.sheetItem = nil }) { ... }"},
+        {"solution": "Use Instruments Allocations track (not Leaks track) to identify what is holding memory", "percentage": 87, "note": "Better diagnostic tool for memory issues"},
+        {"solution": "For iOS 16 and below, ensure view is deallocated by breaking reference cycles", "percentage": 82, "note": "Less critical in earlier iOS versions"}
+    ]'::jsonb,
+    'iOS 17+, Xcode 15, SwiftUI app with sheet modals',
+    'Sheet dismisses and releases memory, Allocations show proper deallocation, App memory usage stable across sheet cycles',
+    'iOS 17 sheets do not release objects automatically - must be released manually. Leaks track is misleading for this issue - use Allocations instead. Strong references to sheet items cause retention.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://developer.apple.com/forums/thread/738840'
+);

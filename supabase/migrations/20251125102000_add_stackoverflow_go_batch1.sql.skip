@@ -1,0 +1,216 @@
+-- Add Stack Overflow top voted Go questions and accepted answers
+-- Source: https://stackoverflow.com/questions/tagged/go?tab=votes
+-- Category: stackoverflow-go
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to check if a map contains a key in Go?',
+    'stackoverflow-go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use the comma ok idiom: val, ok := myMap[\"key\"]. The ok boolean indicates if key exists. For key existence only, use _, ok := myMap[\"key\"]", "percentage": 95, "note": "Most efficient and idiomatic approach"},
+        {"solution": "Use single conditional: if val, ok := myMap[\"foo\"]; ok { /* key exists */ }", "percentage": 90, "note": "Combines declaration and check in one statement"},
+        {"solution": "Check key existence with blank identifier: if _, ok := myMap[\"foo\"]; ok { /* key exists */ }", "percentage": 90, "command": "val, ok := myMap[key]"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Boolean ok variable correctly indicates key presence without iterating map',
+    'Do not confuse zero values with missing keys. Always use the comma ok idiom. Avoid iterating through map when checking single key.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/2050391/how-to-check-if-a-map-contains-a-key-in-go'
+),
+(
+    'How to efficiently concatenate strings in Go?',
+    'stackoverflow-go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use strings.Builder for modern Go (1.10+). Create var sb strings.Builder, call sb.WriteString(), then sb.String() for result. Minimizes memory allocations.", "percentage": 95, "note": "Recommended approach for current Go versions", "command": "var sb strings.Builder\nsb.WriteString(\"text\")\nresult := sb.String()"},
+        {"solution": "Use bytes.Buffer from bytes package. Implements io.Writer and achieves O(n) complexity unlike + operator", "percentage": 85, "note": "Alternative for older Go versions"},
+        {"solution": "Pre-allocate byte slice with copy() if total length is known at start. Provides superior performance for specific use cases.", "percentage": 80, "note": "Less common but fastest when applicable"}
+    ]'::jsonb,
+    'Go 1.10+ recommended',
+    'String concatenation completes in O(n) time, no excessive memory allocations',
+    'Never use + operator for multiple concatenations in loops. Do not use bytes.Buffer when strings.Builder is available. Pre-allocation is not always necessary.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1760757/how-to-efficiently-concatenate-strings-in-go'
+),
+(
+    'How do you write multiline strings in Go?',
+    'stackoverflow-go',
+    'HIGH',
+    '[
+        {"solution": "Use raw string literals with backticks for multiline strings: `line1\\nline2\\nline3`. Preserves actual newlines and ignores escape sequences.", "percentage": 95, "note": "Ideal for static multiline text", "command": "`line 1\nline 2\nline 3`"},
+        {"solution": "Concatenate regular strings across lines: \"line 1\" + \"line 2\" + \"line 3\". Allows escape sequence interpretation.", "percentage": 85, "note": "Use when escape sequences needed"},
+        {"solution": "Use fmt.Sprintf or other formatting functions for dynamic multiline content", "percentage": 75, "note": "When content is computed"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Raw strings preserve newlines, concatenated strings interpret escape sequences correctly',
+    'Do not mix backticks and double quotes in same literal. Backticks do not interpret escape sequences like \\n. Semicolon insertion affects line breaks in concatenated strings.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7933460/how-do-you-write-multiline-strings-in-go'
+),
+(
+    'How do you concatenate two slices in Go?',
+    'stackoverflow-go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use append() with spread operator: append([]int{1,2}, []int{3,4}...). Unpacks second slice elements as variadic arguments.", "percentage": 95, "note": "Standard idiomatic approach", "command": "result := append(slice1, slice2...)"},
+        {"solution": "Use full slice expression to limit capacity if needed: append(a[:2:2], b...). Ensures new allocation instead of in-place modification.", "percentage": 85, "note": "Important when original array should not be modified"},
+        {"solution": "For complex scenarios, iterate and append individual elements", "percentage": 60, "note": "Less efficient but sometimes necessary"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Both slices combined correctly, elements in expected order',
+    'Beware of in-place modification when destination has excess capacity. Use full slice expression to control allocation. Spread operator (...) is required after second slice.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/16248241/concatenate-two-slices-in-go'
+),
+(
+    'How to convert an int value to string in Go?',
+    'stackoverflow-go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use strconv.Itoa(int) for int type: strconv.Itoa(123) returns \"123\". Itoa stands for Integer to ASCII.", "percentage": 95, "note": "Most efficient approach, no reflection overhead", "command": "t := strconv.Itoa(123)"},
+        {"solution": "Use strconv.FormatInt(int64_value, 10) for other integer types like int64", "percentage": 90, "note": "For types other than int"},
+        {"solution": "Use fmt.Sprintf(\"%d\", value) for convenience. Slower due to reflection but acceptable for non-performance-critical code.", "percentage": 70, "note": "Less efficient"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Integer correctly converted to string representation',
+    'Do not use fmt.Sprintf for performance-critical code. Use FormatInt for int64, not Itoa. Itoa only works with int type.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10105935/how-to-convert-an-int-value-to-string-in-go'
+),
+(
+    'What is an idiomatic way of representing enums in Go?',
+    'stackoverflow-go',
+    'HIGH',
+    '[
+        {"solution": "Create named type based on int and use iota for sequential constants: type Base int; const (A Base = iota; C; T; G). Provides type safety.", "percentage": 95, "note": "Standard Go convention visible in standard library", "command": "type Color int\nconst (\n  Red Color = iota\n  Green\n  Blue\n)"},
+        {"solution": "Use string constants if string representation needed for serialization", "percentage": 80, "note": "Alternative when string values required"},
+        {"solution": "Use lightweight discriminated unions with structs for complex enum behaviors", "percentage": 70, "note": "Advanced pattern"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Constants have unique values, functions accept enum type for type safety',
+    'Do not forget to create named type, or enums lack type safety. iota resets with each const declaration. Do not attempt method overloading (not supported in Go).',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14426366/what-is-an-idiomatic-way-of-representing-enums-in-go'
+),
+(
+    'Optional Parameters in Go?',
+    'stackoverflow-go',
+    'HIGH',
+    '[
+        {"solution": "Pass struct with optional fields: type Params struct { a, b int }; func doIt(p Params) int. Callers omit fields via zero values.", "percentage": 95, "note": "Recommended idiomatic approach", "command": "type Options struct {\n  Name string\n  Age  int\n}\nfunc New(opts Options) {}"},
+        {"solution": "Use variadic arguments: func foo(params ...int). Limited to single type but simpler for homogeneous parameters.", "percentage": 75, "note": "Less type safe, works for single type"},
+        {"solution": "Functional Options Pattern: pass option functions that modify configuration. Enables API evolution without breaking changes.", "percentage": 85, "note": "Advanced pattern, good for libraries"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Function accepts mixed types, handles missing parameters gracefully',
+    'Go has no method overloading. Do not attempt function signatures with optional params. Structs remain clearest solution.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/2032149/optional-parameters-in-go'
+),
+(
+    'Is there a foreach loop in Go?',
+    'stackoverflow-go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use for...range loop to iterate: for index, element := range slice {}. Range returns index and copy of each element.", "percentage": 95, "note": "Standard idiomatic iteration", "command": "for i, v := range mySlice {\n  fmt.Println(i, v)\n}"},
+        {"solution": "Ignore index with blank identifier: for _, element := range slice {}. Use when only values needed.", "percentage": 90, "note": "Common pattern"},
+        {"solution": "Get only index: for i := range slice {}. Use when only index needed for accessing values.", "percentage": 85, "note": "Less common but available"},
+        {"solution": "Traditional for loop: for i := 0; i < len(slice); i++ {} when modifying original slice.", "percentage": 80, "note": "Required for in-place modifications"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Loop iterates through all elements correctly, range returns copies not references',
+    'Range returns copies of elements, not references. Cannot modify slice contents via range iteration. Use traditional for loop for modifications.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7782411/is-there-a-foreach-loop-in-go'
+),
+(
+    'How to print struct variables in console?',
+    'stackoverflow-go',
+    'HIGH',
+    '[
+        {"solution": "Use fmt.Printf(\"%+v\\n\", struct). The +v flag adds field names to output.", "percentage": 95, "note": "Simplest built-in solution", "command": "fmt.Printf(\"%+v\\n\", myStruct)"},
+        {"solution": "Use fmt.Printf(\"%#v\\n\", struct) to also include type name", "percentage": 90, "note": "More detailed output"},
+        {"solution": "Convert to JSON with json.MarshalIndent() for pretty-printed formatted output", "percentage": 80, "note": "Better for structured display"},
+        {"solution": "Implement custom String() method on struct for full control. Most idiomatic for exported types.", "percentage": 85, "note": "Best practice for libraries"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Struct fields and values display correctly with field names',
+    'Remember + flag for field names (%+v vs %v). Default %v shows only values. Unexported fields will not show with json.Marshal.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/24512112/how-to-print-struct-variables-in-console'
+),
+(
+    'How to check if a file exists in Go?',
+    'stackoverflow-go',
+    'HIGH',
+    '[
+        {"solution": "Use os.Stat() with errors.Is(): _, err := os.Stat(path); errors.Is(err, os.ErrNotExist). Handles file existence and errors separately.", "percentage": 95, "note": "Recommended since Go 1.13", "command": "if _, err := os.Stat(\"/path\"); err == nil {\n  // exists\n} else if errors.Is(err, os.ErrNotExist) {\n  // not exists\n}"},
+        {"solution": "Check err == nil for existence, handle os.ErrNotExist separately for non-existence", "percentage": 90, "note": "Complete error handling"},
+        {"solution": "Use os.IsNotExist(err) for compatibility with older Go versions", "percentage": 70, "note": "Pre-1.13 approach, deprecated"}
+    ]'::jsonb,
+    'Go 1.0+, Go 1.13+ for errors.Is()',
+    'Function correctly identifies file existence and returns appropriate errors',
+    'Do not check file existence before operating on it—race conditions possible. File could be deleted/renamed between check and use. Always attempt operation directly and handle errors.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/12518876/how-to-check-if-a-file-exists-in-go'
+),
+(
+    'What is the idiomatic Go equivalent of C''s ternary operator?',
+    'stackoverflow-go',
+    'MEDIUM',
+    '[
+        {"solution": "Go has no ternary operator. Use if/else statement instead: if val > 0 { x = val } else { x = -val }. Go designers chose clarity over brevity.", "percentage": 95, "note": "Official Go FAQ recommendation", "command": "var index int\nif val > 0 {\n  index = val\n} else {\n  index = -val\n}"},
+        {"solution": "For simple repeated logic, extract into helper function. Compiler inlines simple functions.", "percentage": 85, "note": "Idiomatic approach for reused patterns", "command": "func abs(val int) int {\n  if val < 0 { return -val }\n  return val\n}"},
+        {"solution": "Initialize then conditionally reassign: x := val; if val <= 0 { x = -val }", "percentage": 75, "note": "Compact alternative"}
+    ]'::jsonb,
+    'Go 1.0+',
+    'Code is readable and maintainable, functions accept appropriate types',
+    'Do not attempt ternary syntax—Go will not compile. Avoid overly complex conditional expressions (Go design philosophy). Extract helper functions for clarity.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/19979178/what-is-the-idiomatic-go-equivalent-of-cs-ternary-operator'
+),
+(
+    'What are the uses for struct tags in Go?',
+    'stackoverflow-go',
+    'MEDIUM',
+    '[
+        {"solution": "Struct tags provide metadata for encoding packages. json:\"field_name\" directs JSON encoder to use specified key. Tags read at runtime via reflect package.", "percentage": 95, "note": "Primary use for serialization", "command": "type User struct {\n  Name string `json:\"username\"`\n}"},
+        {"solution": "Database mapping: gorm:\"type:varchar(100);unique\" specifies column constraints and indexes automatically", "percentage": 90, "note": "Popular with ORM libraries"},
+        {"solution": "Validation tags: binding:\"required\" enforces field requirements in web frameworks like Gin", "percentage": 85, "note": "Input validation"},
+        {"solution": "Support standard tags: xml, yaml, bson for different formats. Custom tags for application logic.", "percentage": 80, "note": "Extensible system"}
+    ]'::jsonb,
+    'Go 1.0+, understanding of reflect package',
+    'Tags correctly interpreted by packages, serialization produces expected output format',
+    'Tags are pure metadata—Go ignores them without explicit reflection. Unexported fields still read by packages. Custom tags require manual reflection implementation.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10858787/what-are-the-uses-for-struct-tags-in-go'
+);

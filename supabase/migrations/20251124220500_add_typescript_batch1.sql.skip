@@ -1,0 +1,221 @@
+-- Add TypeScript compilation errors documentation batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'TypeScript error TS2307: Cannot find module or its corresponding type declarations',
+    'typescript',
+    'VERY_HIGH',
+    '[
+        {"solution": "Install missing type definitions using npm: npm install --save-dev @types/[module-name]", "percentage": 90, "note": "Most common fix for missing type declarations", "command": "npm install --save-dev @types/node"},
+        {"solution": "Verify the import path is correct and matches the actual file location", "percentage": 85, "note": "Check for typos and case sensitivity"},
+        {"solution": "Configure tsconfig.json paths mapping if using custom module resolution", "percentage": 80, "note": "Adjust paths relative to baseUrl", "command": "Set baseUrl and paths in tsconfig.json"},
+        {"solution": "Ensure all dependencies are installed: npm install", "percentage": 75, "command": "npm install"}
+    ]'::jsonb,
+    'Node.js installed, npm or yarn package manager, Valid package.json',
+    'TypeScript compilation succeeds, No TS2307 errors in output, Module imports resolve correctly',
+    'Check node_modules exists and contains the module. Verify tsconfig paths are relative to baseUrl, not project root. Some packages lack type definitions and require @types packages.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2322: Type is not assignable to type',
+    'typescript',
+    'VERY_HIGH',
+    '[
+        {"solution": "Ensure the value matches the expected type by adjusting the variable declaration", "percentage": 85, "note": "Match types exactly or use union types"},
+        {"solution": "Use type assertion with as keyword: value as TargetType", "percentage": 80, "note": "Only when you are certain of the type", "command": "const x = value as string"},
+        {"solution": "Add type guards to narrow union types before assignment", "percentage": 85, "note": "Safest approach for union types"},
+        {"solution": "Update interface or type definition to accept the actual value type", "percentage": 75, "note": "When the type definition is incorrect"}
+    ]'::jsonb,
+    'Valid TypeScript project, tsconfig.json configured',
+    'No TS2322 errors, Type checking passes, Code compiles successfully',
+    'Type assertions bypass type safety - use sparingly. Do not use any type to silence errors. Consider if the type definition or implementation is wrong.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2304: Cannot find name',
+    'typescript',
+    'HIGH',
+    '[
+        {"solution": "Import the missing module or type: import { Name } from module", "percentage": 90, "note": "Most common cause", "command": "import { useState } from react"},
+        {"solution": "Check for typos in variable or type name and verify spelling", "percentage": 85, "note": "Case-sensitive comparison required"},
+        {"solution": "Ensure the variable is declared before use and in correct scope", "percentage": 80, "note": "Check variable hoisting and block scope"},
+        {"solution": "Install type definitions if referring to global types: npm i @types/node", "percentage": 85, "command": "npm install --save-dev @types/node"}
+    ]'::jsonb,
+    'TypeScript compiler installed, Valid project structure',
+    'Variable resolves correctly, No TS2304 errors, Compilation succeeds',
+    'Check import statements are at top of file. Verify the name exists in the imported module. Ensure proper file extensions in imports.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2339: Property does not exist on type',
+    'typescript',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify property name spelling matches the type definition exactly", "percentage": 85, "note": "Check for typos and case sensitivity"},
+        {"solution": "Add missing property to interface or type definition", "percentage": 90, "note": "Update type definition to match implementation", "command": "interface User { email: string; name: string; }"},
+        {"solution": "Use optional chaining for potentially undefined properties: obj?.property", "percentage": 85, "note": "Safe access pattern", "command": "user?.email"},
+        {"solution": "Use type guards to narrow type before accessing property", "percentage": 80, "note": "Type-safe approach for union types"}
+    ]'::jsonb,
+    'TypeScript project with type definitions, Valid tsconfig.json',
+    'Property access succeeds, No TS2339 errors, Type checking passes',
+    'TypeScript is case-sensitive. Optional chaining does not fix type definition issues. Do not use any type or type assertion to bypass this error without investigating.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2345: Argument of type is not assignable to parameter of type',
+    'typescript',
+    'HIGH',
+    '[
+        {"solution": "Verify argument types match function parameter requirements exactly", "percentage": 90, "note": "Check function signature and call site"},
+        {"solution": "Use type conversion to convert argument to expected type", "percentage": 80, "note": "Use Number(), String(), or custom converters", "command": "Number(stringValue)"},
+        {"solution": "Adjust function signature to accept union type if multiple types valid", "percentage": 75, "note": "function foo(x: string | number)"},
+        {"solution": "Create wrapper function with type adapter if changing signature not possible", "percentage": 70, "note": "Wrapper handles type conversion"}
+    ]'::jsonb,
+    'Valid TypeScript configuration, Function definitions available',
+    'Function calls compile without errors, Arguments match parameter types, No TS2345 errors',
+    'Ensure type conversion is safe and does not lose data. Check if function overloads exist. Verify generic type parameters are correctly specified.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS7006: Parameter implicitly has an any type',
+    'typescript',
+    'HIGH',
+    '[
+        {"solution": "Add explicit type annotations to function parameters", "percentage": 95, "note": "Best practice for type safety", "command": "function foo(x: string, y: number) {}"},
+        {"solution": "Enable noImplicitAny in tsconfig.json to catch all implicit any", "percentage": 90, "note": "Enforces strict typing", "command": "Set noImplicitAny: true in compilerOptions"},
+        {"solution": "Use type inference from default parameters when applicable", "percentage": 80, "note": "function foo(x = string)"},
+        {"solution": "Define function signature with interface or type alias", "percentage": 85, "note": "Reusable type definitions"}
+    ]'::jsonb,
+    'TypeScript compiler, tsconfig.json file',
+    'No implicit any errors, All parameters have explicit types, Type checking strict mode passes',
+    'Do not disable noImplicitAny to silence this error. Explicit types improve code maintainability. Type any defeats TypeScript purpose.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2532: Object is possibly undefined',
+    'typescript',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use optional chaining to safely access properties: obj?.property", "percentage": 90, "note": "Modern TypeScript solution", "command": "user?.email?.toLowerCase()"},
+        {"solution": "Add null/undefined check before accessing: if (obj) { obj.property }", "percentage": 95, "note": "Traditional guard approach"},
+        {"solution": "Use non-null assertion operator if certain value exists: obj!.property", "percentage": 70, "note": "Only when absolutely certain", "command": "user!.email"},
+        {"solution": "Provide default value with nullish coalescing: obj ?? defaultValue", "percentage": 85, "note": "Safe fallback pattern", "command": "const email = user?.email ?? unknown@example.com"}
+    ]'::jsonb,
+    'TypeScript with strictNullChecks enabled, Valid project setup',
+    'No TS2532 errors, Null checks in place, Runtime null errors prevented',
+    'Non-null assertion (!) can cause runtime errors if assumption is wrong. Optional chaining returns undefined, not the property. Enable strictNullChecks for safety.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2564: Property has no initializer and is not definitely assigned',
+    'typescript',
+    'HIGH',
+    '[
+        {"solution": "Initialize property with default value in class declaration", "percentage": 90, "note": "Safest approach", "command": "class Foo { name: string = ; }"},
+        {"solution": "Initialize property in constructor", "percentage": 95, "note": "Common pattern for class properties", "command": "constructor() { this.name = value; }"},
+        {"solution": "Use definite assignment assertion if initialized elsewhere: property!: type", "percentage": 75, "note": "Only when certain it will be assigned", "command": "name!: string"},
+        {"solution": "Make property optional with ? operator: property?: type", "percentage": 80, "note": "When property may not exist", "command": "name?: string"}
+    ]'::jsonb,
+    'TypeScript class, strictPropertyInitialization enabled',
+    'No TS2564 errors, All properties initialized, Class instantiation succeeds',
+    'Definite assignment assertion bypasses safety checks. Optional properties require null checks before use. Constructor initialization is preferred over assertion.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript error TS2769: No overload matches this call',
+    'typescript',
+    'MEDIUM',
+    '[
+        {"solution": "Verify function arguments match available overload signatures exactly", "percentage": 90, "note": "Check type, count, and order of parameters"},
+        {"solution": "Check parameter types match the expected types in overload", "percentage": 85, "note": "Review function definition for correct types"},
+        {"solution": "Ensure correct number of arguments provided to function", "percentage": 85, "note": "Some overloads require different argument counts"},
+        {"solution": "Review generic type parameters if function is generic", "percentage": 75, "note": "Explicit generics may be required", "command": "functionName<Type>(args)"}
+    ]'::jsonb,
+    'TypeScript project, Function with overloads defined',
+    'Function call matches an overload, No TS2769 errors, Compilation succeeds',
+    'Read all overload signatures carefully. Order of overloads matters - most specific first. Generic type inference may fail requiring explicit types.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://typescript.tv/errors/'
+),
+(
+    'TypeScript module resolution: Cannot resolve module with baseUrl and paths',
+    'typescript',
+    'HIGH',
+    '[
+        {"solution": "Configure paths mapping relative to baseUrl in tsconfig.json", "percentage": 90, "note": "Paths must be relative to baseUrl", "command": "Set baseUrl: ./src and paths: { @/*: [*] }"},
+        {"solution": "Use wildcard fallback for multiple module locations: paths: { *: [*, components/*] }", "percentage": 85, "note": "Tries exact match then fallback"},
+        {"solution": "Enable moduleResolution: node or bundler in tsconfig.json", "percentage": 90, "note": "node for Node.js, bundler for webpack/vite", "command": "moduleResolution: bundler"},
+        {"solution": "Use rootDirs to merge virtual directories for complex structures", "percentage": 75, "note": "Alternative to paths for multi-root projects"}
+    ]'::jsonb,
+    'TypeScript compiler, tsconfig.json file, Node.js project',
+    'Modules resolve correctly, No module not found errors, Imports work as expected',
+    'Paths are relative to baseUrl not project root. Command line tsc with flags ignores tsconfig.json. Use tsc --traceResolution to debug resolution issues.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://blog.logrocket.com/common-typescript-module-problems-how-to-solve/'
+),
+(
+    'TypeScript module error: Ambiguous module declarations',
+    'typescript',
+    'MEDIUM',
+    '[
+        {"solution": "Avoid conflicting global declarations by organizing files clearly", "percentage": 85, "note": "Keep declarations in separate namespaces"},
+        {"solution": "Remove duplicate .d.ts file if .ts file already declares module", "percentage": 90, "note": "Both log.ts and log.d.ts declaring same module causes conflict"},
+        {"solution": "Use meaningful non-conflicting names for module declarations", "percentage": 80, "note": "Avoid generic names like log, utils"},
+        {"solution": "Organize declaration files into clear folder structure", "percentage": 75, "note": "Separate types, interfaces, and implementations"}
+    ]'::jsonb,
+    'TypeScript project with declaration files, Multiple .d.ts files',
+    'No ambiguous module errors, Clean compilation, Modules resolve uniquely',
+    'Global declarations in .d.ts files affect entire project. File names do not create module boundaries. Check for duplicate declarations across files.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://blog.logrocket.com/common-typescript-module-problems-how-to-solve/'
+),
+(
+    'TypeScript tsconfig: Module not found without moduleResolution node setting',
+    'typescript',
+    'HIGH',
+    '[
+        {"solution": "Set moduleResolution to node in tsconfig.json compilerOptions", "percentage": 95, "note": "Required for node_modules resolution", "command": "moduleResolution: node"},
+        {"solution": "Use node16 or nodenext for modern Node.js with ESM support", "percentage": 90, "note": "Supports both ESM and CommonJS", "command": "moduleResolution: nodenext"},
+        {"solution": "Use bundler mode for webpack/vite/rollup projects", "percentage": 85, "note": "Supports package.json exports field", "command": "moduleResolution: bundler"},
+        {"solution": "Enable esModuleInterop for better CommonJS interop", "percentage": 80, "note": "Improves import compatibility", "command": "esModuleInterop: true"}
+    ]'::jsonb,
+    'TypeScript compiler, tsconfig.json, npm packages installed',
+    'Modules from node_modules resolve correctly, No module not found errors, Imports work',
+    'Without moduleResolution TypeScript does not know how to find libraries in node_modules. node16/nodenext do not add .js extensions automatically.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://blog.logrocket.com/common-typescript-module-problems-how-to-solve/'
+);

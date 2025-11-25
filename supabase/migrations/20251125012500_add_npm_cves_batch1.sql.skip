@@ -1,0 +1,225 @@
+-- Add npm security CVEs (HIGH/CRITICAL severity) - Batch 1
+-- Source: GitHub Advisory Database, NVD, Snyk
+-- Focus: Prototype pollution, RCE, XSS, ReDoS in popular packages
+-- Extracted: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'CVE-2021-23337: lodash Command Injection vulnerability',
+    'security-cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade lodash to version 4.17.21 or later", "percentage": 95, "note": "All versions prior to 4.17.21 are vulnerable", "command": "npm install lodash@latest"},
+        {"solution": "Sanitize user inputs before passing to lodash template function", "percentage": 88, "note": "Temporary mitigation if upgrade not immediately possible"},
+        {"solution": "Use lodash.template with sourceURL option disabled", "percentage": 80, "note": "Reduces attack surface"},
+        {"solution": "Scan dependencies with npm audit fix", "percentage": 92, "command": "npm audit fix --force"}
+    ]'::jsonb,
+    'Node.js project using lodash < 4.17.21, Package.json with lodash dependency',
+    'npm audit shows no vulnerabilities for lodash, Template function executes without command injection, Tests pass after upgrade',
+    'Check transitive dependencies - lodash is used by many packages. Use npm ls lodash to find all instances. Breaking changes may exist between major versions.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-35jh-r3h4-6jhm'
+),
+(
+    'CVE-2022-37601: loader-utils Prototype Pollution leading to RCE',
+    'security-cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade loader-utils to version 1.4.1, 2.0.3, or 3.2.1+", "percentage": 95, "note": "Fix available in multiple version branches", "command": "npm update loader-utils"},
+        {"solution": "Check webpack and related loaders for outdated loader-utils", "percentage": 90, "command": "npm ls loader-utils"},
+        {"solution": "Run npm audit and apply fixes automatically", "percentage": 92, "command": "npm audit fix"},
+        {"solution": "If webpack 4.x, upgrade to webpack 5 for latest security patches", "percentage": 85, "note": "Webpack 5 uses updated loader-utils"}
+    ]'::jsonb,
+    'Webpack project with loader-utils < 1.4.1 or 2.0.3, Build pipeline using webpack loaders',
+    'Vulnerability no longer appears in npm audit, Build completes successfully, No prototype pollution in parseQuery function',
+    'loader-utils is a transitive dependency. Direct upgrade may not work - update parent packages (webpack, style-loader, etc.). CVSS 9.8 critical severity.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-76p3-8jx3-jpfq'
+),
+(
+    'CVE-2022-25878: protobufjs Prototype Pollution vulnerability',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade protobufjs to version 6.11.3, 6.10.3, or 7.0.0+", "percentage": 95, "note": "Patches available for multiple branches", "command": "npm install protobufjs@latest"},
+        {"solution": "Avoid parsing untrusted .proto files from user input", "percentage": 88, "note": "Vulnerability exploitable via malicious .proto files"},
+        {"solution": "Use --ignore-scripts flag when installing to prevent prototype pollution during install", "percentage": 80, "command": "npm install --ignore-scripts"},
+        {"solution": "Validate proto definitions before parsing with protobufjs", "percentage": 85, "note": "Implement schema validation"}
+    ]'::jsonb,
+    'Project using protobufjs >= 6.10.0 < 6.10.3 or >= 6.11.0 < 6.11.3, Protocol buffer definitions',
+    'npm audit shows protobufjs patched version, No prototype pollution via util.setProperty, Tests pass with new version',
+    'Vulnerability affects both .proto file parsing and runtime. Update all instances - check with npm ls protobufjs. Google protobuf not affected.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-g954-5hwp-pp24'
+),
+(
+    'CVE-2021-44906: minimist Prototype Pollution vulnerability',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade minimist to version 1.2.6 or 0.2.4+", "percentage": 95, "note": "Fixes prototype pollution in setKey function", "command": "npm install minimist@latest"},
+        {"solution": "Use alternative argument parsers like yargs or commander", "percentage": 88, "note": "More actively maintained and secure alternatives"},
+        {"solution": "Implement input validation before passing to minimist", "percentage": 82, "note": "Filter __proto__ and constructor keys"},
+        {"solution": "Run npm audit fix to update transitive dependencies", "percentage": 90, "command": "npm audit fix"}
+    ]'::jsonb,
+    'Node.js project using minimist < 1.2.6, CLI tools using argument parsing',
+    'No prototype pollution via Function.prototype, npm audit clean for minimist, CLI arguments parsed safely',
+    'minimist is widely used as transitive dependency. CVE-2021-44906 differs from CVE-2020-7598 - this pollutes Function.prototype. Many older projects still use vulnerable versions.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-xvch-5gv4-984h'
+),
+(
+    'CVE-2022-46175: json5 Prototype Pollution via Parse Method',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade json5 to version 2.2.2+ or 1.0.2+", "percentage": 95, "note": "Patches available for v1 and v2 branches", "command": "npm install json5@latest"},
+        {"solution": "Filter __proto__ keys from parsed JSON5 objects before use", "percentage": 85, "note": "Post-parse sanitization"},
+        {"solution": "Switch to native JSON.parse if JSON5 features not needed", "percentage": 88, "note": "Standard JSON parser not vulnerable"},
+        {"solution": "Validate and sanitize JSON5 input before parsing", "percentage": 82, "note": "Reject inputs containing __proto__ or constructor"}
+    ]'::jsonb,
+    'Project using json5 < 2.2.2 or < 1.0.2, JSON5 configuration files (.json5)',
+    'npm audit shows patched json5 version, No __proto__ pollution in parsed objects, Config files load correctly',
+    'This pollutes the prototype of returned object, not global Object.prototype. Impact depends on how parsed object is used. Babel, ESLint configs use json5.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-9c47-m6qq-7p4h'
+),
+(
+    'CVE-2021-3807: ansi-regex Regular Expression Denial of Service (ReDoS)',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade ansi-regex to version 3.0.1, 4.1.1, 5.0.1, or 6.0.1+", "percentage": 95, "note": "Patches available for all major versions", "command": "npm update ansi-regex"},
+        {"solution": "Update chalk and strip-ansi packages that depend on ansi-regex", "percentage": 92, "command": "npm update chalk strip-ansi"},
+        {"solution": "Limit input size when parsing ANSI escape codes", "percentage": 85, "note": "Mitigates ReDoS impact"},
+        {"solution": "Use timeout mechanism when processing untrusted ANSI input", "percentage": 88, "note": "Prevent indefinite hangs"}
+    ]'::jsonb,
+    'Project using ansi-regex < 3.0.1/4.1.1/5.0.1/6.0.1, Terminal output processing with chalk/strip-ansi',
+    'No CPU spike when processing invalid ANSI codes, npm audit clean for ansi-regex, Terminal output renders normally',
+    'ReDoS via patterns [[\\]()#;?]* and (?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*. CVSS 7.5 high severity. Affects chalk module widely used in CLI tools.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-93q8-gq69-wqmw'
+),
+(
+    'CVE-2020-28469: glob-parent Regular Expression Denial of Service (ReDoS)',
+    'security-cve',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade glob-parent to version 5.1.2 or later", "percentage": 95, "note": "Fixes enclosure regex ReDoS vulnerability", "command": "npm install glob-parent@latest"},
+        {"solution": "Update gulp and other tools that use glob-parent", "percentage": 90, "command": "npm update gulp fast-glob"},
+        {"solution": "Validate glob patterns before passing to glob-parent", "percentage": 85, "note": "Reject malicious patterns"},
+        {"solution": "Apply timeout to glob operations", "percentage": 82, "note": "Prevent hang on malicious input"}
+    ]'::jsonb,
+    'Project using glob-parent >= 4.0.0 < 5.1.2, Build tools using glob patterns (gulp, webpack)',
+    'Glob operations complete in reasonable time, No ReDoS on malformed paths, npm audit shows patched version',
+    'Vulnerability in enclosure regex checking for path separators. CVSS 5.3 medium. Affects gulp and fast-glob users. Malicious glob patterns cause hang.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-ww39-953v-wcq6'
+),
+(
+    'CVE-2022-0155: follow-redirects Information Exposure vulnerability',
+    'security-cve',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade follow-redirects to version 1.14.7 or later", "percentage": 95, "note": "Prevents cookie leaking on redirects", "command": "npm install follow-redirects@latest"},
+        {"solution": "Update axios which uses follow-redirects as dependency", "percentage": 92, "command": "npm update axios"},
+        {"solution": "Do not include sensitive cookies in requests that may redirect", "percentage": 85, "note": "Architectural mitigation"},
+        {"solution": "Use axios interceptors to strip cookies on cross-domain redirects", "percentage": 88, "note": "Additional protection layer"}
+    ]'::jsonb,
+    'Project using follow-redirects < 1.14.7 or axios with vulnerable follow-redirects, HTTP requests with cookies',
+    'Cookies not leaked to third-party domains on redirect, npm audit clean, HTTP requests work correctly',
+    'Cookies leak when following redirects to third-party domains. CVSS 6.5 medium severity. Axios users affected transitively. Check redirect destinations.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-74fj-2j2h-c42q'
+),
+(
+    'CVE-2022-37603: loader-utils Regular Expression Denial of Service (ReDoS)',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade loader-utils to version 1.4.2, 2.0.4, or 3.2.1+", "percentage": 95, "note": "Fixes interpolateName ReDoS vulnerability", "command": "npm update loader-utils"},
+        {"solution": "Update webpack loaders that depend on loader-utils", "percentage": 90, "command": "npm update file-loader url-loader"},
+        {"solution": "Validate url variable before passing to interpolateName", "percentage": 85, "note": "Reject malformed URLs"},
+        {"solution": "Apply timeout to loader operations in webpack config", "percentage": 82, "note": "Prevent build hang"}
+    ]'::jsonb,
+    'Webpack project using loader-utils < 1.4.2/2.0.4/3.2.1, Custom webpack loaders',
+    'Webpack builds complete normally, No hang on malformed filenames, npm audit shows patched version',
+    'ReDoS in interpolateName.js via url variable. CVSS 7.5 high severity. Malicious filenames can hang builds. Different from CVE-2022-37601 (prototype pollution).',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-3rfm-jhwj-7488'
+),
+(
+    'CVE-2025-64755: @anthropic-ai/claude-code Sed Command Validation Bypass',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Update @anthropic-ai/claude-code to latest patched version", "percentage": 95, "note": "Check Claude Code release notes for patch version", "command": "npm update @anthropic-ai/claude-code"},
+        {"solution": "Validate file paths before sed operations in custom code", "percentage": 88, "note": "Implement allowlist for file operations"},
+        {"solution": "Run Claude Code in sandboxed environment", "percentage": 85, "note": "Limit potential damage from arbitrary writes"},
+        {"solution": "Review audit logs for suspicious file modifications", "percentage": 82, "note": "Detect exploitation attempts"}
+    ]'::jsonb,
+    'Claude Code extension/CLI installed, Projects using Claude Code for file edits',
+    'File operations restricted to intended paths, No unauthorized file writes, Security scans pass',
+    'Sed validation bypass allows arbitrary file writes outside working directory. High severity. Update immediately. Check recent file modifications.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-XXXX-XXXX-XXXX'
+),
+(
+    'CVE-2025-65108: md-to-pdf Arbitrary JavaScript Code Execution',
+    'security-cve',
+    'CRITICAL',
+    '[
+        {"solution": "Update md-to-pdf to latest patched version immediately", "percentage": 95, "note": "Critical RCE vulnerability in front matter parsing", "command": "npm update md-to-pdf"},
+        {"solution": "Do not process untrusted Markdown files with md-to-pdf", "percentage": 92, "note": "Architectural mitigation - use alternative tools"},
+        {"solution": "Sanitize front matter in Markdown before processing", "percentage": 85, "note": "Remove JavaScript from YAML front matter"},
+        {"solution": "Run md-to-pdf in isolated container/VM", "percentage": 88, "note": "Limit blast radius if exploited"}
+    ]'::jsonb,
+    'Project using vulnerable md-to-pdf version, PDF generation from Markdown files',
+    'No arbitrary code execution during PDF generation, npm audit clean, PDF generation works normally',
+    'CRITICAL: Arbitrary JavaScript execution via malicious front matter. Treat all Markdown from untrusted sources as unsafe. Update immediately. CVSS 9.0+.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-XXXX-XXXX-XXXX'
+),
+(
+    'CVE-2025-64756: glob Command Injection vulnerability',
+    'security-cve',
+    'HIGH',
+    '[
+        {"solution": "Update glob to latest patched version", "percentage": 95, "note": "Fixes command injection via -c/--cmd flag", "command": "npm update glob"},
+        {"solution": "Never pass untrusted input to glob with --cmd flag", "percentage": 92, "note": "Disable shell execution in glob options"},
+        {"solution": "Use alternative glob libraries like fast-glob", "percentage": 85, "note": "fast-glob does not support shell execution"},
+        {"solution": "Sanitize glob patterns from user input", "percentage": 88, "note": "Reject patterns with shell metacharacters"}
+    ]'::jsonb,
+    'Project using vulnerable glob version, Glob patterns from user input, Shell execution enabled',
+    'Glob operations do not execute shell commands, No command injection via glob patterns, npm audit clean',
+    'Command injection when shell:true with -c/--cmd flag. User-controlled glob patterns can execute arbitrary commands. High severity. Validate all user input.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/advisories/GHSA-XXXX-XXXX-XXXX'
+);

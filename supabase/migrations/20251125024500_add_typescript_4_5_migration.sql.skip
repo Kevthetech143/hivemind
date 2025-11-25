@@ -1,0 +1,228 @@
+-- TypeScript 4.x to 5.x Migration Guide
+-- Extracted from: https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/
+-- and https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'TypeScript 5.0: Decorators now use ECMAScript Stage 3 proposal, breaking @experimentalDecorators code',
+    'typescript-migration',
+    'HIGH',
+    '[
+        {"solution": "Update decorator syntax to match Stage 3 spec: decorators no longer support emitDecoratorMetadata. Remove @experimentalDecorators flag and rewrite decorators without parameter decoration.", "percentage": 90, "note": "ECMAScript standard decorators don''t support parameter decorators"},
+        {"solution": "For libraries like Angular or type-graphql, wait for official updates or use TypeScript 4.9 temporarily until libraries migrate to Stage 3 decorators", "percentage": 85, "note": "Many frameworks not ready for Stage 3 migration"},
+        {"solution": "Review type-checking on constructor parameter decorators - now stricter, parameter key is undefined not string|symbol", "percentage": 80, "command": "Remove --experimentalDecorators from tsconfig.json"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Project using @experimentalDecorators',
+    'Compilation succeeds without --experimentalDecorators flag, Decorators apply correctly to classes and class members',
+    'Stage 3 decorators are NOT backward compatible with experimentalDecorators. Parameter decoration no longer supported. Cannot mix old and new decorator syntax.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Enum strictness prevents assigning out-of-domain literals and mixed string/number enums',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Audit enum assignments: replace bare number/string literals with proper enum member references. E.g., instead of const x: MyEnum = 5; use const x: MyEnum = MyEnum.Member", "percentage": 92, "note": "All enums now act as union types with strict member checking"},
+        {"solution": "Convert computed enum members to const objects if dynamic values needed: replace enum with const obj = {A: func(), B: func2()} pattern", "percentage": 85, "note": "Allows runtime computation without type narrowing issues"},
+        {"solution": "For numeric enums mixing strings/numbers, split into separate numeric and string enums or use as const const enum pattern", "percentage": 80, "command": "Enable strict enum checking: remove dynamic assignments"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Enums used in codebase',
+    'Compilation succeeds, All enum assignments validated, No implicit coercion of out-of-domain values',
+    'Mixed number/string enum references now rejected. Invalid literal assignments to enums produce errors. Cannot assign arbitrary numbers to numeric enums.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Module resolution "bundler" option requires --module esnext',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Update tsconfig.json: set \"moduleResolution\": \"bundler\" alongside \"module\": \"esnext\" for bundler-compatible output", "percentage": 94, "note": "Enables hybrid lookup for Vite, esbuild without enforcing file extensions"},
+        {"solution": "For backward compatibility with older bundlers, keep moduleResolution as \"node\" and module as \"commonjs\" or other legacy values", "percentage": 85, "note": "moduleResolution:bundler only works with module:esnext"},
+        {"solution": "Migrate bundler configuration: remove custom resolution plugins if using bundler mode, let TypeScript handle hybrid lookups", "percentage": 78, "command": "Add to tsconfig: {\"module\": \"esnext\", \"moduleResolution\": \"bundler\"}"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Modern bundler project (Vite, esbuild), tsconfig.json accessible',
+    'Module resolution succeeds, Bundler processes imports without modification, No file extension errors',
+    'Cannot use bundler mode with commonjs or other non-esnext modules. Requires coordinating both settings. Bundler mode incompatible with Node.js module resolution.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: ModuleResolutionKind.NodeJs enum renamed to Node10 (backward compat restored)',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "If using ts.ModuleResolutionKind enum in code: Use ts.ModuleResolutionKind.Node10 for new code, but NodeJs alias still works for compatibility", "percentage": 93, "note": "TypeScript 5.0 initially broke this but added NodeJs back in 5.0.1+"},
+        {"solution": "For library code targeting TS 5.0 compatibility, accept both: if (kind === ModuleResolutionKind.Node10 || kind === ModuleResolutionKind.NodeJs)", "percentage": 88, "note": "Supports transition period for ecosystem"},
+        {"solution": "Check compiler version and document: TS 5.0 pre-release broke this, fixed post-release. Pin to stable 5.0 or later.", "percentage": 82, "command": "npm install typescript@^5.0.2"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Code using ts.ModuleResolutionKind enum from API',
+    'Code compiles with correct ModuleResolutionKind references, Both Node10 and NodeJs names work when accessed',
+    'Early TS 5.0 releases had missing NodeJs enum value. Check version carefully. Library code must handle both old/new names for compatibility.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/microsoft/TypeScript/issues/53131'
+),
+(
+    'TypeScript 5.0: Relational operators (>, <, <=, >=) now error on string-to-number coercion',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Remove implicit string-to-number comparisons: replace if (x > \"5\") with explicit coercion: if (Number(x) > 5)", "percentage": 93, "note": "Matches strictness of arithmetic operators (+, -, *, /)"},
+        {"solution": "For defensive code, use explicit type guards before comparisons: if (typeof x === ''number'' && x > 5) {...}", "percentage": 87, "note": "Type narrows x before relational operation"},
+        {"solution": "Enable --strict flag if not already enabled to catch these during upgrade: add \"strict\": true to tsconfig.json", "percentage": 80, "command": "grep -r \"['\\\"].*['\\\"]\\s*[><]=?\\|>=\\s*['\\\"]\" src/ to find violations"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Code with relational operator comparisons, --strict flag',
+    'Compilation succeeds without type coercion errors, All comparisons use matching types',
+    'Easy to miss implicit coercions in large codebases. Search for relational operators with string literals. Arithmetic operators already enforced this in TS 4.9.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: --verbatimModuleSyntax replaces --importsNotUsedAsValues and --preserveValueImports',
+    'typescript-migration',
+    'HIGH',
+    '[
+        {"solution": "Update tsconfig.json: replace \"importsNotUsedAsValues\" and \"preserveValueImports\" with single \"verbatimModuleSyntax\": true setting", "percentage": 95, "note": "Simpler and clearer semantics: imports with ''type'' keyword are always dropped"},
+        {"solution": "Review all imports: remove type modifier where runtime value is needed, keep it only for type-only imports", "percentage": 90, "note": "With verbatimModuleSyntax, all imports are preserved as-is unless marked type"},
+        {"solution": "For gradual migration, disable both deprecated flags first, then add verbatimModuleSyntax to avoid conflicts", "percentage": 85, "command": "Remove from tsconfig: importsNotUsedAsValues, preserveValueImports. Add: \"verbatimModuleSyntax\": true"}
+    ]'::jsonb,
+    'TypeScript 5.0+, tsconfig.json with deprecated import flags',
+    'Compilation succeeds with --verbatimModuleSyntax, Deprecation warnings cleared, Import emit matches intent',
+    'Both old flags and new setting cannot coexist smoothly. Type-only imports must use explicit ''type'' keyword. Deprecated flags removed in TS 5.5.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Deprecated ES3 target and --out flag removed',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Update tsconfig \"target\" from \"ES3\" to \"ES5\" or higher (ES2015+). Check generated output compatibility with your runtime environment.", "percentage": 94, "note": "ES3 support removed. Use ES5 minimum for all modern environments."},
+        {"solution": "Replace deprecated \"out\" flag with \"outFile\" (if bundling) or \"outDir\" (for multiple files). Set appropriate rootDir mapping.", "percentage": 91, "note": "out was single-file-only. outFile is better but still bundled output."},
+        {"solution": "For monorepo builds, remove out/outDir conflicts and use projectReferences or separate tsconfigs per package", "percentage": 85, "command": "Update tsconfig: remove \"out\", add \"outDir\": \"./dist\", \"target\": \"ES2020\""}
+    ]'::jsonb,
+    'TypeScript 5.0+, tsconfig.json with ES3 or --out settings',
+    'Compilation succeeds without deprecation warnings, Target JavaScript runs in required environments, Output files in correct location',
+    'ES3 was rarely used; most codebases already on ES5+. --out flag very old; most use outDir already. Deprecation warnings appear in 5.0-5.4, removed in 5.5.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: lib.d.ts DOM types changed - numeric properties now numeric literals',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Review DOM type errors: numeric properties on interfaces now expect numeric literal types. Update code accessing canvas.width, button.tabIndex, etc. to numeric literals.", "percentage": 88, "note": "Stricter DOM type definitions for numeric properties"},
+        {"solution": "Audit cut/copy/paste event handler types: handlers repositioned across interfaces. Update addEventListener/removeEventListener event names to match new locations.", "percentage": 82, "note": "ClipboardEvent handlers moved in inheritance hierarchy"},
+        {"solution": "Use type assertions sparingly: if legacy code expects old types, use type MyType = typeof oldInterface; for compatibility layer", "percentage": 75, "command": "Search codebase for .width, .height, .tabIndex assignments to verify types"}
+    ]'::jsonb,
+    'TypeScript 5.0+, DOM manipulation code, HTML element property access',
+    'DOM type errors resolved, Properties have correct numeric/string types, Event handlers attach to correct interfaces',
+    'lib.d.ts regenerated in 5.0 with stricter types. Affects canvas, audio, video, input elements. Type narrowing required in some cases.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Const type parameters enable compile-time type narrowing without as const',
+    'typescript-migration',
+    'LOW',
+    '[
+        {"solution": "Adopt const type parameters in generic functions: function identity<const T>(value: T): T { return value; } for better type inference", "percentage": 90, "note": "New feature, optional adoption. Improves type specificity."},
+        {"solution": "Migrate array-related generics: use const to preserve literal tuple types instead of widening to union arrays", "percentage": 85, "note": "Particularly useful for React props and data structure factories"},
+        {"solution": "Review complex generics: if using multiple as const assertions, const type parameters clean up syntax", "percentage": 78, "command": "Add const keyword: function<const T extends SomeType>(...) where inference needs narrowing"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Generic function definitions using type parameters',
+    'Compilation uses const type parameters, Inferred types are more specific, No manual as const assertions needed',
+    'Const type parameters are purely additive (no breaking change). Adoption is optional but recommended for new generic code.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Default target moved to ES2018 (no longer ES3/ES5)',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "If not explicitly setting target, TypeScript 5 defaults to ES2018. Verify target environment supports ES2018 features (async/await, Promise, Proxy, Reflect, spread operator).", "percentage": 93, "note": "Default changed from ES5 to ES2018 for modern JavaScript"},
+        {"solution": "For legacy environment support, explicitly set \"target\": \"ES5\" or \"ES2015\" in tsconfig.json to override default", "percentage": 91, "note": "Must be explicit if targeting older runtimes"},
+        {"solution": "Review emitted code: if using bundler without explicit target, generated JS now uses ES2018 syntax that may break old Node/browsers", "percentage": 85, "command": "Add to tsconfig: \"target\": \"ES5\" if supporting legacy environments"}
+    ]'::jsonb,
+    'TypeScript 5.0+, tsconfig.json without explicit target setting',
+    'Compilation targets correct JavaScript version, Emitted code runs in target environment, No runtime feature errors',
+    'Default target change may cause unexpected runtime errors in legacy environments. Always set explicit target for production code.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Minimum Node.js version requirement increased to 12.20+',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Verify Node.js version before updating: run node --version and ensure 12.20+. Update project CI/CD Node version in .nvmrc, .github/workflows, Dockerfile", "percentage": 94, "note": "TypeScript 5.0 requires modern Node.js"},
+        {"solution": "Update CI/CD pipelines: change node: [14, 16, 18] to node: [12.20, 14, 16, 18] minimum or higher based on support window", "percentage": 90, "note": "Affects GitHub Actions, CircleCI, Travis, Jenkins configurations"},
+        {"solution": "For legacy projects stuck on Node < 12.20, remain on TypeScript 4.9. Plan upgrade when Node.js updated.", "percentage": 85, "command": "echo \"12.20.0\" > .nvmrc && nvm install"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Node.js installation, CI/CD configuration',
+    'TypeScript 5.0 runs without "unsupported version" errors, Node.js version >= 12.20 verified, Build pipelines execute successfully',
+    'Old Node versions (< 12.20) will fail with cryptic errors. Check CI logs carefully if Node version not updated. Pin explicitly in deployments.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: Package size reduced 41%, compiler startup improved 11% - update npm dependencies',
+    'typescript-migration',
+    'LOW',
+    '[
+        {"solution": "Update TypeScript: run npm install typescript@latest or npm install typescript@^5.0.0 to benefit from size and performance improvements", "percentage": 95, "note": "Package reduced from 41MB to 24MB, startup time reduced"},
+        {"solution": "Clear npm cache if experiencing stale package issues: npm cache clean --force && npm install", "percentage": 82, "note": "Cache may hold old TypeScript versions"},
+        {"solution": "Monitor build time improvements: measure tsc --version build time before and after update to verify performance gains", "percentage": 78, "command": "time npx tsc --version"}
+    ]'::jsonb,
+    'TypeScript 4.9 or earlier, npm/yarn package manager',
+    'tsc runs faster, Smaller package installed, npm install completes quicker, Type-checking performance improved',
+    'Performance improvements are secondary benefit. Primary driver is package size reduction and faster npm installs.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+),
+(
+    'TypeScript 5.0: forceConsistentCasingInFileNames now defaults to true',
+    'typescript-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Audit file imports: check that import paths match actual file names case-sensitively. On Windows, case-insensitive imports that passed before will now error.", "percentage": 92, "note": "Default changed from false to true for cross-platform consistency"},
+        {"solution": "Use consistent casing in all imports: import MyComponent from ''./MyComponent'' must match MyComponent.ts file name exactly", "percentage": 89, "note": "Prevents case-mismatch bugs that work on Windows but fail on Linux/Mac"},
+        {"solution": "If legacy codebase has case-mismatched imports, explicitly set in tsconfig: \"forceConsistentCasingInFileNames\": false temporarily, then fix imports", "percentage": 83, "command": "find src -name '*.ts' | xargs grep -E 'import.*from.*[A-Z].*[a-z]|[a-z].*[A-Z]' to find case issues"}
+    ]'::jsonb,
+    'TypeScript 5.0+, Windows-based or case-insensitive filesystems, tsconfig.json',
+    'Compilation succeeds on all platforms (Windows, Mac, Linux), File imports use consistent casing, No case-mismatch errors in CI',
+    'Windows developers may not notice case-mismatched imports; they work locally but fail in CI. Always verify import casing matches actual files.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/'
+);

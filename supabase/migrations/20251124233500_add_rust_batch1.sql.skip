@@ -1,0 +1,214 @@
+-- Add Rust common errors documentation batch 1
+-- Category: rust
+-- Covers: borrow checker, lifetime, and trait errors
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Rust error E0502: cannot borrow as mutable because it is also borrowed as immutable',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Restructure code so immutable borrow completes before mutable borrow begins", "percentage": 90, "note": "Most common and idiomatic fix"},
+        {"solution": "Use inner scopes to limit borrow lifetimes explicitly", "percentage": 85, "note": "Helpful when restructuring is complex"},
+        {"solution": "Split operations into separate functions to separate borrow scopes", "percentage": 80, "note": "Improves code organization"}
+    ]'::jsonb,
+    'Valid Rust project, Code attempting conflicting borrows in same scope',
+    'Code compiles without E0502 error, Cargo build succeeds',
+    'Mutable and immutable references cannot coexist in the same scope. The borrow checker tracks usage, not just declaration.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0502.html'
+),
+(
+    'Rust error E0499: cannot borrow as mutable more than once at a time',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use only one mutable reference at a time", "percentage": 95, "note": "Fundamental Rust ownership rule"},
+        {"solution": "Use split_at_mut() for slices to get two non-overlapping mutable references", "percentage": 90, "note": "Specific to slice operations"},
+        {"solution": "Refactor to use interior mutability patterns (RefCell/Mutex)", "percentage": 75, "note": "For complex shared mutable state"}
+    ]'::jsonb,
+    'Valid Rust project, Code with multiple mutable borrows',
+    'Compilation succeeds, No E0499 error, All mutations work as intended',
+    'Either multiple immutable references OR a single mutable reference can exist - never both simultaneously. References must not overlap in time.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0499.html'
+),
+(
+    'Rust error E0505: cannot move out of value because it is borrowed',
+    'rust',
+    'HIGH',
+    '[
+        {"solution": "Pass by reference instead of moving - modify function signature to accept &Value", "percentage": 90, "note": "Preferred idiomatic solution"},
+        {"solution": "Use the reference before moving the value", "percentage": 85, "note": "Reorder operations to end borrow before move"},
+        {"solution": "Implement Copy trait if type is small and simple", "percentage": 80, "note": "Creates implicit copy instead of move"}
+    ]'::jsonb,
+    'Rust project, Code attempting to move borrowed value',
+    'Code compiles successfully, No E0505 error, Original functionality preserved',
+    'A value cannot be moved to a function that takes ownership while an active reference to it exists. The reference would become dangling.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0505.html'
+),
+(
+    'Rust error E0106: missing lifetime specifier',
+    'rust',
+    'HIGH',
+    '[
+        {"solution": "Add explicit lifetime annotations connecting input parameters to output: fn foo<''a>(x: &''a str) -> &''a str", "percentage": 90, "note": "Required when compiler cannot infer relationship"},
+        {"solution": "Return owned type (String) instead of reference (&str) if possible", "percentage": 85, "note": "Avoids lifetime complexity entirely"},
+        {"solution": "Use lifetime elision rules: single input reference lifetime is assigned to output", "percentage": 80, "note": "Works when elision rules apply"}
+    ]'::jsonb,
+    'Rust function returning reference, Multiple reference parameters',
+    'Code compiles, Lifetime relationships are clear, No E0106 error',
+    'Lifetime annotations describe relationships, not change actual lifetimes. When returning references from functions with multiple inputs, explicit annotations are required.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html'
+),
+(
+    'Rust error E0597: borrowed value does not live long enough',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Extend lifetime by moving variable declaration to outer scope", "percentage": 90, "note": "Ensures data outlives all references"},
+        {"solution": "Return owned data instead of reference to avoid lifetime issues", "percentage": 85, "note": "Transfers ownership to caller"},
+        {"solution": "Use String::from() or .to_string() to create owned copies", "percentage": 80, "note": "Creates independent data with adequate lifetime"}
+    ]'::jsonb,
+    'Rust code with references, Inner scopes creating temporary values',
+    'Compilation succeeds, References remain valid through usage, No E0597 error',
+    'A reference must never outlive the value it points to. Inner scopes drop values before outer scopes, potentially invalidating references.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0597.html'
+),
+(
+    'Rust error E0621: explicit lifetime required in function signature',
+    'rust',
+    'MEDIUM',
+    '[
+        {"solution": "Align signature by annotating all borrowed parameters with same lifetime: fn foo<''a>(x: &''a i32, y: &''a i32) -> &''a i32", "percentage": 90, "note": "When function may return from any parameter"},
+        {"solution": "Restrict implementation to match original signature - only return from one parameter", "percentage": 85, "note": "Simplifies lifetime requirements"},
+        {"solution": "Use separate lifetimes if return depends on only one parameter: fn foo<''a, ''b>(x: &''a i32, y: &''b i32) -> &''a i32", "percentage": 80, "note": "More precise lifetime tracking"}
+    ]'::jsonb,
+    'Rust function with multiple reference parameters, Return type with lifetime annotation',
+    'Code compiles, Function body matches signature contract, No E0621 error',
+    'Function signature is a contract - the implementation must respect lifetime constraints declared. Data-flow in body must match lifetime promises in signature.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0621.html'
+),
+(
+    'Rust error E0515: cannot return reference to local variable',
+    'rust',
+    'HIGH',
+    '[
+        {"solution": "Return owned value instead of reference - transfer ownership to caller", "percentage": 95, "note": "Most common and safest solution"},
+        {"solution": "Use into_iter() instead of iter() for iterators over owned collections", "percentage": 90, "command": "v.into_iter() instead of v.iter()"},
+        {"solution": "Accept lifetime parameter from caller and store data there instead", "percentage": 75, "note": "Advanced pattern for specific use cases"}
+    ]'::jsonb,
+    'Rust function attempting to return reference to local variable',
+    'Function returns owned data, Compilation succeeds, No dangling references',
+    'Local variables are dropped at function end, making any returned reference immediately invalid. This creates dangling pointers which Rust prevents at compile time.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0515.html'
+),
+(
+    'Rust error E0277: the trait bound is not satisfied',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Implement the required trait for your type: impl TraitName for YourType", "percentage": 90, "note": "Direct implementation when you control the type"},
+        {"solution": "Add trait bounds to generic parameters: fn foo<T: Debug>(x: T)", "percentage": 85, "note": "Constrain generics to types implementing trait"},
+        {"solution": "Use derive macro if trait supports it: #[derive(Debug, Clone)]", "percentage": 95, "note": "Automatic implementation for common traits"}
+    ]'::jsonb,
+    'Rust code using type in context requiring specific trait, Generic function without trait bounds',
+    'Code compiles, Type satisfies trait requirements, No E0277 error',
+    'Rust evaluates function signatures independently. Generic functions must declare all trait requirements explicitly, regardless of actual usage patterns.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0277.html'
+),
+(
+    'Rust error E0382: use of moved value',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use references with & to borrow instead of transferring ownership", "percentage": 90, "note": "Most idiomatic - allows multiple usage without cloning"},
+        {"solution": "Clone the value before moving: let y = x.clone();", "percentage": 85, "note": "Creates independent copy, works when cloning is acceptable"},
+        {"solution": "Implement Copy trait for simple types: #[derive(Copy, Clone)]", "percentage": 80, "note": "For types containing only Copy members"},
+        {"solution": "Use Rc<RefCell<T>> for shared mutable ownership", "percentage": 70, "note": "Runtime-checked borrowing for complex scenarios"}
+    ]'::jsonb,
+    'Rust code attempting to use value after move, Structs without Copy trait',
+    'Code compiles, Values accessible where needed, No E0382 error',
+    'Ownership transfers when assigning to new variable unless type implements Copy. After move, original variable is inaccessible. Multiple variables cannot own same value.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0382.html'
+),
+(
+    'Rust error E0308: mismatched types',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Ensure function arguments match declared parameter types exactly", "percentage": 95, "note": "Check function signature and call sites"},
+        {"solution": "Add type conversions using .into(), .to_string(), or as keyword when appropriate", "percentage": 85, "note": "Convert between compatible types"},
+        {"solution": "Fix return type to match function signature or vice versa", "percentage": 90, "note": "Align implementation with type annotations"},
+        {"solution": "Use proper reference operators & or * to match reference vs value types", "percentage": 80, "note": "Common with &str vs String, &T vs T"}
+    ]'::jsonb,
+    'Rust code with type mismatches, Function calls with wrong argument types',
+    'All types align correctly, Code compiles without E0308, Type inference works properly',
+    'Rust has strict type checking - no implicit conversions. Compiler error message shows expected vs found types. Reference types (&T) and value types (T) are different.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0308.html'
+),
+(
+    'Rust error E0369: binary operation not supported on type',
+    'rust',
+    'HIGH',
+    '[
+        {"solution": "Use a type that supports the operation (e.g., u32/i32 for bitwise ops instead of f32)", "percentage": 90, "note": "Choose appropriate type for operation"},
+        {"solution": "Implement the operator trait from std::ops for custom types: impl Add for MyType", "percentage": 85, "note": "Enable operations on your own types"},
+        {"solution": "For string concatenation, use .to_owned() or format! macro", "percentage": 80, "command": "let s = s1.to_owned() + s2;"}
+    ]'::jsonb,
+    'Rust code using unsupported operator on type, Custom types needing operator support',
+    'Operations work on chosen types, Code compiles successfully, No E0369 error',
+    'Operators in Rust are overloaded through traits. Unless trait is implemented for the type, operations cannot be performed. Not all types support all operators.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/error_codes/E0369.html'
+),
+(
+    'Rust borrow checker: cannot borrow x as mutable because it is also borrowed as Y',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Limit scope of first borrow using {} blocks so it ends before second borrow", "percentage": 90, "note": "Explicit scope control"},
+        {"solution": "Reorder operations to complete all uses of first borrow before creating second", "percentage": 85, "note": "Most common fix in practice"},
+        {"solution": "Split data structure to allow independent borrows of different fields", "percentage": 75, "note": "Use tuple structs or split methods"},
+        {"solution": "Consider RefCell for interior mutability when multiple mutable accesses needed", "percentage": 70, "note": "Runtime borrow checking for complex cases"}
+    ]'::jsonb,
+    'Rust code with overlapping borrows, Attempts to mutate while immutable references exist',
+    'Borrows do not overlap in time, Code compiles, All accesses work as intended',
+    'Borrow checker ensures memory safety by preventing data races. Cannot have mutable and immutable borrows simultaneously. References count as used until their last usage, not declaration.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html'
+);

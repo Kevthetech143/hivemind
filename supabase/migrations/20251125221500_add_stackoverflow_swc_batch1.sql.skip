@@ -1,0 +1,149 @@
+-- Add Stack Overflow SWC (Rust compiler) solutions - batch 1
+-- 12 questions extracted from highest voted SWC compiler questions
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up, source_url)
+VALUES
+(
+  'Next.js failed to load SWC binary npm run dev',
+  'stackoverflow-swc',
+  '[{"solution": "Delete package-lock.json and node_modules directory, then run npm install to reinstall fresh dependencies", "percentage": 95, "command": "rm -rf node_modules package-lock.json && npm install", "note": "Top answer with 183 upvotes. Resolves corrupted binary installations."}, {"solution": "Clear npm cache and reinstall if issue persists after fresh npm install", "percentage": 90, "command": "npm cache clean --force && npm install", "note": "Additional step for stubborn cache issues"}, {"solution": "Create .babelrc with next/babel preset to revert to Babel temporarily", "percentage": 75, "command": "echo {\"presets\": [\"next/babel\"]} > .babelrc", "note": "Workaround loses SWC performance benefits but restores functionality"}]'::jsonb,
+  'Do not delete only node_modules - package-lock.json must also be removed for complete reinstall. Partial deletions may leave corrupted binary references. Cache issues require explicit npm cache clean.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  92,
+  'https://stackoverflow.com/questions/69816589/next-failed-to-load-swc-binary'
+),
+(
+  'SWC vs Babel comparison TypeScript Vite project performance',
+  'stackoverflow-swc',
+  '[{"solution": "Use SWC (TypeScript + SWC option in Vite) for better performance and faster build times", "percentage": 90, "command": "Create Vite project with: npm create vite@latest -- --template react-ts && select TypeScript + SWC", "note": "47 upvote answer. SWC written in Rust, much faster than Babel. Best for new projects."}, {"solution": "Use Babel (plain TypeScript option) for projects needing extensive customization and plugin ecosystem", "percentage": 85, "command": "Select TypeScript (not TypeScript + SWC) when scaffolding Vite project", "note": "Babel has mature ecosystem, extensive plugins, and detailed documentation for complex transforms"}]'::jsonb,
+  'Do not assume Babel and SWC are equivalent. Plain TypeScript in Vite uses Babel (slower), TypeScript + SWC uses Rust compiler (faster). SWC has fewer customization options but superior performance.',
+  0.90,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  63,
+  'https://stackoverflow.com/questions/79111563/what-is-the-difference-of-typescript-vs-typescript-swc-when-creating-a-vite-pr'
+),
+(
+  'Why Did You Render Next.js 12 SWC configuration without disabling',
+  'stackoverflow-swc',
+  '[{"solution": "Configure via next.config.js webpack plugin without disabling SWC", "percentage": 95, "command": "1. Stop dev server 2. Delete .next folder 3. Create scripts/whyDidYouRender.js with initialization code 4. Add webpack config in next.config.js to inject script on dev builds", "note": "7 upvote accepted answer. Requires stopping server and cache deletion before running again."}, {"solution": "Only load Why Did You Render in development environment", "percentage": 85, "command": "Check process.env.NODE_ENV === \"development\" before initializing library", "note": "Prevent unnecessary performance impact in production"}]'::jsonb,
+  'Must stop development server completely and delete .next folder before restarting - partial restarts will not pick up configuration changes. Why Did You Render must only load on client side (isServer === false).',
+  0.95,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  14,
+  'https://stackoverflow.com/questions/69807341/how-to-configure-why-did-you-render-with-nextjs-12'
+),
+(
+  'Failed to load SWC binary module not found win32-x64-msvc',
+  'stackoverflow-swc',
+  '[{"solution": "Remove node_modules and package-lock.json, then reinstall dependencies", "percentage": 95, "command": "rm -rf node_modules && rm package-lock.json && npm install", "note": "14 upvote answer. Platform-specific binary (win32-x64-msvc) not properly installed."}, {"solution": "On Windows, delete package-lock.json specifically before reinstall", "percentage": 90, "command": "del package-lock.json && npm install", "note": "Commenters confirmed package-lock.json deletion was essential for success"}]'::jsonb,
+  'Do not reinstall without deleting package-lock.json - npm will reinstall same corrupted versions. Win32 platform-specific binaries require complete clean install to download correct architecture.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  13,
+  'https://stackoverflow.com/questions/70640773/failed-to-load-swc-binary'
+),
+(
+  'Generate TypeScript code output with SWC compiler Rust AST',
+  'stackoverflow-swc',
+  '[{"solution": "Create Compiler instance and use .print() method on AST with ES version and source map config", "percentage": 90, "command": "let c = swc::Compiler::new(cm.clone()); let ast_printed = c.print(&ast, Some(filename), None, false, EsVersion::Es2022, SourceMapsConfig::Bool(false), &AHashMap::default(), None, false, None)?;", "note": "8 upvote answer. Must pass all required parameters to print method. Returns code via .code field."}, {"solution": "Add SWC as git dependency in Cargo.toml for latest features", "percentage": 85, "command": "[dependencies] swc = { git = \"https://github.com/swc-project/swc\" }", "note": "Using published crates.io version may lack latest compiler features"}]'::jsonb,
+  'SWC print() method requires all parameters including EsVersion and SourceMapsConfig - cannot omit optional parameters. Output is available via .code field of returned struct. Requires Rust project setup.',
+  0.90,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  10,
+  'https://stackoverflow.com/questions/70494606/how-to-generating-typescript-code-with-swc'
+),
+(
+  'Migrating from Babel to SWC React JSX parsing error expression expected',
+  'stackoverflow-swc',
+  '[{"solution": "Import React in every file and change file extensions from .js to .jsx for SWC JSX support", "percentage": 85, "command": "1. Add import React from \"react\" to all component files 2. Rename .js files containing JSX to .jsx 3. Update import statements to use .jsx", "note": "8 upvote answer - workaround but not ideal. Prevents React 17+ automatic JSX transform."}, {"solution": "Configure .swcrc with jsx parser syntax to auto-detect React", "percentage": 75, "command": "{\"jsc\": {\"parser\": {\"syntax\": \"typescript\", \"tsx\": true}}} but be aware SWC may still require .jsx extension", "note": "Configuration alone insufficient - file extensions also required"}]'::jsonb,
+  'SWC does not support React 17+ automatic JSX transform like Babel does. Requires explicit React imports and .jsx extensions even with proper .swcrc config. @swc-node/register has more limited JSX handling than full SWC.',
+  0.85,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  9,
+  'https://stackoverflow.com/questions/69956543/migrating-from-babel-to-swc-with-react'
+),
+(
+  'SWC cannot find module import path aliases tsconfig paths',
+  'stackoverflow-swc',
+  '[{"solution": "Duplicate baseUrl and paths configuration from tsconfig.json into .swcrc jsc section", "percentage": 90, "command": "{\"jsc\": {\"baseUrl\": \"./\", \"paths\": {\"*\": [\"node_modules\", \"src/*\"]}}} - must match tsconfig.json exactly", "note": "3 upvote accepted answer. SWC does not read tsconfig.json paths during transpilation."}, {"solution": "Verify baseUrl is relative path \"./\" not absolute path", "percentage": 85, "command": "baseUrl must be relative: \"./\" not \"/home/user/project\"", "note": "Absolute baseUrl paths cause module resolution failures"}]'::jsonb,
+  'SWC does not inherit tsconfig.json configuration - baseUrl and paths must be duplicated in .swcrc. Path aliases in tsconfig.json alone will not work. Relative vs absolute baseUrl matters significantly.',
+  0.90,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  8,
+  'https://stackoverflow.com/questions/75522940/swc-not-resolving-import-path-aliases'
+),
+(
+  'SWC CLI ignore flag not working exclude test files dist',
+  'stackoverflow-swc',
+  '[{"solution": "Use exclude property in .swcrc configuration instead of --ignore CLI flag", "percentage": 90, "command": "{\"exclude\": [\".*\\\\.spec|test\\\\.(j|t)s$\", \"mocks\", \"types\"]} in .swcrc config file", "note": "Workaround accepted. CLI --ignore flag had bugs fixed in Jan 2024. See GitHub issues swc-project/swc#3559"}, {"solution": "Update SWC and @swc/cli to latest versions (after Jan 2024)", "percentage": 85, "command": "npm install -D swc@latest @swc/cli@latest", "note": "Bug was resolved in recent updates. Check GitHub issues for specific version requirements"}]'::jsonb,
+  'The --ignore CLI flag had a long-standing bug that was only recently fixed. Using exclude property in .swcrc is more reliable. Requires understanding regex patterns for exclude - patterns are NOT glob patterns.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  8,
+  'https://stackoverflow.com/questions/72215754/how-to-ignore-files-with-swc-cli'
+),
+(
+  'Next.js Material UI SWC modularizeImports transformation import',
+  'stackoverflow-swc',
+  '[{"solution": "Use next.config.js modularizeImports property instead of swcPlugins for Material UI", "percentage": 95, "command": "module.exports = { modularizeImports: { \"@mui/material\": { transform: \"@mui/material/{{member}}\" }, \"@mui/icons-material\": { transform: \"@mui/icons-material/{{member}}\" } } }", "note": "6 upvote answer. modularizeImports is built-in Next.js feature, more reliable than custom swcPlugins"}, {"solution": "Configure all MUI packages in single config object", "percentage": 90, "command": "Include @mui/material, @mui/icons-material, @mui/styles, @mui/lab in same modularizeImports config", "note": "Single configuration maintains consistency"}]'::jsonb,
+  'swcPlugins approach for Material UI tree-shaking is unreliable in Next.js. Use built-in modularizeImports instead - it is purpose-built for this use case. Double curly braces {{member}} are required in transform pattern.',
+  0.95,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  7,
+  'https://stackoverflow.com/questions/73857881/next-js-how-to-use-swc-compiler-with-material-ui-and-swc-plugin-transform-import'
+),
+(
+  'SWC plugins break Next.js wasm compilation issues',
+  'stackoverflow-swc',
+  '[{"solution": "Update SWC and Next.js to latest versions that fixed plugin compatibility", "percentage": 90, "command": "Update to swc_cli v0.91.42 or later and next.js v13.4.3-canary.2 or production release", "note": "Bug was environment/version-dependent. Plugin issues resolved with updates to swc-project/swc and Next.js repos."}, {"solution": "Verify plugin targets WASM (wasm32-wasi) not native code", "percentage": 85, "command": "When compiling plugin: cargo build-wasi --release. Ensure target in Cargo.toml is wasm32-wasi", "note": "Native plugins cannot run in Next.js"}]'::jsonb,
+  'SWC plugin bugs were version-specific (especially v13.2.4-v13.3.1). Many plugin failures resolve with Next.js/SWC updates. Plugins must target wasm32-wasi architecture not native code. Works on Windows, Ubuntu, and macOS if versions match.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  1,
+  'https://stackoverflow.com/questions/76194519/swc-plugins-not-working-any-plugin-i-compile-breaks-next-js'
+),
+(
+  'Migrating NextJS 11 to NextJS 12 SWC path aliases module not found',
+  'stackoverflow-swc',
+  '[{"solution": "Verify path aliases in tsconfig.json use wildcard pattern with trailing slash", "percentage": 85, "command": "{\"compilerOptions\": {\"baseUrl\": \".\", \"paths\": {\"@styles/*\": [\"./src/styles/*\"]}}} - note trailing /* after both source and target", "note": "Missing wildcard in paths causes module resolution failures. Exact import path matching required."}, {"solution": "Ensure next.config.js does not set forceSwcTransforms if custom Babel config exists", "percentage": 80, "command": "Check for conflicts: custom .babelrc file disables SWC regardless of forceSwcTransforms flag", "note": "Having both .babelrc and forceSwcTransforms creates conflicting configuration"}]'::jsonb,
+  'Path aliases must include wildcard pattern with trailing slashes: \"@alias/*\" maps to \"./path/*\". Incomplete patterns like \"@styles\" without /* fail silently. Custom .babelrc can override SWC settings unexpectedly.',
+  0.85,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  1,
+  'https://stackoverflow.com/questions/73122994/migrating-nextjs11-to-nextjs12-with-swc-config'
+),
+(
+  'next/font requires SWC custom babel config conflict error',
+  'stackoverflow-swc',
+  '[{"solution": "Remove .babelrc or custom Babel configuration file to enable SWC", "percentage": 95, "command": "Delete or rename .babelrc file. If styled-components: move config to next.config.js styledComponents option", "note": "Next Font requires SWC and is incompatible with custom Babel configs. Next.js defaults to Babel if .babelrc exists."}, {"solution": "Use next.config.js styledComponents configuration instead of babel-plugin-styled-components", "percentage": 90, "command": "module.exports = { compiler: { styledComponents: true } } - no .babelrc needed", "note": "Built-in styled-components support available in next.config.js"}]'::jsonb,
+  'Custom .babelrc file automatically disables SWC compiler in Next.js, even if next/font requires it. Next Font is incompatible with Babel configuration. styled-components can be configured via next.config.js without Babel.',
+  0.95,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  1,
+  'https://stackoverflow.com/questions/75959591/next-font-requires-swc-although-babel-is-being-used-due-to-a-custom-babel-conf'
+);

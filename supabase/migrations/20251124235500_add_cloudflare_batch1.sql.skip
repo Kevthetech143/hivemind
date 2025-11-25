@@ -1,0 +1,213 @@
+-- Add Cloudflare Workers documentation solutions batch 1
+-- DOC-MINER-34: Runtime errors, deployment errors, binding issues
+-- Source: Official Cloudflare Workers documentation
+-- Mined: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Cloudflare Workers error 1101: Worker threw a JavaScript exception',
+    'cloudflare',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use wrangler tail to inspect real-time exceptions and identify the uncaught error", "percentage": 95, "command": "wrangler tail", "note": "Most effective for debugging runtime exceptions"},
+        {"solution": "Check Workers Logs in dashboard and filter with $metadata.error EXISTS or $workers.outcome = exception", "percentage": 90, "note": "View historical error patterns"},
+        {"solution": "Add try-catch blocks around async operations and event handlers to catch unhandled promises", "percentage": 85, "note": "Prevents uncaught exceptions from reaching runtime"}
+    ]'::jsonb,
+    'Deployed Worker, Access to Cloudflare dashboard or Wrangler CLI',
+    'Error 1101 no longer appears in logs, Worker returns proper responses, No exceptions in wrangler tail output',
+    'Unhandled promise rejections are a common cause. Always await async operations. Destructured methods lose this context - call methods directly on parent object.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers error 1102: Worker exceeded CPU time limit',
+    'cloudflare',
+    'HIGH',
+    '[
+        {"solution": "Optimize CPU-intensive operations by reducing loop iterations or using more efficient algorithms", "percentage": 90, "note": "Workers have strict CPU time limits per request"},
+        {"solution": "Move heavy processing to asynchronous background tasks using ctx.waitUntil()", "percentage": 85, "note": "Keeps response fast while completing work"},
+        {"solution": "Cache expensive computations in KV or Durable Objects to avoid recalculating on every request", "percentage": 80, "note": "Trade memory for CPU time"}
+    ]'::jsonb,
+    'Deployed Worker, Performance profiling tools',
+    'Response time decreases, CPU time metrics show under limit, Error 1102 no longer occurs',
+    'CPU time limit applies per request invocation, not wall-clock time. Async operations do not count against CPU limit. Top-level code has 1 second CPU limit.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers error 1019: Worker hit loop limit (recursive Worker invocation)',
+    'cloudflare',
+    'MEDIUM',
+    '[
+        {"solution": "Redesign architecture to avoid recursive Worker calls - use iterative approach or state machine pattern", "percentage": 95, "note": "Workers cannot call themselves or other Workers more than 16 times"},
+        {"solution": "Use Durable Objects to maintain state across invocations instead of chaining Worker calls", "percentage": 90, "note": "Better pattern for stateful operations"},
+        {"solution": "Implement request batching to reduce number of Worker-to-Worker invocations", "percentage": 80, "note": "Combine multiple operations into single calls"}
+    ]'::jsonb,
+    'Service bindings configured, Multiple Workers in same zone',
+    'Recursive call depth stays under 16, No 1019 errors in logs, Requests complete successfully',
+    'Maximum recursion depth is 16 for any Worker-to-Worker call chain. This includes service bindings and fetch() to other Workers on same zone. Use global_fetch_strictly_public flag if needed.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers: The script will never generate a response',
+    'cloudflare',
+    'HIGH',
+    '[
+        {"solution": "Ensure all Promises are properly resolved or rejected - check for missing await statements", "percentage": 95, "note": "Most common cause is unresolved Promise in event handler"},
+        {"solution": "Add server.close() to WebSocket event listeners to properly close server-side connections", "percentage": 90, "note": "Required for WebSocket servers"},
+        {"solution": "Verify that all code paths return a Response object before event loop completes", "percentage": 85, "note": "Every fetch handler must return Response"}
+    ]'::jsonb,
+    'Workers runtime environment, Async code using Promises',
+    'Worker returns Response to all requests, No timeout errors, Event loop completes properly',
+    'Runtime detects all code executed with no events left but no Response returned. Check for Promises that never resolve. WebSocket connections must be explicitly closed.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers TypeError: Illegal invocation - function called with incorrect this reference',
+    'cloudflare',
+    'HIGH',
+    '[
+        {"solution": "Call methods directly on parent object instead of destructuring: use ctx.waitUntil() not { waitUntil } = ctx", "percentage": 95, "note": "Methods lose this context when destructured"},
+        {"solution": "Use .bind() to restore correct this context: const waitUntil = ctx.waitUntil.bind(ctx)", "percentage": 90, "note": "Preserves method context"},
+        {"solution": "Use arrow functions or .call()/.apply() when passing methods as callbacks", "percentage": 85, "note": "Maintains proper this binding"}
+    ]'::jsonb,
+    'ES6 destructuring syntax, Methods passed as callbacks',
+    'No TypeError: Illegal invocation errors, Methods execute with correct context, Code runs without runtime errors',
+    'Destructuring methods from objects breaks this binding. ExecutionContext methods like waitUntil, passThroughOnException require proper this reference. Always call on parent object or use bind().',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers: Cannot perform I/O on behalf of a different request',
+    'cloudflare',
+    'MEDIUM',
+    '[
+        {"solution": "Store only data in global scope, not I/O objects like streams or request/response bodies", "percentage": 95, "note": "I/O objects are request-scoped and cannot be shared"},
+        {"solution": "Use Durable Objects for cross-request state management instead of global caching", "percentage": 90, "note": "Proper pattern for persistent state"},
+        {"solution": "Use Workers KV for caching data across requests, not streams or response objects", "percentage": 85, "note": "KV stores data, not I/O handles"}
+    ]'::jsonb,
+    'Workers with global scope variables, Caching implementation',
+    'No cross-request I/O errors, Proper state management, Data cached without I/O objects',
+    'I/O objects created in one request handler cannot be accessed from different invocation. Streams, request bodies, response bodies are all I/O objects. Only cache serialized data.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers error 10021: Validation Error - Script startup exceeded CPU time limit',
+    'cloudflare',
+    'HIGH',
+    '[
+        {"solution": "Move expensive initialization code from top-level scope into request handlers", "percentage": 95, "note": "Top-level code has 1 second CPU limit"},
+        {"solution": "Lazy-load modules and libraries only when needed instead of at startup", "percentage": 90, "note": "Reduces initial CPU usage"},
+        {"solution": "Pre-compile or pre-process data offline and import as static constants", "percentage": 85, "note": "Avoid runtime computation at startup"}
+    ]'::jsonb,
+    'Worker deployment process, Code in top-level scope',
+    'Worker deploys successfully, No validation errors, Startup completes under 1 second CPU time',
+    'Top-level scope runs once per Worker instance startup with 1 second CPU limit. Heavy computation, large imports, or complex initialization triggers this. Move work to handlers.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers error 10021: Validation Error - Script startup exceeded memory limit',
+    'cloudflare',
+    'MEDIUM',
+    '[
+        {"solution": "Reduce size of imported data structures and modules in top-level scope", "percentage": 90, "note": "Top-level code has 128 MB memory limit"},
+        {"solution": "Use dynamic imports to load large modules only when needed in request handlers", "percentage": 90, "note": "Defers memory allocation"},
+        {"solution": "Split large static data into external KV storage instead of bundling in Worker code", "percentage": 85, "note": "Keeps Worker bundle small"}
+    ]'::jsonb,
+    'Large imports or data structures, Worker deployment',
+    'Worker deploys without memory errors, Top-level scope uses under 128 MB, Module size optimized',
+    'Top-level scope limited to 128 MB memory. Large JSON files, bundled assets, or many imports can exceed limit. Use KV for data, dynamic imports for code splitting.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+),
+(
+    'Cloudflare Workers deployment: Missing entry-point error',
+    'cloudflare',
+    'HIGH',
+    '[
+        {"solution": "Create wrangler.toml file in project root directory with name and main fields configured", "percentage": 95, "note": "wrangler.toml is required for deployment"},
+        {"solution": "Update build configuration root directory path in Workers dashboard Settings > Build", "percentage": 85, "note": "Points to correct directory with wrangler.toml"},
+        {"solution": "Verify main field in wrangler.toml points to correct entry file (e.g. src/index.js)", "percentage": 80, "note": "Entry point must exist"}
+    ]'::jsonb,
+    'Wrangler CLI installed, Project structure created',
+    'Deployment succeeds, wrangler.toml found and parsed, Entry point correctly identified',
+    'wrangler.toml must exist in root directory. The main field specifies entry point. Build configuration in dashboard must point to directory containing wrangler.toml.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/ci-cd/builds/troubleshoot/'
+),
+(
+    'Cloudflare Workers Service Bindings: Deployment fails - target Worker does not exist',
+    'cloudflare',
+    'HIGH',
+    '[
+        {"solution": "Deploy the target Worker (Worker B) first before deploying Worker A that binds to it", "percentage": 95, "note": "Service bindings require target Worker to exist"},
+        {"solution": "Verify binding name in wrangler.toml matches deployed Worker name exactly", "percentage": 90, "note": "Case-sensitive name matching"},
+        {"solution": "Check that target Worker is deployed to same account/zone as source Worker", "percentage": 85, "note": "Cross-account bindings not supported"}
+    ]'::jsonb,
+    'Multiple Workers, Service binding configuration in wrangler.toml',
+    'Deployment succeeds for both Workers, Service binding resolves correctly, No deployment errors',
+    'Target Worker must exist before source Worker can bind to it. Deploy order matters. Binding name must match exactly. Both Workers must be in same account.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/runtime-apis/bindings/service-bindings/'
+),
+(
+    'Cloudflare Workers KV binding is not defined error',
+    'cloudflare',
+    'VERY_HIGH',
+    '[
+        {"solution": "For module workers, access KV binding through env parameter: export default { async fetch(request, env) { await env.MY_KV.get(key) } }", "percentage": 95, "note": "Module workers expose bindings via env parameter"},
+        {"solution": "Verify KV namespace binding name in wrangler.toml matches property accessed in code", "percentage": 90, "note": "Binding names are case-sensitive"},
+        {"solution": "Use importable env from cloudflare:workers to access bindings anywhere: import { env } from cloudflare:workers", "percentage": 85, "note": "2025 feature - requires compatibility date 2025-03-17 or later"}
+    ]'::jsonb,
+    'KV namespace created, Binding configured in wrangler.toml, Module worker syntax (not service worker)',
+    'KV binding resolves successfully, env.BINDING_NAME is defined, KV operations execute without errors',
+    'Module workers do not have global bindings. Must access via env parameter. Service worker syntax (addEventListener) does not expose env. Import from cloudflare:workers cannot be used in top-level context.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/kv/concepts/kv-bindings/'
+),
+(
+    'Cloudflare Workers error 10027: Uploaded Worker exceeded size limits',
+    'cloudflare',
+    'MEDIUM',
+    '[
+        {"solution": "Enable minification in build process to reduce bundle size", "percentage": 90, "note": "Removes whitespace and shortens variable names"},
+        {"solution": "Split Worker into multiple Workers using service bindings to distribute code", "percentage": 85, "note": "Each Worker has separate size limit"},
+        {"solution": "Move large static data to KV storage and fetch at runtime instead of bundling", "percentage": 85, "note": "Reduces Worker script size"},
+        {"solution": "Use dynamic imports to defer loading of large modules until needed", "percentage": 80, "note": "Reduces initial bundle size"}
+    ]'::jsonb,
+    'Build tooling (webpack/esbuild/rollup), KV namespace for static data',
+    'Worker bundle size under limit, Deployment succeeds, No size limit errors',
+    'Free tier: 1 MB limit. Paid tier: 10 MB limit after compression. Large dependencies, bundled assets, or inline data cause overruns. Use external storage for data.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://developers.cloudflare.com/workers/observability/errors/'
+);

@@ -1,0 +1,211 @@
+-- Add Render incident postmortems batch 1
+-- Mined from https://status.render.com/history and Render community/blog
+-- Focus: Service degradation, database connection issues, static site failures, auto-deploy problems
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Render platform: March 26 2024 unintended restart of all workloads causing database recovery delays',
+    'infrastructure-incident',
+    'VERY_HIGH',
+    '[
+        {"solution": "Feature-flagged faulty code change prevented proper testing in non-production. Standardize testing environments to match production by removing subtle differences that mask issues. Run integration tests with feature flags disabled to catch bugs.", "percentage": 95, "note": "Official recommendation from incident postmortem"},
+        {"solution": "When recovering from widespread platform restarts affecting managed databases: increase rate limits for disk detach-attach operations by batching requests. Contact infrastructure provider to remove throttling restrictions on disk migration.", "percentage": 90, "note": "Mitigation used in actual recovery"},
+        {"solution": "For faster recovery of stateless services and microservices: use blue-green deployment with separate infrastructure pools to prevent simultaneous complete restart exposure.", "percentage": 80, "note": "Preventive measure for future incidents"}
+    ]'::jsonb,
+    'Access to Render platform, PostgreSQL and/or Redis databases, Services with attached disks',
+    'All stateless services restored within 20 minutes, Database services return to normal service within 4 hours, No data loss verified',
+    'Feature flags must be tested with flag disabled to prevent bypassing tests. Rate limits for disk migration were initially insufficient for event scale. Testing inconsistencies between production and staging environments allowed bugs to pass validation.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/blog/root-cause-analysis-extended-service-disruption-3-26-24'
+),
+(
+    'Render: November 20 2025 elevated deploy failure rates affecting auto-deploy pipeline',
+    'deploy-incident',
+    'HIGH',
+    '[
+        {"solution": "For Node.js monorepo deployments with pnpm: Check platform status page first before debugging code changes. Recent pnpm install/build phase failures suggest platform-level caching or build infrastructure issues, not code problems.", "percentage": 85, "note": "Specific to pnpm monorepo builds"},
+        {"solution": "When status page marks incident as resolved but builds continue failing: Contact Render support with full build logs showing cache extraction succeeded but pnpm phase failed. Include Node version (e.g., 20.12.2) and exact error: ELIFECYCLE Command failed with exit code 1.", "percentage": 80, "note": "Workaround for premature resolution declaration"},
+        {"solution": "Alternative deployment strategy during incidents: Use manual build trigger instead of auto-deploy. Deploy static build artifacts if possible to bypass dynamic build dependencies.", "percentage": 75, "note": "Temporary bypass while infrastructure recovers"}
+    ]'::jsonb,
+    'Node.js application on Render, pnpm package manager installed, Prisma migrations enabled, Render auto-deploy configured',
+    'Build completes through cache extraction and Node setup phases, pnpm install phase executes without exit code 1 errors, Deployment proceeds to service launch',
+    'Do not assume status page resolution indicates all issues are fixed - check community forum for reports of continued failures. ELIFECYCLE errors during pnpm phase may indicate platform-level build container issues. No recent code changes suggests infrastructure problem, not application issue.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://status.render.com/incidents/mtbs2q8c2kj5'
+),
+(
+    'Render: November 21 2025 dashboard service experiencing increased slowness and high latency',
+    'performance-degradation',
+    'MEDIUM',
+    '[
+        {"solution": "Dashboard slowness is typically caused by load on Render''s control plane infrastructure. Wait for automatic recovery - Render infrastructure team scales to handle load spikes. Expected recovery time 2-4 hours.", "percentage": 88, "note": "Performance degradation incident type"},
+        {"solution": "If slowness persists after 4 hours: Use Render API directly instead of dashboard UI for critical operations. API endpoints often remain responsive when dashboard UI slows due to rendering overhead.", "percentage": 82, "note": "Workaround during performance issues"},
+        {"solution": "Monitor upcoming maintenance windows. On Nov 21, Render performed critical infrastructure upgrades which likely caused temporary dashboard performance impact as part of normal maintenance cycle.", "percentage": 75, "note": "Planned maintenance correlation"}
+    ]'::jsonb,
+    'Render dashboard access, Valid authentication credentials, Render account with services',
+    'Dashboard responsive within 2 seconds, List operations (services, databases) complete within 5 seconds, No 504/502 errors from dashboard API',
+    'Dashboard slowness is often temporary and self-healing. Do not assume data loss - check your services directly. Performance issues may be correlated with planned infrastructure upgrades. API remains functional when dashboard UI slow.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://status.render.com/history'
+),
+(
+    'Render: November 18 2025 upstream provider major incident causing intermittent 500 errors',
+    'upstream-dependency',
+    'HIGH',
+    '[
+        {"solution": "When users report 500 errors but Render status page status is normal: Check upstream provider status (Render depends on infrastructure providers for networking, compute capacity). Render publishes upstream incidents on their status page with clear attribution.", "percentage": 92, "note": "Root cause identification for mysterious errors"},
+        {"solution": "Implement circuit breaker pattern with fallback responses for non-critical features. Upstream provider issues may cause cascading failures if services don''t gracefully degrade.", "percentage": 85, "note": "Architectural resilience pattern"},
+        {"solution": "Configure application-level request retry logic with jitter and exponential backoff specifically for 500 errors. Upstream issues are typically transient and resolve within minutes.", "percentage": 88, "command": "Implement: 3 retries with 100ms initial delay, 2x backoff multiplier, ±20% jitter"}
+    ]'::jsonb,
+    'Applications running on Render, Understanding of upstream provider dependencies, Ability to implement application-level retries',
+    '500 errors reduce to normal baseline within 30 minutes, Monitoring shows clear correlation with upstream provider incident timeline, No customer data loss or corruption',
+    'Do not assume Render platform failure when seeing 500 errors - check status page for upstream incidents. Upstream incidents typically last 15-60 minutes. Implement retries at application level to absorb transient failures.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://status.render.com/history'
+),
+(
+    'Render: November 14 2025 missing metrics and logs for services in Oregon region',
+    'observability-failure',
+    'MEDIUM',
+    '[
+        {"solution": "When metrics and logs are missing for services in specific region: This indicates platform-level observability infrastructure failure, not application issue. Check Render status page for regional incident reports. Oregon region often has infrastructure maintenance.", "percentage": 90, "note": "Regional observability outage pattern"},
+        {"solution": "During observability outages, implement alternative monitoring: Use application-level logging to stdout (captured by Render), Set up external monitoring via API calls to your services, Store metrics in application database as temporary backup.", "percentage": 85, "note": "Workaround during observability service degradation"},
+        {"solution": "Verify your applications are still running correctly despite missing metrics: Services are unaffected - only the observability pipeline failed. Check application functionality, test API endpoints directly, verify database operations.", "percentage": 95, "note": "Reassurance that missing metrics ≠ service failure"}
+    ]'::jsonb,
+    'Render service deployed in Oregon region, Services actively running, Access to Render dashboard or direct service URLs',
+    'Service endpoints respond normally to requests, Application logs stored in application database, External health checks pass, Metrics return within 2-4 hours after incident resolution',
+    'Missing metrics does not mean services are down - observability is separate from application functionality. Do not panic about missing logs - focus on verifying services work correctly. Regional outages typically affect only monitoring, not compute.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://status.render.com/history'
+),
+(
+    'Render PostgreSQL: Database connection pool exhaustion under elevated query load',
+    'database-incident',
+    'HIGH',
+    '[
+        {"solution": "For PostgreSQL instances on Render: Connection pool size scales with plan tier. Verify plan has sufficient connections for peak load. Each Render PostgreSQL instance default allows 10 connections on free tier, 90+ on paid tiers.", "percentage": 95, "note": "Plan-based connection limits"},
+        {"solution": "Implement connection pooling in application code using: PgBouncer mode (transaction pooling) for high connection churn applications, Persistent connection pooling for long-lived connections. Configure pool max size 20-30% below database limit.", "percentage": 90, "command": "Reduce connection pool size by 25% below max database connections to avoid exhaustion"},
+        {"solution": "Diagnose exhaustion: Query pg_stat_activity to identify long-running queries holding connections. Kill idle connections: SELECT pg_terminate_backend(pid) WHERE state = ''idle''", "percentage": 88, "command": "SELECT count(*) FROM pg_stat_activity; -- Monitor active connections"}
+    ]'::jsonb,
+    'Render PostgreSQL instance, Application with database connection pooling, Access to database via psql or admin panel',
+    'Application maintains fewer than 80% of max available connections under normal load, No more connection timeout errors in application logs, Response times return to baseline',
+    'Each plan tier has hard connection limit - cannot exceed without upgrade. Idle connections still count against limit and cause exhaustion errors. Connection pooling in application layer is critical for Render PostgreSQL.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/docs/postgresql'
+),
+(
+    'Render static site: Failed auto-deploy from GitHub due to git integration failure',
+    'static-site-incident',
+    'MEDIUM',
+    '[
+        {"solution": "When static site auto-deploy fails: Verify GitHub webhook is configured correctly in Render dashboard. Render > Settings > Auto-Deploy must point to correct GitHub branch (main/master). Webhook delivery can be verified in GitHub repo > Settings > Webhooks.", "percentage": 94, "note": "Configuration verification"},
+        {"solution": "If webhook is configured but auto-deploy still fails: Check Render build logs in dashboard. Common failures include: build command timeout (15 min limit), missing build script in package.json, insufficient disk space (1GB limit on free tier).", "percentage": 90, "note": "Build log analysis"},
+        {"solution": "For static sites with dependencies: Ensure build command completes within 15 minute Render timeout. Test locally: time npm run build. If over 12 minutes, optimize by: removing unnecessary dependencies, caching build artifacts, using lighter build tools (esbuild vs webpack).", "percentage": 85, "command": "npm run build -- check execution time, must be < 15 minutes"}
+    ]'::jsonb,
+    'Static site project on Render, GitHub repository with write access, Build script configured in package.json',
+    'GitHub webhook green checkmark in webhook settings, Build logs show "Build succeeded" status, Site served at render.com URL within 2 minutes of push',
+    'Auto-deploy requires webhook configuration - manual deployments bypass webhook. Build timeout is strict 15-minute hard limit for free tier (higher on paid). Static sites fail silently if build takes too long - check logs, not just push status.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/docs/static-sites'
+),
+(
+    'Render: Managed Redis instance unavailable after platform incident - extended recovery time',
+    'cache-incident',
+    'HIGH',
+    '[
+        {"solution": "When Redis instance is unavailable after platform incident: Do not attempt manual restart for first 15 minutes - Render infrastructure is already recovering. Monitor Render status page for updates. Expected recovery for Redis: 30 minutes to 2 hours depending on incident scope.", "percentage": 93, "note": "Recovery timeline for cache services"},
+        {"solution": "During Redis unavailability: Implement circuit breaker for Redis operations to fail gracefully. Cache misses should degrade application functionality, not crash it. Route around cache with slower direct database queries.", "percentage": 88, "note": "Architectural resilience pattern for cache"},
+        {"solution": "Prevent data loss during future incidents: Use Redis persistence (RDB snapshots or AOF). Render automatically handles backups for managed instances, but verify backup retention settings in Render dashboard. Free tier backups limited to 7 days.", "percentage": 85, "note": "Preventive configuration"}
+    ]'::jsonb,
+    'Render managed Redis instance, Application with Redis circuit breaker pattern, Understanding of cache failure modes',
+    'Redis instance returns to healthy status on status page, Application continues operating with degraded performance during outage, Previous cached data restored after recovery',
+    'Redis failures should not cascade to application failure - implement graceful degradation. Platform incidents can cause 30+ minute Redis recovery due to disk migration rate limits. Managed instances have automatic backups - retention period depends on plan tier.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/docs/redis'
+),
+(
+    'Render auto-deploy: Unreliable GitHub webhook delivery causing missed deployments',
+    'deployment-reliability',
+    'MEDIUM',
+    '[
+        {"solution": "For unreliable auto-deploy: Check webhook delivery logs in GitHub repository Settings > Webhooks > Recent Deliveries. Failed deliveries show HTTP status (5xx = Render issue, 4xx = webhook misconfiguration). Render recommends retrying failed deliveries.", "percentage": 92, "note": "Webhook delivery debugging"},
+        {"solution": "If webhooks frequently fail: Reduce webhook payload size by: disabling unnecessary event types in GitHub webhook, updating webhook URL if it has changed. Render may drop oversized payloads.", "percentage": 85, "note": "Performance optimization"},
+        {"solution": "Fallback strategy during unreliable auto-deploy: Enable manual deployment trigger from Render dashboard as workaround. Use GitHub Actions to manually trigger Render deploy via API call on push (more reliable than webhooks).", "percentage": 80, "command": "curl -X POST https://api.render.com/deploy/:service-id with Bearer token"}
+    ]'::jsonb,
+    'Render service with GitHub auto-deploy enabled, GitHub repository with webhook access, Render API key for manual deployment',
+    'Webhook shows successful HTTP 200 delivery in GitHub webhook logs, Auto-deploy triggers within 30 seconds of push, Site updates reflect latest commits',
+    'Webhook delivery is asynchronous and can fail silently - check GitHub webhook delivery logs, not just Render status. Failed webhooks require manual retry from GitHub. Auto-deploy is less reliable than explicit CI/CD integration.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/docs/github#auto-deploy'
+),
+(
+    'Render: Rate limiting on disk migration operations during simultaneous large-scale recovery',
+    'infrastructure-bottleneck',
+    'MEDIUM',
+    '[
+        {"solution": "When recovering from platform incident affecting many services with disks: Recovery is bottlenecked by rate-limited disk migration (detach/attach between hosts). Render limits this to prevent overload. Expected delay: 1-4 hours depending on number of disks affected.", "percentage": 94, "note": "Incident-specific recovery pattern"},
+        {"solution": "To speed recovery: Contact Render support during incident to request rate limit increase. Render typically increases limits to max sustainable throughput during major incidents. Provide: incident ID, affected service IDs, brief impact description.", "percentage": 85, "note": "Escalation path"},
+        {"solution": "Prevention for future incidents: Use separate persistent disks vs. service restart to minimize simultaneous disk movement. Store non-critical data in managed Redis or object storage instead of disk to reduce recovery dependencies.", "percentage": 78, "note": "Architectural design for resilience"}
+    ]'::jsonb,
+    'Render services with persistent disks (PostgreSQL, Redis, or mounted volumes), Understanding of infrastructure dependency chains',
+    'Affected services restore sequentially or in small batches without additional rate limit errors, Disk utilization stabilizes after recovery, No cascading failures',
+    'Rate limiting on disk operations is infrastructure protection mechanism - cannot be disabled. Simultaneous wide-scale disk recovery (>1000 disks) can take 4+ hours. Service restarts without disk attachments recover in 20 minutes - consider stateless architecture.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/blog/root-cause-analysis-extended-service-disruption-3-26-24'
+),
+(
+    'Render: Container security vulnerability CVE-2025-49844 RediShell affecting Redis instances',
+    'security-incident',
+    'MEDIUM',
+    '[
+        {"solution": "For Render managed Redis instances: Render maintains container security patches automatically. No action required for managed Redis - Render team applies patches to platform. Check status page for security update notifications.", "percentage": 98, "note": "Managed service responsibility"},
+        {"solution": "For self-managed Redis containers on Render: Update Redis container images to patched version. CVE-2025-49844 RediShell affects Redis command parsing. Redeploy containers via Render dashboard > Services > Redeploy.", "percentage": 90, "command": "Redeploy container from Render dashboard after updating base image to latest patched Redis version"},
+        {"solution": "For all deployments: Monitor Render blog and security announcements. Render publishes security incident responses transparently. Subscribe to status page for security advisories.", "percentage": 85, "note": "Proactive monitoring"}
+    ]'::jsonb,
+    'Render account with Redis instances (managed or self-managed), Container image with base image tag management',
+    'Redis instances accessible and responding to commands, Security scan shows no known CVE-2025-49844 vulnerabilities, No unauthorized access logs in container',
+    'Managed Redis handled by Render - no patch required. Self-managed containers must update base images explicitly. CVE-2025-49844 specifically affects Redis command parsing in certain configurations.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/blog/our-response-to-redishell-vulnerability'
+),
+(
+    'Render: Testing infrastructure bug - feature flags not properly evaluated in staging environment',
+    'testing-incident',
+    'MEDIUM',
+    '[
+        {"solution": "When deploying changes behind feature flags: Explicitly test with feature flag DISABLED in staging to catch bugs that feature flag logic masks. Do not rely on feature flag enabling to prevent bad code from reaching production.", "percentage": 96, "note": "Critical testing practice from 3/26/24 incident"},
+        {"solution": "Verify feature flag evaluation in non-production: Run identical test suite with flag disabled. Feature flag logic bugs can prevent code path from executing in staging but execute in production, bypassing all validation.", "percentage": 95, "note": "Root cause of March 2024 incident"},
+        {"solution": "Standardize staging and production environment configuration to eliminate subtle differences that prevent bugs from surfacing. Use infrastructure-as-code (Terraform) to ensure environment parity.", "percentage": 90, "note": "Long-term prevention"}
+    ]'::jsonb,
+    'Render deployment pipeline with feature flags, Staging environment that mirrors production, Test suite covering all code paths',
+    'Feature flag disabled test suite passes in staging, Code behaves identically with flag enabled vs disabled, Automated tests include disabled flag test case, No staging-to-production behavior divergence',
+    'Feature flags can hide bugs if not properly tested with flag disabled in staging. Subtle differences between staging and production environments allow bad code to pass validation. Test all code paths including feature flag logic paths.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://render.com/blog/root-cause-analysis-extended-service-disruption-3-26-24'
+);

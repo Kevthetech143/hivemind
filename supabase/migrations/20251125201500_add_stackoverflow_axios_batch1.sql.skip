@@ -1,0 +1,245 @@
+-- Add Stack Overflow Axios questions batch 1
+-- 12 highest-voted Axios questions with accepted answers
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'How can I get the status code from an HTTP error in Axios?',
+    'stackoverflow-axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Access error.response.status property in catch block to retrieve HTTP status code", "percentage": 95, "note": "Check that error.response exists before accessing properties, as network errors may have undefined response"},
+        {"solution": "Use error.response.data to access the response body and error.response.headers for response headers", "percentage": 90, "note": "All error details are available in these properties"},
+        {"solution": "Use validateStatus config option to resolve all responses as successful: axios.get(url, {validateStatus: () => true})", "percentage": 75, "note": "Alternative approach allows processing all status codes without throwing errors"}
+    ]'::jsonb,
+    'Axios installed, API endpoint that returns errors',
+    'console.log(error.response.status) shows correct HTTP status code, error properties are accessible',
+    'Attempting to log error directly shows string representation, not the response object. Always check error.response existence before accessing nested properties to avoid undefined errors.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39153080/how-can-i-get-the-status-code-from-an-http-error-in-axios'
+),
+(
+    'axios post request to send form data',
+    'stackoverflow-axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use FormData API with axios.post(): append data with .append() method and let Axios set headers automatically", "percentage": 95, "note": "Axios automatically handles Content-Type boundary when FormData is detected"},
+        {"solution": "For Node.js file uploads, use form-data package: const FormData = require(\"form-data\"), then call formData.getHeaders() for headers", "percentage": 90, "note": "Node.js environment requires form-data npm package"},
+        {"solution": "For URL-encoded format (application/x-www-form-urlencoded), use qs package: qs.stringify({key: value})", "percentage": 85, "note": "Alternative to FormData for simple key-value data"}
+    ]'::jsonb,
+    'Axios installed, HTML form or FormData support in environment',
+    'Backend receives form data correctly, no 400 Bad Request errors, form values properly populated in server',
+    'Do not manually set Content-Type header with boundary - Axios handles this automatically. FormData converts all values to strings. Using set() instead of append() on FormData overwrites instead of adding values.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/47630163/axios-post-request-to-send-form-data'
+),
+(
+    'How to set header and options in axios?',
+    'stackoverflow-axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Pass configuration object as third parameter to axios.post(): axios.post(url, data, {headers: {header1: value}})", "percentage": 95, "note": "Config object contains headers and other options like timeout, validateStatus"},
+        {"solution": "Set global default headers: axios.defaults.headers.common[\"header1\"] = \"value\" or axios.defaults.headers.post[\"header1\"] for POST only", "percentage": 90, "note": "Applied to all requests using that axios instance"},
+        {"solution": "Create axios instance with default headers: axios.create({headers: {post: {header1: \"value\"}}})", "percentage": 88, "note": "Allows multiple instances with different header configurations"}
+    ]'::jsonb,
+    'Axios installed, backend configured to accept custom headers via CORS',
+    'Custom headers appear in request, server receives and processes headers correctly',
+    'Headers must be in config object (third parameter for POST), not as named parameters. Forgetting to set server-side CORS headers for custom header acceptance. Using singular "header" instead of plural "headers".',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45578844/how-to-set-header-and-options-in-axios'
+),
+(
+    'Make Axios send cookies in its requests automatically',
+    'stackoverflow-axios',
+    'HIGH',
+    '[
+        {"solution": "Set axios.defaults.withCredentials = true to enable automatic cookie transmission in all requests", "percentage": 95, "note": "Global setting applies to all axios requests"},
+        {"solution": "For individual requests, pass withCredentials in config: axios.get(url, {withCredentials: true})", "percentage": 92, "note": "For POST requests, withCredentials must be in third parameter: axios.post(url, data, {withCredentials: true})"},
+        {"solution": "Configure Express backend with CORS: app.use(cors({origin: \"http://localhost:3000\", credentials: true}))", "percentage": 90, "note": "Origin must be exact domain, not wildcard (*) when using credentials"}
+    ]'::jsonb,
+    'Axios installed, Express.js or backend server configured for CORS, cookies exist on domain',
+    'Cookies automatically included in request headers, backend receives and processes cookies correctly',
+    'Access-Control-Allow-Origin header cannot be wildcard (*) when credentials are required - must specify exact domain. withCredentials in config must be in the correct parameter position for POST requests (third parameter).',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43002444/make-axios-send-cookies-in-its-requests-automatically'
+),
+(
+    'Axios get access to response header fields',
+    'stackoverflow-axios',
+    'HIGH',
+    '[
+        {"solution": "Configure server to expose custom headers via Access-Control-Expose-Headers response header. Access via response.headers[\"header-name\"]", "percentage": 95, "note": "Browser only exposes whitelisted headers by default for CORS security"},
+        {"solution": "Node.js/Express: const cors = require(\"cors\"); app.use(cors({exposedHeaders: [\"Authorization\", \"x-custom\"]}))", "percentage": 92, "note": "Whitelist specific headers for client-side access"},
+        {"solution": "Manual Express configuration: res.header(\"Access-Control-Expose-Headers\", \"Authorization, X-Custom\")", "percentage": 88, "note": "Alternative to using cors package"}
+    ]'::jsonb,
+    'Axios installed, backend server running, CORS enabled',
+    'Custom headers accessible via response.headers[key], headers visible in browser DevTools Network tab match what JavaScript can access',
+    'Headers visible in browser DevTools do not equal programmatic access - browser shows all headers for debugging but restricts API access via CORS for security. Always lowercase header names when accessing via JavaScript: response.headers["authorization"]',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37897523/axios-get-access-to-response-header-fields'
+),
+(
+    'Axios handling errors',
+    'stackoverflow-axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use axios interceptors for centralized error handling: axios.interceptors.response.use(response => response, error => {handle error; return Promise.reject(error)})", "percentage": 95, "note": "Allows global error handling without catch blocks at every call site"},
+        {"solution": "Check three error scenarios in catch block: error.response (server responded with error), error.request (request made but no response), or error (request setup failed)", "percentage": 92, "note": "Different error scenarios require different handling approaches"},
+        {"solution": "Use async/await with try/catch for cleaner error handling: try {await axios.get()} catch(error) {if(error.response)...}", "percentage": 90, "note": "Modern approach recommended over .then().catch() chains"}
+    ]'::jsonb,
+    'Axios installed, error handling logic ready',
+    'Errors caught and handled appropriately, error notifications displayed, application continues gracefully',
+    'error.response can be undefined during destructuring causing crashes - always verify error structure. Returning error from interceptor allows catch blocks at call sites for specialized handling. Some error.response properties may be undefined in network errors.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/49967779/axios-handling-errors'
+),
+(
+    'What is difference between Axios and Fetch?',
+    'stackoverflow-axios',
+    'HIGH',
+    '[
+        {"solution": "Axios is third-party library with automatic JSON parsing, built-in timeout/interceptors. Fetch is native API requiring manual .json() parsing and AbortController for cancellation", "percentage": 90, "note": "Axios provides more features out of box, Fetch requires manual implementation"},
+        {"solution": "Axios rejects on all error status codes (404, 500), Fetch only rejects on network errors, not HTTP errors", "percentage": 88, "note": "Axios provides consistent error handling, Fetch requires manual status checking"},
+        {"solution": "Choose Fetch for lightweight apps without external dependencies or Service Worker contexts. Choose Axios for interceptors, transformers, older browser support, and consistent error handling", "percentage": 85, "note": "Decision depends on project requirements and browser compatibility needs"}
+    ]'::jsonb,
+    'JavaScript knowledge of Promises/async-await, understanding of HTTP and network requests',
+    'Code correctly handles responses and errors with chosen HTTP client, browser compatibility requirements met',
+    'Axios cannot intercept requests in Service Worker contexts - Fetch must be used for PWA caching. Fetch does not reject on HTTP error status codes, requiring manual error checking. IE 11 compatibility requires Axios since Fetch is not supported.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40844297/what-is-difference-between-axios-and-fetch'
+),
+(
+    'Sending the bearer token with axios',
+    'stackoverflow-axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Create config object with Authorization header and pass as third parameter: axios.post(url, bodyData, {headers: {Authorization: \"Bearer TOKEN\"}})", "percentage": 96, "note": "Token is passed in Authorization header, not in request body"},
+        {"solution": "Set global default headers at app startup: axios.defaults.headers.common = {Authorization: \"Bearer TOKEN\"}", "percentage": 92, "note": "Applied to all subsequent requests, computed once at initialization"},
+        {"solution": "Use request interceptors for dynamic token updates: service.interceptors.request.use(config => {config.headers[\"Authorization\"] = \"bearer \" + getToken(); return config;})", "percentage": 90, "note": "Handles token changes after app initialization"}
+    ]'::jsonb,
+    'Valid bearer token available, Axios installed, API endpoint that requires authentication',
+    'Request includes Authorization header with Bearer token, server validates and processes request successfully',
+    'Header key is \"Authorization\" (capital A), value is \"Bearer TOKEN\" with capital B (though some APIs accept lowercase). Do not place headers in data object - must be third parameter for POST. For GET requests, headers are second parameter: axios.get(url, {headers: {...}})',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40988238/sending-the-bearer-token-with-axios'
+),
+(
+    'Passing headers with axios POST request',
+    'stackoverflow-axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Pass headers as config object in third parameter: axios.post(url, data, {headers: {\"Content-Type\": \"application/json\", \"Authorization\": \"JWT ...\"}}", "percentage": 96, "note": "Headers must be in config object (third argument), not nested in data"},
+        {"solution": "Use request interceptors to add headers to all requests and avoid repetition: axios.interceptors.request.use(config => {config.headers.Authorization = token; return config;})", "percentage": 92, "note": "Centralized header management for consistency"},
+        {"solution": "For GET requests, pass headers as second parameter: axios.get(url, {headers: {...}})", "percentage": 90, "note": "Different parameter position than POST/PUT/PATCH"}
+    ]'::jsonb,
+    'Axios installed, valid headers required by API',
+    'Headers correctly included in HTTP request, server receives and processes headers, no 400 Bad Request errors',
+    'Headers must be in config object (third parameter for POST), not inside data object. Case matters: use lowercase \"headers\" not \"Headers\". GET requests use second parameter for headers, POST/PUT/PATCH use third parameter - easy to confuse.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/44617825/passing-headers-with-axios-post-request'
+),
+(
+    'How to post a file from a form with Axios',
+    'stackoverflow-axios',
+    'HIGH',
+    '[
+        {"solution": "Use FormData wrapper with file input: const formData = new FormData(); formData.append(\"file\", fileInput.files[0]); axios.post(url, formData)", "percentage": 96, "note": "Axios automatically sets correct Content-Type headers when FormData is detected"},
+        {"solution": "For React file upload: const onChange = (e) => {const formData = new FormData(); formData.append(\"file\", e.target.files[0]); axios.post(url, formData);}", "percentage": 94, "note": "Standard React pattern for file inputs"},
+        {"solution": "Use axios.postForm() in v0.25+: axios.postForm(url, document.querySelector(\"#fileInput\").files)", "percentage": 88, "note": "Modern convenience method available in recent Axios versions"}
+    ]'::jsonb,
+    'Axios installed, HTML file input element, server configured to receive multipart files',
+    'File successfully uploaded to server, server receives file in request, no 400 Bad Request errors',
+    'Do not send raw File object without FormData wrapper. Do not nest FormData in object: {data: formData} causes failure. Do not manually set Content-Type header with boundary - Axios handles automatically. Form field names must match server parameter expectations.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43013858/how-to-post-a-file-from-a-form-with-axios'
+),
+(
+    'Axios DELETE Request with Request Body and Headers',
+    'stackoverflow-axios',
+    'MEDIUM',
+    '[
+        {"solution": "Nest body and headers in config object: axios.delete(url, {headers: {Authorization: token}, data: {username: value}})", "percentage": 95, "note": "Body must be in \"data\" property within config, unlike POST where it is second parameter"},
+        {"solution": "Ensure Axios version 0.21.1 or higher - earlier versions had bug #3282 preventing request bodies with DELETE", "percentage": 90, "note": "Version checking required for older projects"},
+        {"solution": "Server accesses DELETE body via req.body in Express/Node.js just like POST requests", "percentage": 85, "note": "Backend handling is same as other HTTP methods"}
+    ]'::jsonb,
+    'Axios 0.21.1 or higher installed, API endpoint that accepts DELETE with body and Authorization header',
+    'DELETE request sent with body and headers, server receives both body data and headers correctly',
+    'Common mistake: passing body as second parameter like axios.delete(url, payload, headers) - incorrect syntax. DELETE syntax differs from POST which uses second parameter for body. Body must always be in data property for DELETE requests.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/51069552/axios-delete-request-with-request-body-and-headers'
+),
+(
+    'How to download files using axios',
+    'stackoverflow-axios',
+    'HIGH',
+    '[
+        {"solution": "Set responseType: \"blob\" in axios config and use URL.createObjectURL() to trigger download: axios({url, method: \"GET\", responseType: \"blob\"}).then(res => {const href = URL.createObjectURL(res.data); const link = document.createElement(\"a\"); link.href = href; link.download = \"file.pdf\"; link.click(); URL.revokeObjectURL(href);})", "percentage": 95, "note": "Always revoke object URL after download to prevent memory leaks"},
+        {"solution": "Use file-saver library for cleaner syntax: const FileDownload = require(\"js-file-download\"); axios.get(url, {responseType: \"blob\"}).then(res => FileDownload(res.data, \"report.csv\"));", "percentage": 92, "note": "Requires npm install js-file-download"},
+        {"solution": "Configure server with Content-Disposition header: res.header(\"Content-Disposition\", \"attachment; filename=file.ext\") and expose via CORS if needed", "percentage": 88, "note": "Server-side configuration for secure downloads"}
+    ]'::jsonb,
+    'Axios installed, file download endpoint available, browser environment with DOM access',
+    'File downloaded successfully to user computer, correct filename assigned, no memory leaks after download',
+    'Blob approach buffers entire file in memory - not suitable for very large files. Always revoke object URLs to prevent memory leaks. Must set responseType to \"blob\" or response is treated as text. Manual header creation approach requires careful handling of blob conversion.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/41938718/how-to-download-files-using-axios'
+),
+(
+    'How to send Basic Auth with axios',
+    'stackoverflow-axios',
+    'MEDIUM',
+    '[
+        {"solution": "Use built-in auth property in config object: axios.post(url, {}, {auth: {username: \"user\", password: \"password\"}})", "percentage": 96, "note": "Axios automatically base64-encodes credentials, cleanest approach"},
+        {"solution": "Manually create base64-encoded header: const token = Buffer.from(\"username:password\").toString(\"base64\"); axios.get(url, {headers: {Authorization: \"Basic \" + token}})", "percentage": 90, "note": "Required if auth property is not available or for specific encoding needs"},
+        {"solution": "Ensure config parameter position for POST: axios.post(url, {}, {auth: {...}}) - empty data object required as second parameter", "percentage": 85, "note": "Common mistake to forget empty data object"}
+    ]'::jsonb,
+    'Axios installed, valid username and password, CORS configured on backend for Authorization header',
+    'Request includes Basic Authorization header with base64-encoded credentials, server validates successfully, no 401 errors',
+    'Do not place auth in data object - must be in config (third parameter). Must pass empty data object {} as second parameter for POST. Backend must allow Authorization header via CORS headers. Base64 encoding must be correct or server rejects with 401.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/44072750/how-to-send-basic-auth-with-axios'
+),
+(
+    'Axios GET with query parameters: URL vs params object',
+    'stackoverflow-axios',
+    'MEDIUM',
+    '[
+        {"solution": "Use params property in config object: axios.get(url, {params: {key: value, name: \"test\"}}) to properly serialize into URL query string", "percentage": 96, "note": "Axios builds query string from params object, accessible in backend via req.query or $_GET"},
+        {"solution": "Direct URL approach works: axios.get(\"http://example.com/api?key=value\") but less flexible for dynamic parameters", "percentage": 85, "note": "Good for static URLs but not recommended for dynamic parameters"},
+        {"solution": "Remember second parameter is config object, not query params directly - common misunderstanding of axios.get() signature", "percentage": 90, "note": "axios.get(url, config) not axios.get(url, queryParams)"}
+    ]'::jsonb,
+    'Axios installed, backend expecting query parameters',
+    'Query parameters correctly appear in URL, backend receives parameters via req.query or $_GET, server processes correctly',
+    'Passing object as second parameter without params key treats it as config, not query parameters - parameters won''t be serialized. Easy confusion about axios.get() signature: second parameter is always config object. Inline URL parameters work but lose flexibility for dynamic values.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40947650/axios-get-in-url-works-but-with-second-parameter-as-object-it-doesnt'
+);

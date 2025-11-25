@@ -1,8 +1,9 @@
 // Supabase Edge Function: Search Knowledge Base
-// Handles full-text search with ranking and tracking
+// Handles hybrid search (FTS + semantic) with ranking and tracking
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import OpenAI from 'https://deno.land/x/openai@v4.20.1/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,11 +23,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Rate limiting check
+    // Get client IP
     const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] ||
                      req.headers.get('x-real-ip') ||
                      'unknown'
 
+    // IP ban check (security first)
+    const { data: isBanned } = await supabaseClient.rpc('is_ip_banned', {
+      p_ip_address: clientIP
+    })
+
+    if (isBanned) {
+      return new Response(
+        JSON.stringify({ error: 'Access denied.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Rate limiting check
     const { data: rateLimitOk } = await supabaseClient.rpc('check_rate_limit', {
       p_ip_address: clientIP,
       p_endpoint: 'search',
@@ -53,10 +67,32 @@ serve(async (req) => {
 
     const startTime = performance.now()
 
-    // Full-text search using Postgres tsvector
+    // Try semantic search if OpenAI API key is available
+    let searchEmbedding = null
+    let searchMethod = 'postgres_fts'
+    const openaiKey = Deno.env.get('OPENAI_API_KEY')
+
+    if (openaiKey) {
+      try {
+        const openai = new OpenAI({ apiKey: openaiKey })
+        const embeddingResponse = await openai.embeddings.create({
+          model: 'text-embedding-3-small',
+          input: query,
+          encoding_format: 'float',
+        })
+        searchEmbedding = `[${embeddingResponse.data[0].embedding.join(',')}]`
+        searchMethod = 'hybrid_semantic_fts'
+      } catch (embeddingError) {
+        console.warn('Failed to generate embedding, falling back to FTS:', embeddingError)
+        // Continue with FTS-only search
+      }
+    }
+
+    // Hybrid search (semantic + FTS) or FTS-only fallback
     const { data: results, error } = await supabaseClient.rpc('search_knowledge', {
       search_query: query,
-      result_limit: max_results
+      result_limit: max_results,
+      search_embedding: searchEmbedding
     })
 
     if (error) {
@@ -211,7 +247,7 @@ serve(async (req) => {
       },
       query_metadata: {
         total_matches: results.length,
-        search_method: 'postgres_fts',
+        search_method: searchMethod,
         search_time_ms: Math.round(searchTime * 100) / 100
       }
     }

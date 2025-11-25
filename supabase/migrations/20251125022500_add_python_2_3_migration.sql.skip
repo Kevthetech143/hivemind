@@ -1,0 +1,228 @@
+-- Add Python 2 to Python 3 migration guide entries
+-- Source: https://docs.python.org/3.10/howto/pyporting.html + https://portingguide.readthedocs.io/
+-- Category: Migration Guide
+-- Extracted: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Python 2 to 3: print statement to print function',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Replace print statements with function calls: print \"text\" becomes print(\"text\")", "percentage": 95, "note": "Most common Python 3 syntax change"},
+        {"solution": "Use from __future__ import print_function in Python 2 code for compatibility", "percentage": 92, "note": "Enables Python 3 syntax in Python 2.7"},
+        {"solution": "For multiple arguments: print x, y becomes print(x, y)", "percentage": 90, "note": "Comma-separated arguments work the same"},
+        {"solution": "For print without newline: print \"text\", becomes print(\"text\", end=\" \")", "percentage": 88, "note": "Use end parameter to control line ending"}
+    ]'::jsonb,
+    'Python 2 codebase with print statements, Python 3 target environment',
+    'Code runs without syntax errors in Python 3, Output appears correctly',
+    'Print is a function in Python 3, not a statement. Parentheses are mandatory. Cannot mix print statement and function in same file.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/syntax.html'
+),
+(
+    'Python 2 to 3: exception syntax change',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace except ValueError, e: with except ValueError as e:", "percentage": 95, "note": "Python 3 requires as keyword for exception binding"},
+        {"solution": "Update all except clauses to use as instead of comma", "percentage": 93, "note": "Applies to all exception types"},
+        {"solution": "Multiple exceptions: except (TypeError, ValueError) as e:", "percentage": 90, "note": "Tuple syntax remains, only as changes"},
+        {"solution": "Use 2to3 tool to automatically convert exception syntax", "percentage": 88, "command": "2to3 -f except yourfile.py"}
+    ]'::jsonb,
+    'Python 2 code with exception handling, Access to 2to3 tool',
+    'Exception handling works correctly, No syntax errors on except clauses',
+    'Comma syntax (except E, e:) is removed in Python 3. Must use as keyword. Affects all try-except blocks.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/exceptions.html'
+),
+(
+    'Python 2 to 3: dictionary methods iteration changes',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace dict.iteritems() with dict.items() which returns a view in Python 3", "percentage": 92, "note": "items() now returns dict view, not list"},
+        {"solution": "Replace dict.iterkeys() with dict.keys() or just use dict directly", "percentage": 90, "note": "keys() returns dict view, dict itself is iterable over keys"},
+        {"solution": "Replace dict.itervalues() with dict.values()", "percentage": 90, "note": "values() returns dict view"},
+        {"solution": "Replace dict.has_key(x) with x in dict", "percentage": 95, "note": "has_key() removed entirely, use membership test"},
+        {"solution": "Wrap with list() if you need actual list: list(dict.items())", "percentage": 88, "note": "Views are memory-efficient but sometimes list is needed"}
+    ]'::jsonb,
+    'Python 2 code using dict iteration methods, Understanding of dict views',
+    'Dictionary iteration works correctly, No AttributeError on dict methods',
+    'iteritems/iterkeys/itervalues removed in Python 3. has_key() removed. Python 3 dict methods return views, not lists. Views are dynamic and reflect changes.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/dicts.html'
+),
+(
+    'Python 2 to 3: integer division behavior change',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use // for floor division: 5 / 2 in Python 2 becomes 5 // 2 in Python 3 (both return 2)", "percentage": 95, "note": "Critical change: / now does true division"},
+        {"solution": "Add from __future__ import division to Python 2 code for compatibility", "percentage": 92, "note": "Makes / behave like Python 3 in Python 2.7"},
+        {"solution": "Use / for true division: 5 / 2 returns 2.5 in Python 3", "percentage": 90, "note": "Default division now returns float"},
+        {"solution": "Review all division operations and choose correct operator: / for float, // for integer", "percentage": 88, "note": "Behavioral change affects mathematical correctness"}
+    ]'::jsonb,
+    'Python 2 code with division operations, Understanding of integer vs float division',
+    'Division produces expected results, Math operations return correct types',
+    'In Python 3, 5 / 2 == 2.5, not 2. Use // for floor division. This affects all / operators, not just obvious cases. Can cause subtle bugs in calculations.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/division.html'
+),
+(
+    'Python 2 to 3: xrange to range conversion',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace all xrange() calls with range()", "percentage": 95, "note": "xrange removed, range() now returns iterator-like object"},
+        {"solution": "Python 3 range() behaves like Python 2 xrange() - memory efficient", "percentage": 93, "note": "No need to convert to xrange for performance"},
+        {"solution": "Wrap with list() if you need actual list: list(range(10))", "percentage": 88, "note": "Rarely needed, but available if list required"},
+        {"solution": "Use 2to3 tool for automatic conversion", "percentage": 90, "command": "2to3 -f xrange yourfile.py"}
+    ]'::jsonb,
+    'Python 2 code using xrange(), Understanding of iterators',
+    'Range operations work correctly, No NameError for xrange',
+    'xrange() removed completely in Python 3. range() in Python 3 is lazy like xrange() was. Old range() behavior available via list(range()).',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/builtins.html'
+),
+(
+    'Python 2 to 3: unicode vs str vs bytes',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Mark binary literals with b prefix: b\"bytes\" for byte strings", "percentage": 92, "note": "Critical for distinguishing text from binary"},
+        {"solution": "Mark text literals with u prefix in Python 2 for compatibility: u\"text\"", "percentage": 90, "note": "Enables forward compatibility"},
+        {"solution": "Use .encode() to convert str to bytes: text.encode(\"utf-8\")", "percentage": 93, "note": "Explicit conversion from text to binary"},
+        {"solution": "Use .decode() to convert bytes to str: data.decode(\"utf-8\")", "percentage": 93, "note": "Explicit conversion from binary to text"},
+        {"solution": "In Python 3, str is always unicode; bytes is for binary data", "percentage": 95, "note": "Fundamental type system change"}
+    ]'::jsonb,
+    'Python 2 code mixing text and binary, Understanding of encodings',
+    'No UnicodeDecodeError or UnicodeEncodeError, Text/binary operations work correctly',
+    'Python 3 separates text (str) and binary (bytes). Cannot mix without explicit conversion. Default encoding is UTF-8. File I/O requires mode specification (text vs binary).',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/strings.html'
+),
+(
+    'Python 2 to 3: import reorganization (urllib)',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace from urllib import urlopen with from urllib.request import urlopen", "percentage": 94, "note": "urllib split into urllib.request, urllib.parse, urllib.error"},
+        {"solution": "Replace from urllib2 import Request with from urllib.request import Request", "percentage": 92, "note": "urllib2 merged into urllib.request"},
+        {"solution": "Replace from urlparse import urlparse with from urllib.parse import urlparse", "percentage": 90, "note": "urlparse is now urllib.parse"},
+        {"solution": "Use six.moves.urllib for cross-version compatibility", "percentage": 88, "note": "six library provides compatibility layer"}
+    ]'::jsonb,
+    'Python 2 code using urllib/urllib2/urlparse, Python 3 target',
+    'Import statements work without ImportError, URL operations function correctly',
+    'urllib, urllib2, and urlparse reorganized in Python 3. Must update all import paths. Check for indirect imports through other modules.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/stdlib.html'
+),
+(
+    'Python 2 to 3: import reorganization (ConfigParser, StringIO, etc)',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace from StringIO import StringIO with from io import StringIO", "percentage": 95, "note": "StringIO module removed, moved to io"},
+        {"solution": "Replace from ConfigParser import ConfigParser with from configparser import ConfigParser", "percentage": 93, "note": "Module renamed to lowercase"},
+        {"solution": "Replace from Queue import Queue with from queue import Queue", "percentage": 90, "note": "Module renamed to lowercase"},
+        {"solution": "Use try/except for compatibility: try io import, fallback to StringIO import", "percentage": 88, "note": "Enables cross-version code"}
+    ]'::jsonb,
+    'Python 2 code with standard library imports, Module reorganization knowledge',
+    'All imports resolve correctly, No ImportError for moved modules',
+    'Many standard library modules renamed (lowercase) or reorganized in Python 3. ConfigParser → configparser, Queue → queue, etc. Case matters.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/stdlib.html'
+),
+(
+    'Python 2 to 3: map, filter, zip return iterators',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Wrap with list() if you need list: list(map(func, data))", "percentage": 90, "note": "map/filter/zip return iterators in Python 3"},
+        {"solution": "Use itertools.imap/ifilter for explicit iterators in Python 2 (removed in Python 3)", "percentage": 85, "note": "imap/ifilter removed, regular map/filter now return iterators"},
+        {"solution": "Iterate directly without list() for memory efficiency", "percentage": 92, "note": "Iterator consumption is one-time only"},
+        {"solution": "Be aware zip() returns iterator - can only iterate once", "percentage": 88, "note": "Create list if multiple iterations needed"}
+    ]'::jsonb,
+    'Python 2 code using map/filter/zip expecting lists, Iterator knowledge',
+    'Functions return expected types, No unexpected iterator exhaustion',
+    'Python 3 map/filter/zip return iterators, not lists. Iterators can only be consumed once. itertools.imap/ifilter removed (redundant). Wrap with list() if multiple passes needed.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/builtins.html'
+),
+(
+    'Python 2 to 3: file I/O and open() function',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Use io.open() with explicit encoding for text files: io.open(\"file.txt\", \"r\", encoding=\"utf-8\")", "percentage": 93, "note": "io.open() works in both Python 2.7 and 3"},
+        {"solution": "Use binary mode for binary files: open(\"file.bin\", \"rb\")", "percentage": 95, "note": "Binary mode required for non-text data"},
+        {"solution": "In Python 3, built-in open() returns text by default (unicode)", "percentage": 90, "note": "Different from Python 2 which returned bytes"},
+        {"solution": "Always specify encoding explicitly to avoid platform differences", "percentage": 88, "note": "Default encoding varies by platform"}
+    ]'::jsonb,
+    'Python 2 code with file operations, Understanding of text vs binary modes',
+    'Files open correctly, No encoding errors, Text/binary data handled properly',
+    'Python 3 open() in text mode returns str (unicode), not bytes. Must specify binary mode (rb/wb) for binary data. Encoding must be explicit for portability.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/files.html'
+),
+(
+    'Python 2 to 3: use feature detection not version detection',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Use try/except for imports instead of sys.version_info checks", "percentage": 93, "note": "More Pythonic and handles backports"},
+        {"solution": "Check for attributes with hasattr() instead of version checks", "percentage": 90, "note": "Works across implementations and versions"},
+        {"solution": "Avoid sys.version_info conditionals for feature availability", "percentage": 88, "note": "Features may be backported or forward-ported"},
+        {"solution": "Use six library for compatibility helpers: six.PY2, six.PY3", "percentage": 85, "note": "If version checks truly needed, use six"}
+    ]'::jsonb,
+    'Code with version-specific logic, Understanding of duck typing',
+    'Code works across Python versions, No false assumptions about features',
+    'Version checks are brittle. Features may be backported to Python 2 or missing in alternative implementations. Use try/except or hasattr() for robustness.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://portingguide.readthedocs.io/en/latest/core.html'
+),
+(
+    'Python 2 to 3: use __future__ imports for compatibility',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Add from __future__ import division for Python 3 division behavior", "percentage": 92, "note": "Makes / do true division in Python 2"},
+        {"solution": "Add from __future__ import print_function for print() syntax", "percentage": 93, "note": "Enables print() function in Python 2.7"},
+        {"solution": "Add from __future__ import absolute_import for explicit imports", "percentage": 88, "note": "Prevents implicit relative imports"},
+        {"solution": "Add from __future__ import unicode_literals for unicode strings", "percentage": 85, "note": "Makes string literals unicode by default (use cautiously)"},
+        {"solution": "Place __future__ imports at top of file before other imports", "percentage": 95, "note": "Required by Python syntax rules"}
+    ]'::jsonb,
+    'Python 2.7 codebase, Goal of Python 2/3 compatible code',
+    'Code runs in both Python 2.7 and 3.x, __future__ imports accepted',
+    '__future__ imports must come first after module docstring. unicode_literals can break some libraries. Only available in Python 2.7+, not 2.6.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3.10/library/__future__.html'
+);

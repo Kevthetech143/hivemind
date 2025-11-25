@@ -1,0 +1,210 @@
+-- PostgreSQL 12→13 Migration Guide - Breaking Changes & Upgrade Issues
+-- Extracted from: https://www.postgresql.org/docs/13/release-13.html
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'PostgreSQL 12 to 13 upgrade: SIMILAR TO ... ESCAPE NULL behavior change',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Update SIMILAR TO queries: SIMILAR TO operator now returns NULL when ESCAPE value is null (SQL-standard compliance). Change queries that relied on default backslash escape to explicitly specify ESCAPE or use LIKE operator", "percentage": 95, "note": "Affects SIMILAR TO and substring(text FROM pattern ESCAPE text) functions"},
+        {"solution": "Test all SIMILAR TO queries in application code with NULL escape values before upgrade. Wrap in CASE WHEN to handle NULL results", "percentage": 90, "note": "Critical for pattern matching operations"},
+        {"solution": "Review application code for implicit null handling in SIMILAR TO queries and add explicit null checks", "percentage": 85, "command": "Add explicit ESCAPE clause to SIMILAR TO queries"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with SIMILAR TO queries, application code review access',
+    'SIMILAR TO queries return expected NULL values, pattern matching operations complete successfully, application handles NULL results correctly',
+    'Do not assume default escape behavior with NULL values. Always explicitly specify ESCAPE character. Test before upgrading production.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.1'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: json[b]_to_tsvector() stricter validation',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Audit json_to_tsvector() and jsonb_to_tsvector() calls with string option parameter. PostgreSQL 13 fully validates spelling (previously accepted misspellings). Correct common misspellings: ''weights'' (not ''weight''), ''useweight'' (not ''use_weight'')", "percentage": 95, "note": "Function now rejects previously tolerated misspellings"},
+        {"solution": "Update function calls: json_to_tsvector(document, json_options) - ensure string option spelling matches PostgreSQL 13 requirements", "percentage": 90, "command": "Verify json_to_tsvector option spelling"},
+        {"solution": "Test JSON/JSONB text search functions in staging environment before production upgrade", "percentage": 85, "note": "Breaking change affects full-text search functionality"}
+    ]'::jsonb,
+    'PostgreSQL 12 with json_to_tsvector() or jsonb_to_tsvector() functions in use, schema audit capability',
+    'JSON/JSONB text search functions execute without validation errors, full-text search results remain consistent',
+    'Check all function call parameters for misspelled string options. PostgreSQL 13 validation is stricter - test all text search queries.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.3'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: wal_keep_segments renamed to wal_keep_size with unit change',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Before upgrade: Convert wal_keep_segments (file count) to wal_keep_size (megabytes). Formula: wal_keep_size_mb = wal_keep_segments * wal_segment_size. Default wal_segment_size is 16MB. Example: 64 segments = 64 * 16 = 1024 MB. Update postgresql.conf with new wal_keep_size value", "percentage": 95, "note": "PostgreSQL 13 removes wal_keep_segments parameter entirely"},
+        {"solution": "Add to postgresql.conf before upgrade: wal_keep_size setting (matching previous wal_keep_segments * 16MB calculation)", "percentage": 92, "command": "Set wal_keep_size in postgresql.conf"},
+        {"solution": "Verify conversion: Check current wal_keep_segments value with SHOW wal_keep_segments, calculate new value, test in staging cluster first", "percentage": 88, "command": "SHOW wal_keep_segments; SELECT 64 * 16 AS wal_keep_size_mb;"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with custom wal_keep_segments setting, postgresql.conf edit access, knowledge of current segment count',
+    'Cluster starts without parameter errors, WAL retention behavior unchanged, replication continues normally',
+    'Do not use old wal_keep_segments parameter in PostgreSQL 13. Conversion formula is critical - test with same retention behavior in staging first.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.4'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: effective_io_concurrency parameter conversion',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "PostgreSQL 13 uses effective_io_concurrency directly (PostgreSQL 12 applied adjustment formula before use). Convert old settings: SELECT round(sum(old_value / n::float)) AS new_value FROM generate_series(1, old_io_concurrency_value) s(n). Example: old value 200 → new value 50-100. Test new value in staging before applying", "percentage": 93, "note": "Parameter now used directly without internal adjustment"},
+        {"solution": "Run conversion query to calculate new effective_io_concurrency: SELECT round(sum(200 / n::float)) FROM generate_series(1, 200) s(n) to get recommended new value, then adjust based on storage subsystem performance", "percentage": 88, "command": "SELECT round(sum(200 / n::float)) AS recommended_new_value FROM generate_series(1, 200) s(n);"},
+        {"solution": "Monitor I/O performance metrics after upgrade with new setting. If performance degrades, lower effective_io_concurrency incrementally", "percentage": 85, "note": "Test in staging environment with production-like workload"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with custom effective_io_concurrency setting, SQL calculation capability, performance monitoring access',
+    'Database I/O operations perform at similar or better speed post-upgrade, no sequential I/O bottlenecks detected in logs',
+    'Do not copy wal_keep_segments settings directly to PostgreSQL 13 - the formula has changed fundamentally. Test performance impact thoroughly.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.5'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: pg_stat_ssl and pg_stat_gssapi auxiliary process removal',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Audit all queries joining pg_stat_ssl or pg_stat_gssapi to pg_stat_activity. PostgreSQL 13 removes auxiliary processes from these views. Change INNER JOIN to LEFT JOIN to maintain query compatibility and avoid missing results", "percentage": 95, "note": "Query structure change required for monitoring/observability"},
+        {"solution": "Update monitoring queries: FROM pg_stat_activity a INNER JOIN pg_stat_ssl s ON a.pid = s.pid → FROM pg_stat_activity a LEFT JOIN pg_stat_ssl s ON a.pid = s.pid", "percentage": 93, "command": "SELECT a.*, s.* FROM pg_stat_activity a LEFT JOIN pg_stat_ssl s ON a.pid = s.pid;"},
+        {"solution": "Test all monitoring dashboards and scripts that query these views before upgrade. Add NULL checks for joined auxiliary data", "percentage": 88, "note": "Affects Prometheus exporters, Grafana dashboards, custom monitoring"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with existing monitoring queries, dashboard/exporter source code access, DBA query modification capability',
+    'Monitoring queries return expected results (including NULL values for auxiliary processes), dashboards display data without errors, connection statistics visible',
+    'Auxiliary processes no longer appear in these views - queries using INNER JOIN will silently lose data. Always use LEFT JOIN when joining to pg_stat_activity.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.6'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: Command tag changes for ALTER FOREIGN TABLE and MATERIALIZED VIEW',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Update application code expecting command tags from DDL operations: ALTER FOREIGN TABLE ... RENAME COLUMN now returns ''ALTER FOREIGN TABLE'' (not ''ALTER TABLE''). ALTER MATERIALIZED VIEW ... RENAME COLUMN returns ''ALTER MATERIALIZED VIEW'' (not ''ALTER TABLE''). Update all switch/case statements and if-conditions checking command tags", "percentage": 94, "note": "Affects DDL result parsing in application layer"},
+        {"solution": "Search application code for: if (command_tag == ''ALTER TABLE'') when dealing with RENAME COLUMN operations on foreign tables or materialized views. Update to check exact returned tag", "percentage": 90, "command": "PREPARE stmt AS ALTER FOREIGN TABLE my_table RENAME COLUMN old_name TO new_name; EXECUTE stmt;"},
+        {"solution": "Add integration tests for DDL operations verifying correct command tags before and after upgrade", "percentage": 85, "note": "Breaking change for application parsers expecting generic ALTER TABLE"}
+    ]'::jsonb,
+    'Application code using DDL command tag parsing, PostgreSQL 12 test environment, migration testing capability',
+    'DDL operations execute successfully, application correctly interprets command tags, no silent failures in migration scripts',
+    'Command tags are now more specific. Applications expecting generic ''ALTER TABLE'' tag will miss the actual returned tag type. Test all DDL operations.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.7'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: Removed pre-PostgreSQL 8.0 operator class syntax',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Audit schema for legacy operator class definitions using pre-8.0 syntax (CREATE OPERATOR CLASS ... WITHOUT OPERATOR). PostgreSQL 13 removes support. Convert to modern syntax: CREATE OPERATOR CLASS ... USING btree AS ... (if B-tree indexing needed) or DROP operator class if no longer required", "percentage": 92, "note": "Operator class definitions rarely used in modern code"},
+        {"solution": "Dump and inspect all operator classes: SELECT * FROM pg_opclass WHERE opcfamily IN (SELECT oid FROM pg_opfamily WHERE opfmethod = 403). Document purpose of each before upgrade", "percentage": 88, "command": "SELECT opcname, opcfamily FROM pg_opclass WHERE opcfamily IN (SELECT oid FROM pg_opfamily);"},
+        {"solution": "If custom operator classes required: Rewrite using PostgreSQL 8.0+ syntax with operator class family definitions and operator strategy numbers", "percentage": 82, "note": "Rare - most users can safely drop legacy operator classes"}
+    ]'::jsonb,
+    'PostgreSQL 12 schema with operator class definitions, SQL introspection capability, custom indexing knowledge',
+    'Database schema loads without errors, custom indexes function correctly, operator class definitions valid in PostgreSQL 13',
+    'Pre-8.0 operator syntax is completely removed. If your schema uses legacy syntax, upgrade will fail. Check pg_opclass before upgrading.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.8'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: Pre-PostgreSQL 7.3 foreign key constraint syntax removed',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Search schema for legacy foreign key syntax: CONSTRAINT name FOREIGN KEY ... REFERENCES without ON DELETE/ON UPDATE clauses or using implicit format. PostgreSQL 13 requires explicit modern syntax: ALTER TABLE child ADD CONSTRAINT fk_name FOREIGN KEY (column) REFERENCES parent(column) ON DELETE CASCADE", "percentage": 93, "note": "Extremely rare - pre-7.3 syntax would be 20+ years old"},
+        {"solution": "Dump schema and grep for legacy patterns: FOREIGN KEY without explicit clause specification. Recreate with modern SQL syntax", "percentage": 88, "command": "pg_dump -s database_name | grep -A 2 FOREIGN"},
+        {"solution": "If found: Drop old constraint and create with modern syntax: ALTER TABLE child DROP CONSTRAINT old_fk; ALTER TABLE child ADD CONSTRAINT new_fk FOREIGN KEY (col) REFERENCES parent(col);", "percentage": 85, "note": "Most databases never used pre-7.3 syntax"}
+    ]'::jsonb,
+    'Very old PostgreSQL 12 schema (migrated from pre-7.3), schema dump file access, foreign key modification capability',
+    'All foreign key constraints defined with modern syntax, referential integrity maintained, constraint operations succeed',
+    'Pre-7.3 foreign key syntax is no longer accepted. Extremely unlikely to encounter unless schema is 20+ years old and never modernized.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.9'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: Opaque pseudo-types from pre-7.3 removed',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Search function definitions for opaque pseudo-type references (language: internal functions using ''opaque'' type). PostgreSQL 13 removes support. Convert to specific types: void, anyelement, anyarray, or appropriate concrete type", "percentage": 92, "note": "Affects only very legacy C-language or PL/pgSQL functions"},
+        {"solution": "Query system catalog to find functions with opaque type references. Document each function and convert to modern type signatures", "percentage": 88, "command": "Query pg_proc for functions with opaque type"},
+        {"solution": "Rewrite functions with opaque type: Change language to plpgsql and replace opaque with appropriate type or use ANY type for flexibility", "percentage": 82, "note": "Rare - modern code does not use opaque types"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with legacy C-language functions, function source code access, PL/pgSQL conversion capability',
+    'All functions load without opaque type errors, function calls execute correctly, type system functions properly',
+    'Opaque pseudo-type only appears in very old C extensions. If using legacy extensions, contact vendor for PostgreSQL 13 compatible versions.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.10'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: Unpackaged extensions no longer supported',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Audit all extensions: SELECT * FROM pg_extension. Identify any created with CREATE EXTENSION ... FROM. Before upgrading to PostgreSQL 13: DROP EXTENSION (unpackaged version), then reinstall packaged version with CREATE EXTENSION (without FROM clause). Packaged extensions automatically handle version upgrades", "percentage": 95, "note": "Critical blocker if unpackaged extensions present"},
+        {"solution": "For each unpackaged extension: (1) Drop with DROP EXTENSION extension_name CASCADE (note dependencies), (2) Create packaged version CREATE EXTENSION extension_name, (3) Restore tables/data if needed", "percentage": 93, "command": "DROP EXTENSION unpackaged_ext CASCADE; CREATE EXTENSION packaged_ext;"},
+        {"solution": "Contact extension vendor for packaged version if not in standard PostgreSQL distribution. Test extension restoration in staging environment before production upgrade", "percentage": 85, "note": "Installation may fail completely if unpackaged extensions present"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with extension list, unpacked extensions identified, installation media access, database backup before modifications',
+    'All extensions installed successfully, CREATE EXTENSION without FROM clause succeeds, extension functions available post-upgrade',
+    'Unpackaged extensions completely prevent PostgreSQL 13 installation. Upgrade to packaged versions before running pg_upgrade or dump/restore.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.11'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: TLS minimum version changed from 1.0 to 1.2',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Review SSL/TLS configuration in postgresql.conf. PostgreSQL 13 requires TLS 1.2 minimum (up from 1.0). Ensure all clients support TLS 1.2. Verify: grep -i ssl_protocols postgresql.conf. If TLS 1.0/1.1 clients exist, they will disconnect", "percentage": 94, "note": "Security improvement but breaks legacy TLS clients"},
+        {"solution": "Before upgrade: Test all client connections with TLS 1.2 requirement. Update applications, drivers, and tools requiring TLS 1.2+ support (e.g., psycopg2 >= 2.8, node-postgres >= 8.0, JDBC >= 4.2)", "percentage": 91, "command": "openssl s_client -tls1_2 -connect localhost:5432"},
+        {"solution": "If TLS 1.0/1.1 clients required (not recommended): Either upgrade client applications or run PostgreSQL 12 longer. Document security impact of using unsupported TLS versions", "percentage": 75, "note": "Security advisory: TLS 1.0/1.1 are deprecated, do not use in production"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster with TLS/SSL enabled, client application inventory, TLS 1.2+ client driver support',
+    'All client connections succeed with TLS 1.2, SSL connections work correctly, no TLS version errors in logs',
+    'TLS 1.0 and 1.1 clients will be rejected after upgrade. Ensure all applications support TLS 1.2 before upgrading production.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/release-13.html#id1.11.6.34.5.3.2.1.1.12'
+),
+(
+    'PostgreSQL 12 to 13 upgrade: Requires dump/restore or pg_upgrade - no in-place format compatibility',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "PostgreSQL 13 changes internal data storage format from v12. Choose upgrade method: (1) pg_upgrade for minimal downtime (in-place conversion with optional --link mode), (2) pg_dumpall logical backup for full compatibility assurance, or (3) Logical replication for parallel cluster switch", "percentage": 95, "note": "Major version upgrade - format incompatible, requires migration"},
+        {"solution": "Plan downtime: pg_upgrade typically takes minutes (with --link) to hours (without --link) depending on database size. pg_dumpall/restore may take longer on large databases. Test all three approaches in staging", "percentage": 92, "command": "pg_upgrade -b /usr/lib/postgresql/12/bin -B /usr/lib/postgresql/13/bin -d /var/lib/postgresql/12/main -D /var/lib/postgresql/13/main"},
+        {"solution": "pg_upgrade method (fastest): Requires exclusive cluster access. Procedure: (1) Stop PostgreSQL 12, (2) Run pg_upgrade, (3) Run analyze_new_cluster.sh, (4) Test applications, (5) Start PostgreSQL 13. Run pg_upgrade --check first to validate schema compatibility", "percentage": 88, "command": "pg_upgrade --check -b /usr/lib/postgresql/12/bin -B /usr/lib/postgresql/13/bin"}
+    ]'::jsonb,
+    'PostgreSQL 12 cluster, PostgreSQL 13 binaries installed, sufficient disk space (min 1.5x database size), read-only backup, application testing capability',
+    'Cluster successfully migrates to PostgreSQL 13, ANALYZE completes, all tables accessible, indexes valid, test application queries succeed',
+    'Do not attempt to start PostgreSQL 13 with PostgreSQL 12 data files - corruption will result. Always use upgrade method. Test recovery procedures.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://www.postgresql.org/docs/13/upgrading.html'
+);

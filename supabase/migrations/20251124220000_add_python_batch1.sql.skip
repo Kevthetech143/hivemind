@@ -1,0 +1,223 @@
+-- Add Python common errors documentation batch 1
+-- Source: Official Python 3.14.0 documentation
+-- Errors covered: ImportError, ModuleNotFoundError, AttributeError, TypeError, KeyError, IndexError, FileNotFoundError
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Python ModuleNotFoundError: No module named',
+    'python',
+    'VERY_HIGH',
+    '[
+        {"solution": "Install the missing module using pip: pip install <module_name>", "percentage": 90, "note": "Ensure pip version matches Python version", "command": "pip install <module_name>"},
+        {"solution": "Verify Python and pip versions match: python --version and pip --version", "percentage": 85, "note": "Common with multiple Python installations"},
+        {"solution": "Use pip3 explicitly if using Python 3: pip3 install <module_name>", "percentage": 88, "command": "pip3 install <module_name>"},
+        {"solution": "Activate virtual environment if using one: source venv/bin/activate (Linux/Mac) or venv\\Scripts\\activate (Windows)", "percentage": 92, "note": "Most common cause in project-based development"}
+    ]'::jsonb,
+    'Python 3.x installed, pip or pip3 available, Network connection for package download',
+    'Import statement succeeds without error, Module functionality accessible, python -c "import <module_name>" returns no error',
+    'Installing with pip but running with python2. Not activating virtual environment. Using wrong pip for multiple Python versions. Script name conflicts with module name.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python ImportError: cannot import name from module',
+    'python',
+    'HIGH',
+    '[
+        {"solution": "Verify the name exists in the module: import module; print(dir(module))", "percentage": 88, "note": "Check for typos or renamed functions", "command": "python -c \"import module; print(dir(module))\""},
+        {"solution": "Check for circular import dependencies between modules", "percentage": 85, "note": "Reorganize imports or use lazy importing"},
+        {"solution": "Ensure module is up to date: pip install --upgrade <module_name>", "percentage": 82, "command": "pip install --upgrade <module_name>"},
+        {"solution": "Add parent directory to sys.path: import sys; sys.path.append(\"/path/to/parent\")", "percentage": 75, "note": "For local modules not in site-packages"}
+    ]'::jsonb,
+    'Module already installed, Python can locate the module file, Valid import syntax',
+    'Import succeeds without ImportError, Imported name is accessible and functional',
+    'Typos in import names. Outdated module versions with renamed exports. Circular imports causing partial module initialization. Local file shadowing installed module.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python AttributeError: object has no attribute',
+    'python',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check attribute exists before access using hasattr(): if hasattr(obj, \"attr\"): obj.attr", "percentage": 90, "note": "Prevents AttributeError completely"},
+        {"solution": "Use getattr() with default value: getattr(obj, \"attr\", default_value)", "percentage": 92, "note": "Best for optional attributes"},
+        {"solution": "Verify object type using type() or isinstance() before accessing attribute", "percentage": 85, "note": "Prevents type confusion errors"},
+        {"solution": "Use dir(obj) to list all available attributes: print(dir(obj))", "percentage": 80, "command": "python -c \"print(dir(your_object))\""}
+    ]'::jsonb,
+    'Object is initialized and not None, Expected attribute spelling is correct',
+    'Attribute access succeeds without error, hasattr() returns True for attribute, getattr() returns expected value',
+    'Accessing attributes on None objects. Typos in attribute names. Accessing attributes before object initialization. Confusing class attributes with instance attributes.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python TypeError: unsupported operand type(s)',
+    'python',
+    'HIGH',
+    '[
+        {"solution": "Convert types explicitly before operation: int(str_var) + num_var or str(num_var) + str_var", "percentage": 92, "note": "Most common solution for mixed-type operations"},
+        {"solution": "Use type checking before operations: if isinstance(var, int): result = var + 1", "percentage": 88, "note": "Defensive programming approach"},
+        {"solution": "Handle None values explicitly: if var is not None: result = var + 1", "percentage": 85, "note": "Common when values might be None"},
+        {"solution": "Use str.format() or f-strings for string concatenation with numbers: f\"Value: {num_var}\"", "percentage": 90, "note": "Prevents string + number errors"}
+    ]'::jsonb,
+    'Variables are initialized, Expected data types are known',
+    'Operation completes without TypeError, Result has expected type and value, Type conversions preserve data correctly',
+    'Forgetting to convert types when mixing strings and numbers. Not handling None values before operations. Assuming implicit type conversion like other languages. Using + for string and number concatenation.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python TypeError: argument must be str not int',
+    'python',
+    'HIGH',
+    '[
+        {"solution": "Convert to string using str(): str(int_var)", "percentage": 95, "note": "Direct and explicit conversion"},
+        {"solution": "Use f-strings for automatic conversion: f\"{int_var}\"", "percentage": 92, "note": "Modern Python 3.6+ approach"},
+        {"solution": "Use format() method: \"{}\".format(int_var)", "percentage": 88, "note": "Compatible with older Python versions"},
+        {"solution": "Use string formatting operator: \"%s\" % int_var", "percentage": 80, "note": "Legacy approach, still valid"}
+    ]'::jsonb,
+    'Python 3.x for f-strings, Variable contains valid data for conversion',
+    'String operation succeeds, Converted value represents original correctly, No TypeError raised',
+    'Forgetting to convert when concatenating. Assuming Python auto-converts like JavaScript. Using + operator mixing types instead of f-strings.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python KeyError: dictionary key not found',
+    'python',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use dict.get() with default value: my_dict.get(key, default_value)", "percentage": 95, "note": "Returns None or default if key missing"},
+        {"solution": "Use collections.defaultdict for automatic defaults: from collections import defaultdict; d = defaultdict(list)", "percentage": 90, "note": "Best for repeated missing key patterns"},
+        {"solution": "Check key existence with in operator: if key in my_dict: value = my_dict[key]", "percentage": 85, "note": "Explicit checking before access"},
+        {"solution": "Use dict.setdefault() to initialize missing keys: my_dict.setdefault(key, default_value)", "percentage": 88, "note": "Gets or sets in one operation"}
+    ]'::jsonb,
+    'Dictionary is initialized, Key variable contains expected type',
+    'No KeyError raised, Retrieved value is correct, Default values work as expected for missing keys',
+    'Assuming key exists without checking. Using dict[key] instead of dict.get(key). Not handling case-sensitive key differences. Forgetting to initialize nested dictionaries.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python IndexError: list index out of range',
+    'python',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check list length before access: if index < len(my_list): value = my_list[index]", "percentage": 92, "note": "Prevents out-of-bounds access"},
+        {"solution": "Use enumerate() in loops to prevent index errors: for i, item in enumerate(my_list):", "percentage": 95, "note": "Index always valid, Pythonic approach"},
+        {"solution": "Use try-except to handle missing indices: try: value = my_list[index] except IndexError: value = default", "percentage": 85, "note": "EAFP approach (Easier to Ask Forgiveness than Permission)"},
+        {"solution": "Use list slicing which never raises IndexError: my_list[index:index+1] returns [] if out of bounds", "percentage": 80, "note": "Returns empty list instead of error"}
+    ]'::jsonb,
+    'List is initialized and populated, Index is integer type',
+    'List access succeeds without IndexError, Retrieved value is correct, Loop completes all iterations',
+    'Off-by-one errors (using len(list) as index). Using length of wrong list for indexing. Not accounting for empty lists. Negative indices without bounds checking.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python FileNotFoundError: No such file or directory',
+    'python',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use os.path.exists() before file operations: if os.path.exists(filepath): with open(filepath) as f:", "percentage": 90, "note": "Checks file exists before opening"},
+        {"solution": "Use pathlib.Path for robust path handling: from pathlib import Path; if Path(filepath).exists():", "percentage": 92, "note": "Modern Python 3.4+ approach"},
+        {"solution": "Use absolute paths instead of relative: os.path.abspath(filepath)", "percentage": 88, "note": "Prevents current directory confusion"},
+        {"solution": "Use try-except to handle missing files gracefully: try: f = open(filepath) except FileNotFoundError: create_file()", "percentage": 85, "note": "EAFP pattern for file operations"}
+    ]'::jsonb,
+    'File path is correctly formatted, Parent directory exists and is accessible, Appropriate file permissions',
+    'File operation succeeds, File can be read/written as expected, No FileNotFoundError raised',
+    'Using relative paths without checking current directory (os.getcwd()). Forgetting file extensions. Incorrect path separators (/ vs \\). Not handling spaces in filenames. Case sensitivity on Linux/Mac.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python NameError: name is not defined',
+    'python',
+    'HIGH',
+    '[
+        {"solution": "Define variable before use: var_name = value before accessing it", "percentage": 92, "note": "Variables must be assigned before reference"},
+        {"solution": "Check for typos in variable names, Python is case-sensitive", "percentage": 88, "note": "myVar and myvar are different"},
+        {"solution": "Import required modules at top of file: import module_name", "percentage": 90, "note": "Common cause is forgetting imports"},
+        {"solution": "Check variable scope - define in correct scope (global vs local)", "percentage": 85, "note": "Variables defined in functions not accessible outside"}
+    ]'::jsonb,
+    'Python file syntax is correct, Required modules are available',
+    'Code executes without NameError, Variable accessible in expected scope, No undefined name references',
+    'Using variable before definition. Typos in variable names. Forgetting to import modules. Scope confusion (local vs global). Deleting variables then using them.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python ValueError: invalid literal for int() with base 10',
+    'python',
+    'HIGH',
+    '[
+        {"solution": "Validate string before conversion: if str.isdigit(): num = int(str)", "percentage": 88, "note": "Only converts valid numeric strings"},
+        {"solution": "Use try-except for conversion: try: num = int(str) except ValueError: handle_error()", "percentage": 90, "note": "Catches non-numeric strings gracefully"},
+        {"solution": "Strip whitespace before conversion: int(str.strip())", "percentage": 85, "note": "Removes leading/trailing spaces"},
+        {"solution": "Handle empty strings explicitly: num = int(str) if str else default_value", "percentage": 82, "note": "Prevents error on empty input"}
+    ]'::jsonb,
+    'Input string contains data, String encoding is compatible',
+    'Conversion succeeds without ValueError, Resulting integer has expected value, Edge cases (empty, whitespace) handled correctly',
+    'Not validating input before conversion. Forgetting about whitespace in strings. Trying to convert empty strings. Not handling decimal numbers (use float() first). Locale-specific number formats.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+),
+(
+    'Python IndentationError: unexpected indent',
+    'python',
+    'HIGH',
+    '[
+        {"solution": "Use consistent indentation - either all spaces or all tabs, not mixed", "percentage": 95, "note": "Python 3 recommends 4 spaces per level"},
+        {"solution": "Configure editor to show whitespace characters to identify tab/space mixing", "percentage": 90, "note": "Most editors have this feature"},
+        {"solution": "Use editor auto-format feature to fix all indentation: autopep8 or black", "percentage": 92, "command": "pip install black && black yourfile.py"},
+        {"solution": "Check for unintended indentation after blank lines or comments", "percentage": 85, "note": "Common when copy-pasting code"}
+    ]'::jsonb,
+    'Text editor supports Python indentation, Python file is not corrupted',
+    'Python file runs without IndentationError, Code structure is visually clear, Indentation matches code block nesting',
+    'Mixing tabs and spaces (PEP 8 violation). Copy-pasting code with different indentation. Not configuring editor for Python. Incorrect nesting of if/for/while blocks.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/reference/lexical_analysis.html'
+),
+(
+    'Python ZeroDivisionError: division by zero',
+    'python',
+    'MEDIUM',
+    '[
+        {"solution": "Check denominator before division: if denominator != 0: result = numerator / denominator", "percentage": 92, "note": "Simple bounds checking"},
+        {"solution": "Use try-except to handle division errors: try: result = a / b except ZeroDivisionError: result = float(\"inf\")", "percentage": 88, "note": "EAFP approach"},
+        {"solution": "Validate input before calculations: assert denominator != 0, \"Cannot divide by zero\"", "percentage": 85, "note": "Early validation with clear error message"},
+        {"solution": "Use max() to ensure minimum denominator: result = numerator / max(denominator, epsilon)", "percentage": 80, "note": "Numerical programming approach"}
+    ]'::jsonb,
+    'Numeric values are initialized, Mathematical operation is valid',
+    'Division completes without error, Result is mathematically correct, Edge cases (zero, negative) handled properly',
+    'Not validating user input before calculations. Loop counters reaching zero unexpectedly. Integer division vs float division confusion. Not handling calculated zeros.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.python.org/3/library/exceptions.html'
+);

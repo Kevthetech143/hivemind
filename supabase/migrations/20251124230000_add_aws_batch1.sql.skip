@@ -1,0 +1,225 @@
+-- Add AWS documentation solutions batch 1
+-- Mined from official AWS documentation for S3, Lambda, EC2, IAM errors
+-- DOC-MINER-23: AWS common errors extraction
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS S3 error 403: Access Denied on bucket operations',
+    'aws',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify bucket policy includes Allow statement for your IAM identity with required actions (s3:GetObject, s3:PutObject, etc.)", "percentage": 90, "note": "Same-account requires Allow in either bucket OR IAM policy; cross-account requires Allow in BOTH"},
+        {"solution": "Check S3 Block Public Access settings - disable BlockPublicAcls, IgnorePublicAcls, BlockPublicPolicy, or RestrictPublicBuckets as needed", "percentage": 85, "note": "All four settings enabled by default since April 2023"},
+        {"solution": "Review Service Control Policies (SCP) in AWS Organizations for explicit Deny statements", "percentage": 80, "command": "Use IAM policy simulator to test policies"},
+        {"solution": "Verify IAM user identity matches expected principal: aws sts get-caller-identity", "percentage": 95, "command": "aws sts get-caller-identity"}
+    ]'::jsonb,
+    'Valid AWS credentials, IAM permissions to view policies, Access to AWS Console or CLI',
+    'S3 operation returns 200 status code, No AccessDenied error in response, Object successfully uploaded/downloaded',
+    'Account lockout possible from incorrect bucket policy - use root user to fix. Cross-account access requires Allow in BOTH bucket policy AND requester IAM policy, not just one. Check all four Block Public Access settings independently.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonS3/latest/userguide/troubleshoot-403-errors.html'
+),
+(
+    'AWS S3 KMS encryption access denied on upload',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Grant kms:GenerateDataKey permission to IAM identity in KMS key policy", "percentage": 95, "note": "Required for uploading objects with SSE-KMS encryption"},
+        {"solution": "Add kms:Decrypt permission for downloading and multipart uploads", "percentage": 90, "note": "Both GenerateDataKey and Decrypt typically needed"},
+        {"solution": "Verify KMS key policy allows your AWS account as a principal", "percentage": 85, "note": "Check Principal element includes your account ARN"},
+        {"solution": "Ensure bucket default encryption KMS key ID matches the key in your request", "percentage": 80, "note": "S3 denies request if key IDs do not match"}
+    ]'::jsonb,
+    'S3 bucket with SSE-KMS encryption enabled, Customer-managed KMS key created, IAM permissions to modify key policies',
+    'S3 PutObject returns 200 status, Object encrypted with correct KMS key ID, No AccessDenied error',
+    'AWS-managed KMS keys require same AWS account for both upload and download. SSE-C encryption will be blocked with HTTP 403 starting April 2026 for new buckets. Grant both kms:GenerateDataKey AND kms:Decrypt, not just one.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html'
+),
+(
+    'AWS Lambda function times out after X seconds',
+    'aws',
+    'VERY_HIGH',
+    '[
+        {"solution": "Increase timeout setting in Lambda configuration - adjust from default 3 seconds up to 900 seconds (15 minutes)", "percentage": 85, "note": "Configure via Console > General configuration > Edit or update-function-configuration CLI command"},
+        {"solution": "Increase function memory allocation to provide more CPU power", "percentage": 80, "note": "Memory and CPU are proportionally linked in Lambda"},
+        {"solution": "Optimize code to reduce processing time for large datasets", "percentage": 75, "note": "Test with realistic upper-bound dataset sizes"},
+        {"solution": "Search CloudWatch logs for \"Task timed out\" to retrieve request IDs of failed invocations", "percentage": 90, "command": "Filter CloudWatch log group for pattern: Task timed out"}
+    ]'::jsonb,
+    'Lambda function deployed, CloudWatch Logs access enabled, Understanding of expected processing time',
+    'Function completes within timeout period, CloudWatch logs show successful completion, No Task timed out errors',
+    'Default timeout is only 3 seconds - must explicitly increase for longer operations. Maximum timeout is 900 seconds (15 minutes) regardless of memory. Test with realistic data sizes, not small samples.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/lambda/latest/dg/configuration-timeout.html'
+),
+(
+    'AWS Lambda VPC function timeout accessing internet',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Deploy NAT Gateway in public subnet (1 per Availability Zone recommended)", "percentage": 95, "note": "NAT gateway requires Elastic IP address allocation"},
+        {"solution": "Attach Lambda function to private subnets, not public subnets", "percentage": 90, "note": "Counterintuitively, connecting to public subnet does not give internet access"},
+        {"solution": "Configure private subnet route table with 0.0.0.0/0 route to NAT gateway", "percentage": 95, "note": "Public subnets route to internet gateway, private subnets route to NAT gateway"},
+        {"solution": "Verify security group allows outbound traffic to external endpoints", "percentage": 85, "note": "Default outbound rules may need adjustment"}
+    ]'::jsonb,
+    'Lambda function in VPC, VPC with public and private subnets, Elastic IP available for NAT gateway',
+    'Function successfully reaches public internet endpoints, HTTP requests return 200 status, No timeout errors in CloudWatch',
+    'NAT gateway MUST be in public subnet. Lambda function MUST attach to private subnet. Do not attach Lambda to public subnet thinking it gives internet access - it does not. Each NAT gateway times out idle connections after 350 seconds (5m 50s).',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc-internet.html'
+),
+(
+    'AWS Lambda CloudWatch Logs access denied or missing logs',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Attach AWSLambdaBasicExecutionRole managed policy to execution role", "percentage": 95, "command": "aws iam attach-role-policy --role-name your-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"},
+        {"solution": "Grant logs:CreateLogGroup, logs:CreateLogStream, and logs:PutLogEvents permissions", "percentage": 90, "note": "These three permissions are required for CloudWatch logging"},
+        {"solution": "Wait 5-10 minutes for logs to appear after function invocation", "percentage": 70, "note": "Normal log visibility delay"},
+        {"solution": "Verify execution role has trust relationship with lambda.amazonaws.com service", "percentage": 85, "note": "Check role trust policy includes Lambda service principal"}
+    ]'::jsonb,
+    'Lambda function created, Execution role exists, IAM permissions to modify role policies',
+    'Logs appear in CloudWatch Logs under /aws/lambda/function-name, No permission denied errors, Function invocations generate log streams',
+    'Logs may take 5-10 minutes to appear - do not assume failure immediately. AWSLambdaBasicExecutionRole is AWS managed policy, do not create custom policy unless needed. Standard CloudWatch Logs pricing applies.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html'
+),
+(
+    'AWS EC2 SSH connection timeout port 22',
+    'aws',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add inbound security group rule allowing SSH (port 22) from your IP address", "percentage": 95, "note": "Most common cause of connection timeout"},
+        {"solution": "Verify subnet route table contains route to internet gateway for 0.0.0.0/0", "percentage": 85, "note": "Required for public internet access"},
+        {"solution": "Check Network ACL allows inbound port 22 and outbound ephemeral ports (1024-65535)", "percentage": 80, "note": "Network ACLs are stateless, require both inbound and outbound rules"},
+        {"solution": "Confirm instance has public IPv4 address assigned", "percentage": 90, "note": "Associate Elastic IP if instance lacks public IP"},
+        {"solution": "Verify corporate/local firewall permits outbound port 22 traffic", "percentage": 75, "note": "Check firewall rules on your local machine"}
+    ]'::jsonb,
+    'EC2 instance in running state, Instance passed status checks, Correct private key file, Knowledge of instance public IP',
+    'SSH connection establishes successfully, Terminal shows login prompt, No connection timeout error',
+    'Dynamic IP addresses change frequently - use broader CIDR ranges in security group or update rules when IP changes. Security group changes apply immediately. Check BOTH security groups AND network ACLs.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/TroubleshootingInstancesConnecting.html'
+),
+(
+    'AWS EC2 SSH connection refused port 22',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Verify SSH service is running on the instance using EC2 Serial Console or Systems Manager", "percentage": 85, "note": "Connection refused means server actively rejected connection"},
+        {"solution": "Check SSH daemon configuration in /etc/ssh/sshd_config allows connections", "percentage": 75, "note": "Verify Port 22 is configured and ListenAddress is correct"},
+        {"solution": "Run AWSSupport-TroubleshootSSH automation runbook to diagnose issues", "percentage": 90, "note": "Installs EC2Rescue tool to identify and fix SSH blocking issues"},
+        {"solution": "Verify instance firewall (iptables/firewalld) allows port 22", "percentage": 80, "note": "OS-level firewall separate from security groups"}
+    ]'::jsonb,
+    'EC2 instance running, Access to EC2 Serial Console or Systems Manager Session Manager, Security group already allows port 22',
+    'SSH connection establishes, No connection refused error, SSH daemon responding on port 22',
+    'Connection timeout = network blocking (security group). Connection refused = server rejecting (SSH not running or firewall). Check both AWS security group AND instance OS firewall. EC2 Serial Console can troubleshoot boot/network/SSH config issues.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/TroubleshootingInstancesConnecting.html'
+),
+(
+    'AWS EC2 SSH permission denied (publickey)',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Verify using correct AMI default username (ec2-user for Amazon Linux, ubuntu for Ubuntu, admin for Debian)", "percentage": 90, "note": "Wrong username is most common cause"},
+        {"solution": "Confirm private key file matches instance key pair name", "percentage": 95, "note": "Use key pair specified when launching instance"},
+        {"solution": "Set correct private key file permissions: chmod 0400 ~/.ssh/my_private_key.pem", "percentage": 85, "command": "chmod 0400 ~/.ssh/my_private_key.pem"},
+        {"solution": "Check authorized_keys file permissions on instance are 600 and owned by user", "percentage": 75, "note": "Fix via detaching volume and mounting on temp instance if locked out"}
+    ]'::jsonb,
+    'Private key file available, Knowledge of AMI type to determine username, SSH client installed',
+    'SSH authentication succeeds, Login prompt appears, No publickey error',
+    'PuTTY users must convert .pem to .ppk format. Private key permissions on Linux/Mac must be 400 or 600, not 777. On instance, authorized_keys must be 600, .ssh directory must be 700, home directory must be 700.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/TroubleshootingInstancesConnecting.html'
+),
+(
+    'AWS IAM AssumeRole AccessDenied error',
+    'aws',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add sts:AssumeRole permission to IAM policy with Resource specifying target role ARN", "percentage": 95, "note": "Action: sts:AssumeRole, Resource: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME"},
+        {"solution": "Verify role trust policy includes your account/principal in Principal element", "percentage": 90, "note": "Trust policy must list your AWS account or IAM entity as trusted principal"},
+        {"solution": "Check role name case sensitivity - use exact role name", "percentage": 85, "note": "Role names are case-sensitive in AssumeRole calls"},
+        {"solution": "Verify MFA token if role requires MFA authentication", "percentage": 80, "note": "Missing or expired TokenCode causes access denied"},
+        {"solution": "Ensure DurationSeconds does not exceed role maximum session duration", "percentage": 75, "note": "Role chaining limited to 1 hour maximum"}
+    ]'::jsonb,
+    'IAM user or role with credentials configured, Target role exists, Access to modify IAM policies or trust policies',
+    'AssumeRole API call succeeds, Temporary credentials returned, No AccessDenied error',
+    'Cross-account requires TWO changes: source account IAM policy AND target account role trust policy. Role chaining (role assuming another role) limited to 1 hour regardless of settings. MFA token must be current if required.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_roles.html'
+),
+(
+    'AWS S3 Requester Pays bucket access denied',
+    'aws',
+    'MEDIUM',
+    '[
+        {"solution": "Include --request-payer requester flag in AWS CLI commands", "percentage": 95, "command": "aws s3 cp s3://bucket/object.txt /local/path --request-payer requester"},
+        {"solution": "Set x-amz-request-payer header to requester in AWS SDK requests", "percentage": 90, "note": "Required header for all operations on Requester Pays buckets"},
+        {"solution": "Ensure IAM user has s3:GetObject and s3:ListBucket permissions", "percentage": 85, "note": "Standard S3 permissions still required"},
+        {"solution": "Verify account has sufficient credits for request charges", "percentage": 70, "note": "Requester pays for bandwidth and request costs"}
+    ]'::jsonb,
+    'S3 bucket with Requester Pays enabled, IAM permissions for S3 access, AWS CLI or SDK configured',
+    'S3 operation succeeds, Object downloaded successfully, Request costs charged to requester account',
+    'Request-payer parameter must be included on EVERY request to Requester Pays bucket. Anonymous requests not allowed on Requester Pays buckets. Requester pays for both bandwidth and request charges.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonS3/latest/userguide/troubleshoot-403-errors.html'
+),
+(
+    'AWS S3 Object Lock prevents deletion (403 Access Denied)',
+    'aws',
+    'MEDIUM',
+    '[
+        {"solution": "Check Object Lock retention mode - Compliance mode prevents all deletions including root user", "percentage": 90, "note": "Only delete marker created, not permanent deletion"},
+        {"solution": "For Governance mode, use s3:BypassGovernanceRetention permission to delete protected versions", "percentage": 85, "note": "Requires explicit bypass permission in IAM policy"},
+        {"solution": "Remove Legal Hold using s3:PutObjectLegalHold permission before deletion", "percentage": 80, "note": "Legal Hold independent of retention mode"},
+        {"solution": "Wait for retention period to expire before attempting deletion", "percentage": 70, "note": "Retention period shown in object lock information"}
+    ]'::jsonb,
+    'S3 bucket with Object Lock enabled, IAM permissions to view object lock configuration, Understanding of retention requirements',
+    'Object successfully deleted after retention period or bypass, No 403 Access Denied error, Object version removed',
+    'Compliance Retention mode is PERMANENT - even root user cannot delete before retention expires. Governance mode can be bypassed with correct permissions. Legal Hold is separate from retention mode and must be removed independently.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonS3/latest/userguide/troubleshoot-403-errors.html'
+),
+(
+    'AWS IAM PassRole access denied when creating resources',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Grant iam:PassRole permission in IAM policy with Resource element specifying role ARN", "percentage": 95, "note": "Required when service needs to assume role on your behalf"},
+        {"solution": "Verify Resource element in PassRole permission matches exact role ARN being passed", "percentage": 90, "note": "Cannot use wildcard unless explicitly intended"},
+        {"solution": "Check trust policy of role being passed allows the target service as principal", "percentage": 85, "note": "Role must trust the service it is being passed to"},
+        {"solution": "Request administrator to grant iam:PassRole for service-linked roles", "percentage": 80, "note": "Service-linked roles have specific PassRole requirements"}
+    ]'::jsonb,
+    'IAM permissions to create resources (EC2, Lambda, etc.), Target role exists, Understanding of which role needs to be passed',
+    'Resource creation succeeds, Service can assume role successfully, No iam:PassRole access denied error',
+    'PassRole is not the same as AssumeRole - PassRole grants permission to give role to a service. Must specify exact role ARN in Resource element. Service trust policy must allow the service (e.g., lambda.amazonaws.com) as Principal.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_roles.html'
+);

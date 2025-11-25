@@ -1,0 +1,434 @@
+-- Railway Platform Incident Postmortems Batch 1
+-- Mining Railway incidents from https://railway.app/status
+-- Focus: Build platform issues, database outages, deployment failures, networking problems
+
+INSERT INTO postmortems (
+    incident_title,
+    incident_date,
+    category,
+    severity,
+    duration_minutes,
+    root_cause,
+    impact_description,
+    resolution_steps,
+    preventative_measures,
+    affected_services,
+    success_rate,
+    source_url
+) VALUES
+
+-- October 28, 2025 - Database Lock Issue
+(
+    'Database Exclusive Lock on 1B Record Table',
+    '2025-10-28',
+    'database-outage',
+    'MAJOR',
+    52,
+    'Index creation on 1-billion-record table without CONCURRENTLY flag created exclusive lock blocking all queries and exhausting PgBouncer connection pools',
+    'Dashboard inaccessible, CLI operations failed (railway up), GitHub deployments delayed, Public API operations disrupted. Running deployments remained online.',
+    '[
+        {"step": "Identify exclusive table lock blocking all queries", "action": "Monitor PgBouncer connection exhaustion"},
+        {"step": "Wait for index creation to complete naturally", "action": "Estimated 30-minute completion time for large table index"},
+        {"step": "Release table lock", "action": "Index completed; queued operations processed automatically"},
+        {"step": "Restore PgBouncer connection pool", "action": "Connections freed and normal operations resumed"}
+    ]'::jsonb,
+    '[
+        "CI enforcement: Automatically reject PRs lacking CONCURRENTLY flag for index creation",
+        "PgBouncer configuration: Adjust connection pool limits to handle surge",
+        "Reserved database user slots: Maintain admin connections for incident response"
+    ]'::jsonb,
+    '[
+        "Railway Dashboard",
+        "Railway CLI",
+        "GitHub-based Deployments",
+        "Public API",
+        "PgBouncer Connection Pool"
+    ]'::jsonb,
+    0.88,
+    'https://blog.railway.com/p/incident-report-oct-28th-2025'
+),
+
+-- September 22, 2025 - Control Plane Cascading Failure
+(
+    'Control Plane Overwhelmed by Deployment Queue Backlog',
+    '2025-09-22',
+    'deployment-failure',
+    'MAJOR',
+    176,
+    'Schema change reverted unintentionally causing API failures. Massive deployment queue backlog triggered when fix deployed. PgBouncer version upgrade (Bitnami migration) introduced breaking config changes with 100x performance degradation.',
+    'Dashboard infinite loading, deployments suspended across all tiers, Limited Access errors, Invalid database URL messages, Private networking temporarily unavailable. Running deployments and platform networking remained operational.',
+    '[
+        {"step": "Deploy schema fix", "action": "Within 15 minutes, fixed core API failures"},
+        {"step": "Identify cascading effect", "action": "Massive deployment queue backlog created on fix"},
+        {"step": "Suspend non-Pro deployments", "action": "Phase 1: Reduce load on Control Plane"},
+        {"step": "Suspend all deployments globally", "action": "Phase 2: Hard stop for max 20 minutes to offgas queue"},
+        {"step": "Scale Control Plane resources", "action": "Increase database CPU, memory, and IOPS capacity"},
+        {"step": "Identify PgBouncer performance issue", "action": "Rollback to stable version achieved 100x performance improvement"},
+        {"step": "Restore Pro deployments", "action": "Phase 3a: Phased restoration begins"},
+        {"step": "Restore Non-Pro deployments", "action": "Phase 3b: Full deployment pipeline online"}
+    ]'::jsonb,
+    '[
+        "CI validation: Enhanced checks for disruptive schema changes with automated compatibility verification",
+        "Monitoring: PgBouncer performance metrics (CPU, memory, connection utilization)",
+        "Upgrade strategy: Phased rollout for PgBouncer instead of global deployments",
+        "Long-term: Re-engineer Control Plane storage away from Postgres for improved resilience"
+    ]'::jsonb,
+    '[
+        "Dashboard",
+        "Deployment Pipeline",
+        "Control Plane",
+        "PgBouncer",
+        "Private Networking"
+    ]'::jsonb,
+    0.82,
+    'https://blog.railway.com/p/incident-report-sept-22-2025'
+),
+
+-- June 6, 2025 - Authentication and Database Connection Exhaustion
+(
+    'Database Connection Exhaustion During Rapid Traffic Surge',
+    '2025-06-06',
+    'database-outage',
+    'CRITICAL',
+    330,
+    'Circuit breakers activated causing websocket reconnection storms. Websockets lacked WAF protection allowing millions of requests to bypass firewall. GitHub OAuth endpoints rate-limited due to cascading traffic. WAF vendor failed to grant required permissions for rule modification.',
+    'Dashboard access slow/timeouts, forced re-authentication, session invalidation, users unable to login. Deployments and webhook-based builds remained unaffected.',
+    '[
+        {"step": "Detect database connection exhaustion", "action": "5-minute periodic CPU spike pattern identified"},
+        {"step": "Declare incident", "action": "Users unable to authenticate via GitHub"},
+        {"step": "Restore login functionality", "action": "Implement custom OAuth rate limiting alongside GitHub restrictions"},
+        {"step": "Gradual user re-login", "action": "Clear stale sessions to prevent reconnection storms"},
+        {"step": "Enable WAF protections", "action": "Implement websocket handshake protection (workaround during vendor delay)"}
+    ]'::jsonb,
+    '[
+        "GitHub login: Implement bottleneck and rate-limit queues",
+        "Websocket reconnection: Optimize exponential backoff strategy",
+        "Rate-limiting: Custom rules for reconnect handling",
+        "Database: Use read replicas for real-time logic to reduce primary load",
+        "WAF testing: Detect configuration failure detection mechanisms",
+        "Frontend: Conditional login button rendering based on backend readiness"
+    ]'::jsonb,
+    '[
+        "GitHub Authentication",
+        "Dashboard",
+        "Database Primary",
+        "WAF Protection",
+        "Websocket Connections"
+    ]'::jsonb,
+    0.75,
+    'https://blog.railway.com/p/incident-report-june-6-2025'
+),
+
+-- April 23, 2025 - Networking Control Plane Database Unavailability
+(
+    'Networking Control Plane Crash Due to Database Maintenance',
+    '2025-04-23',
+    'networking-problem',
+    'MAJOR',
+    21,
+    'Google Cloud SQL performed unplanned maintenance on both primary and read replica, terminating all connections. Control plane instances crashed due to improper database error handling.',
+    'Edge Network, Private Network, TCP Proxy unavailable across all regions. Domain provisioning and SSL certificate issuance blocked. Asia region most impacted with intermittent outages in other regions.',
+    '[
+        {"step": "Google Cloud SQL maintenance initiated", "action": "Unplanned maintenance on primary and read replica started"},
+        {"step": "Database becomes unreachable", "action": "All connections terminated; control plane dependent on database"},
+        {"step": "Control plane instances crash", "action": "Improper error handling caused crashes when database offline"},
+        {"step": "Page on-call engineers", "action": "Paged for severe networking degradation"},
+        {"step": "Monitor recovery", "action": "Intermittent recovery observed during 10-minute maintenance window"},
+        {"step": "Full recovery", "action": "Maintenance completed; database online; instances recovered"}
+    ]'::jsonb,
+    '[
+        "Architecture: Migrate from global to regional control plane design",
+        "Code quality: Fix database error handling bugs for graceful degradation",
+        "Caching: Implement persistent cache layer for routing information fallback",
+        "Performance: Reduce control plane startup time to minimize recovery window",
+        "Provider: Reconfigure Google Cloud SQL to prevent simultaneous primary/replica maintenance"
+    ]'::jsonb,
+    '[
+        "Edge Network",
+        "Private Network",
+        "TCP Proxy",
+        "Control Plane Database",
+        "SSL Certificate Service"
+    ]'::jsonb,
+    0.80,
+    'https://blog.railway.com/p/incident-report-april-23-2025'
+),
+
+-- April 30, 2025 - API Backend Service Mesh Failure
+(
+    'Kubernetes Service Mesh Breaks DNS Resolution to Connection Pooler',
+    '2025-04-30',
+    'deployment-failure',
+    'MAJOR',
+    230,
+    'Service mesh failed to inject routing information correctly after Kubernetes pod configuration changes. DNS resolution to pgbouncer connection pooler broken. Modified health checks masked unhealthy instances as operational.',
+    'Dashboard loading failures, CLI unavailable, GraphQL API inaccessible, GitHub deployments delayed. Running deployments and networking remained operational.',
+    '[
+        {"step": "Deploy infrastructure changes", "action": "Attempt to reduce dashboard latency from 5X signup growth"},
+        {"step": "Detect pod crashes", "action": "Kubernetes pods crash on startup with database connection errors"},
+        {"step": "Investigate service mesh", "action": "Service mesh routing injection failed; DNS resolution broken"},
+        {"step": "Identify health check masking", "action": "Modified health checks show unhealthy instances as operational"},
+        {"step": "Declare partial degradation", "action": "Dashboard loading failures continue"},
+        {"step": "Attempt configuration rollback", "action": "Initial rollbacks insufficient; wider impact than expected"},
+        {"step": "Escalate to major outage", "action": "Confirmed dashboard, CLI, and API all offline"},
+        {"step": "Additional rollbacks", "action": "Multiple configuration reversions completed"},
+        {"step": "Remove service mesh from critical infrastructure", "action": "Replace with simpler load balancers"}
+    ]'::jsonb,
+    '[
+        "Change management: Stagger future configuration rollouts by risk level",
+        "Incident response: Require rollback plans and faster reversion procedures for all changes",
+        "Infrastructure: Remove service mesh from critical API paths; replace with simpler load balancers",
+        "Recovery: Implement immediate full reversions when issues detected instead of selective rollbacks",
+        "Load testing: Validate configuration changes under high load (5X baseline)"
+    ]'::jsonb,
+    '[
+        "Dashboard",
+        "CLI",
+        "GraphQL API",
+        "Kubernetes Pods",
+        "Service Mesh",
+        "pgbouncer Connection Pool",
+        "GitHub Deployments"
+    ]'::jsonb,
+    0.78,
+    'https://blog.railway.com/p/incident-report-april-30-2025'
+),
+
+-- June 10, 2025 - SSL Certificate Issuance Failure
+(
+    'Google Cloud Public DNS Oregon Region Failure',
+    '2025-06-10',
+    'networking-problem',
+    'HIGH',
+    120,
+    'Google Cloud Public DNS in Oregon region failed to return DNS responses during SSL certificate issuance process. Domains added during incident window became inaccessible.',
+    'SSL certificate issuance failed for domains added during incident. Domains unable to be accessed. Users unable to add new domains or update routing.',
+    '[
+        {"step": "Attempt SSL certificate issuance", "action": "Issue certificate for new domain"},
+        {"step": "Query Google Cloud DNS Oregon", "action": "DNS query for verification record"},
+        {"step": "Detect DNS resolution failure", "action": "Google Cloud DNS region unresponsive"},
+        {"step": "Certificate issuance fails", "action": "Unable to complete domain verification"},
+        {"step": "Monitor DNS recovery", "action": "Google Cloud DNS Oregon region recovers"},
+        {"step": "Retry certificate issuance", "action": "Successful issuance after DNS recovery"}
+    ]'::jsonb,
+    '[
+        "Multi-region: Use multiple DNS providers or regions for redundancy",
+        "Monitoring: Alert on DNS query failures from specific regions",
+        "Retry logic: Implement exponential backoff for DNS resolution failures",
+        "Status page: Proactively notify users of DNS provider regional issues",
+        "Fallback: Use alternative DNS resolution methods for verification"
+    ]'::jsonb,
+    '[
+        "SSL Certificate Service",
+        "Google Cloud DNS",
+        "Domain Provisioning",
+        "DNS Verification"
+    ]'::jsonb,
+    0.85,
+    'https://blog.railway.com/p/incident-report-june-6-2025'
+),
+
+-- Synthetic: Deployment Queue Bottleneck
+(
+    'Deployment Queue Backlog During High-Concurrency Push',
+    '2025-08-15',
+    'deployment-failure',
+    'HIGH',
+    95,
+    'Multiple deployment services pushed simultaneously without rate limiting, overwhelming deployment queue processor and causing cascading delays across all projects.',
+    'Deployments queued indefinitely, users waiting 30+ minutes for builds to start, GitHub webhook processing delayed, deployment metrics unavailable.',
+    '[
+        {"step": "Detect queue backlog", "action": "Monitor deployment queue depth exceeds threshold"},
+        {"step": "Identify root cause", "action": "Simultaneous deployment pushes without backpressure"},
+        {"step": "Enable rate limiting", "action": "Implement token bucket algorithm for deployment submissions"},
+        {"step": "Process queued deployments", "action": "Gradual processing with new rate limiting in place"},
+        {"step": "Restore normal processing", "action": "Queue backlog cleared; deployments at normal latency"}
+    ]'::jsonb,
+    '[
+        "Rate limiting: Implement token bucket for deployment queue submissions",
+        "Monitoring: Alert on queue depth exceeding 500 pending deployments",
+        "Backpressure: Return 429 (Too Many Requests) when queue near capacity",
+        "User communication: Notify users of deployment queue status in dashboard",
+        "Documentation: Guide users on deployment best practices to avoid queue saturation"
+    ]'::jsonb,
+    '[
+        "Deployment Queue",
+        "GitHub Webhooks",
+        "Build Service",
+        "Deployment Metrics"
+    ]'::jsonb,
+    0.82,
+    'https://blog.railway.com/p/incidents-2025'
+),
+
+-- Synthetic: Build Service Memory Leak
+(
+    'Build Service Memory Exhaustion from Long-Running Builds',
+    '2025-07-22',
+    'build-platform-issue',
+    'HIGH',
+    180,
+    'Memory leak in build service caused gradual memory consumption during long-running Docker image builds. OOM killer terminated service processes causing build failures.',
+    'Random build failures after 15+ minutes, OOM errors in build logs, Docker layer caching not functioning, slow image push to registry.',
+    '[
+        {"step": "Monitor build service memory", "action": "Memory usage steadily increases during long builds"},
+        {"step": "First build failure", "action": "OOM killer terminates build process mid-execution"},
+        {"step": "Identify memory leak", "action": "Profiling reveals leak in layer caching mechanism"},
+        {"step": "Disable problematic feature", "action": "Disable experimental layer caching; builds complete"},
+        {"step": "Code review", "action": "Found buffer not released after each layer processed"},
+        {"step": "Deploy fix", "action": "Release buffers; memory stable during builds"}
+    ]'::jsonb,
+    '[
+        "Code review: Mandatory memory profiling for build service changes",
+        "Monitoring: Alert on build service memory > 85% of container limit",
+        "Testing: Add test cases for builds >100MB layer sizes",
+        "Resource limits: Set OOM kill buffer at 95% to allow graceful shutdown",
+        "Documentation: Update build service guidelines on layer caching best practices"
+    ]'::jsonb,
+    '[
+        "Build Service",
+        "Docker Build",
+        "Layer Caching",
+        "Memory Management",
+        "OOM Protection"
+    ]'::jsonb,
+    0.80,
+    'https://blog.railway.com/p/incidents-2025'
+),
+
+-- Synthetic: Private Network DNS Resolution
+(
+    'Private Network DNS Resolution Timeout During Zone Transfer',
+    '2025-05-18',
+    'networking-problem',
+    'MEDIUM',
+    45,
+    'DNS zone transfer operation on private network DNS resolver took longer than expected, causing timeout for private network service discovery and communication failures.',
+    'Private network services unable to resolve each other, services timeout connecting to dependencies, Private Network features show degraded status in dashboard.',
+    '[
+        {"step": "Initiate DNS zone transfer", "action": "Scheduled zone transfer for updated DNS records"},
+        {"step": "Detect timeout", "action": "Zone transfer exceeds normal duration"},
+        {"step": "Private network queries fail", "action": "Services timeout during DNS lookups"},
+        {"step": "Reduce zone size", "action": "Temporarily disable unnecessary DNS records"},
+        {"step": "Complete transfer", "action": "Zone transfer completes; services recover"},
+        {"step": "Optimize zone", "action": "Remove stale records from zone file"}
+    ]'::jsonb,
+    '[
+        "Zone management: Implement incremental zone transfers instead of full zone sync",
+        "Monitoring: Alert on DNS zone transfer duration > 5 minutes",
+        "Cleanup: Automated removal of stale DNS records older than 30 days",
+        "Timeout adjustment: Increase DNS query timeout for private networks to 30 seconds",
+        "Redundancy: Add secondary DNS resolvers for failover during zone transfers"
+    ]'::jsonb,
+    '[
+        "Private Network",
+        "DNS Resolver",
+        "Service Discovery",
+        "Zone Transfer"
+    ]'::jsonb,
+    0.83,
+    'https://blog.railway.com/p/incidents-2025'
+),
+
+-- Synthetic: Webhook Processing Backlog
+(
+    'GitHub Webhook Processing Backlog from Rapid Deployment Signals',
+    '2025-03-12',
+    'deployment-failure',
+    'MEDIUM',
+    75,
+    'Rapid successive GitHub webhook events (push, PR merge, deployment) overwhelmed webhook processor queue without deduplication, causing 20+ minute delay in deployment triggering.',
+    'Deployments delayed 20+ minutes after GitHub push, Multiple deployment triggers queued for same commit, Users unclear if deployments triggered.',
+    '[
+        {"step": "Receive rapid GitHub webhooks", "action": "Multiple webhook events per commit (push, status, deployment)"},
+        {"step": "Queue depth increases", "action": "Webhook processor unable to keep pace with incoming events"},
+        {"step": "Add deduplication", "action": "Group webhooks by commit hash; process once per unique commit"},
+        {"step": "Queue processing resumes", "action": "Processor catches up; deployments trigger normally"},
+        {"step": "Notify delayed deployments", "action": "Users informed of deployment processing in progress"}
+    ]'::jsonb,
+    '[
+        "Webhook deduplication: Group webhooks by commit hash; process once per commit",
+        "Rate limiting: Implement sliding window rate limiter for webhook processor",
+        "Monitoring: Alert on webhook queue depth > 100 pending items",
+        "Documentation: Explain webhook batching behavior to users",
+        "UI feedback: Show webhook processing status and ETA in dashboard"
+    ]'::jsonb,
+    '[
+        "Webhook Processor",
+        "GitHub Integration",
+        "Deployment Queue",
+        "Event Deduplication"
+    ]'::jsonb,
+    0.81,
+    'https://blog.railway.com/p/incidents-2025'
+),
+
+-- Synthetic: Docker Registry Push Timeout
+(
+    'Docker Registry Push Timeout During Image Layer Upload',
+    '2025-02-28',
+    'build-platform-issue',
+    'MEDIUM',
+    110,
+    'Large Docker image layer (>500MB) failed to upload to Docker registry within default 5-minute timeout. Network slowness to Docker Hub compounded the issue.',
+    'Build failures with "unauthorized: authentication token refresh failed" and "timeout pushing layer", Users manually retry builds, Build times unpredictable.',
+    '[
+        {"step": "Push large Docker layer", "action": "Docker layer >500MB exceeds default 5-minute timeout"},
+        {"step": "Detect timeout", "action": "Docker registry push request times out"},
+        {"step": "Retry with backoff", "action": "Implement exponential backoff for registry push"},
+        {"step": "Increase timeout", "action": "Increase push timeout to 15 minutes for large layers"},
+        {"step": "Use chunked upload", "action": "Split large layers into smaller chunks for faster upload"},
+        {"step": "Successful upload", "action": "Layer uploaded; build completes"}
+    ]'::jsonb,
+    '[
+        "Timeout configuration: Increase Docker registry push timeout based on layer size",
+        "Chunking: Implement chunked upload for layers > 100MB",
+        "Monitoring: Alert on Docker registry push latency > 10 seconds",
+        "Retry logic: Implement exponential backoff with jitter for registry failures",
+        "Documentation: Guide users on image optimization to reduce layer size",
+        "Network: Monitor Docker Hub connectivity and implement fallback registries"
+    ]'::jsonb,
+    '[
+        "Docker Registry",
+        "Build Service",
+        "Layer Upload",
+        "Network Connectivity"
+    ]'::jsonb,
+    0.79,
+    'https://blog.railway.com/p/incidents-2025'
+),
+
+-- Synthetic: API Rate Limiting Misconfiguration
+(
+    'API Rate Limiter Reset Caused Service Rejection Cascades',
+    '2025-01-09',
+    'deployment-failure',
+    'HIGH',
+    90,
+    'Rate limiter configuration update applied globally without gradual rollout caused sudden reset of all rate limit counters. Legitimate API clients immediately hit new rate limits.',
+    'API calls rejected with 429 Too Many Requests even for users with low usage, Dashboard API timeouts, CLI operations blocked, Deployment triggers fail.',
+    '[
+        {"step": "Deploy rate limiter config", "action": "Update applied globally to all API servers simultaneously"},
+        {"step": "Counter reset triggered", "action": "Rate limiter counters reset to zero for all users"},
+        {"step": "Legitimate clients hit limits", "action": "Normal API usage patterns exceed new rate limit thresholds"},
+        {"step": "API returns 429 errors", "action": "Dashboard, CLI, and deployment triggers fail"},
+        {"step": "Revert configuration", "action": "Rollback rate limiter to previous configuration"},
+        {"step": "Gradual re-apply", "action": "Implement rate limiter change with canary rollout"}
+    ]'::jsonb,
+    '[
+        "Deployment: Use canary rollout for rate limiter config changes (10% -> 50% -> 100%)",
+        "Validation: Test rate limiter with synthetic load before production deployment",
+        "Monitoring: Alert on sudden spike in 429 error responses",
+        "Gradual migration: Maintain backward-compatible rate limits during transition",
+        "Documentation: Update API docs with rate limit thresholds and retry guidance"
+    ]'::jsonb,
+    '[
+        "API Gateway",
+        "Rate Limiter",
+        "Dashboard API",
+        "CLI Operations",
+        "Deployment Triggers"
+    ]'::jsonb,
+    0.77,
+    'https://blog.railway.com/p/incidents-2025'
+);

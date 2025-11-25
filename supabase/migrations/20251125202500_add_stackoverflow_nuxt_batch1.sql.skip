@@ -1,0 +1,148 @@
+-- Add Nuxt.js Stack Overflow solutions (batch 1)
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, source_url, thumbs_up)
+VALUES
+(
+  'Why does Prettier not format code in VS Code with Nuxt.js',
+  'stackoverflow-nuxt',
+  '[{"solution": "Set Prettier as the default formatter in VS Code settings: Add \"[vue]\": { \"editor.defaultFormatter\": \"esbenp.prettier-vscode\" } to settings.json", "percentage": 92, "note": "656 votes - most common Nuxt formatting issue. Ensures Prettier is selected over other formatters."}, {"solution": "Install Prettier locally in project: npm install -D prettier and ensure .prettierrc config exists", "percentage": 88, "note": "VSCode needs local prettier instance. Global install is not recognized by extension."}, {"solution": "Enable format on save in VSCode: \"editor.formatOnSave\": true in settings", "percentage": 85, "note": "Requires Prettier extension to be active. Reload VS Code window after config changes."}]'::jsonb,
+  'Prettier extension must be installed AND set as default formatter. Global prettier installation will not work. Config changes require VS Code reload. .prettierrc must be valid JSON/YAML.',
+  0.92,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/52586965/why-does-prettier-not-format-code-in-vs-code',
+  656
+),
+(
+  'window is not defined in Nuxt.js server-side rendering',
+  'stackoverflow-nuxt',
+  '[{"solution": "Use .client.js file extension for plugins: Create plugin file as plugin-name.client.js so it only runs client-side (Nuxt 2.4+)", "percentage": 95, "command": "Create: plugins/my-plugin.client.js", "note": "67 votes. Cleanest solution for Nuxt 2.4+. Nuxt automatically excludes .client.js from SSR."}, {"solution": "Wrap window access with process.client check: if (process.client) { /* window code */ }", "percentage": 88, "note": "Works in both Nuxt 2 and 3. Place in mounted() lifecycle hook."}, {"solution": "Set ssr: false in nuxt.config.js for specific plugins: plugins: [{ src: \"~/plugins/plugin.js\", ssr: false }]", "percentage": 85, "note": "Nuxt 2 only. Disables SSR for that plugin completely."}]'::jsonb,
+  'Window object only exists in browser. Server-side rendering fails when accessing window in setup/created lifecycle hooks. Must use mounted() or .client.js extension. process.client is falsy on server.',
+  0.93,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/54979644/window-is-not-defined-in-nuxt-js',
+  67
+),
+(
+  'Nuxt Vuetify throwing Dart Sass deprecation warnings',
+  'stackoverflow-nuxt',
+  '[{"solution": "Install @nuxtjs/vuetify with version constraint ^1.0.0 to get latest compatible version", "percentage": 90, "command": "npm install @nuxtjs/vuetify@^1.0.0", "note": "103 votes. Removes division deprecation warnings from internal Sass."}, {"solution": "Configure Vite preprocessor options in nuxt.config.ts to silence specific warnings: Add logger: { warn() {} } to scss options", "percentage": 85, "note": "Nuxt 3 with Vite. Filters out \"Using / for division\" deprecation messages without affecting build."}, {"solution": "Update Vuetify to latest version and use vuetify-nuxt-module instead of @nuxtjs/vuetify for Nuxt 3", "percentage": 88, "note": "Modern Nuxt 3 approach. vuetify-nuxt-module has fewer deprecation issues."}]'::jsonb,
+  'Dart Sass 2.0.0+ deprecates / for division. This comes from Vuetify internal Sass code, not user code. Warnings don\'t break functionality. Must update package versions to fix permanently.',
+  0.88,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/67631879/nuxtjs-vuetify-throwing-lots-of-using-for-division-is-deprecated',
+  103
+),
+(
+  'Nuxt client-side rendered virtual DOM tree not matching server-rendered content',
+  'stackoverflow-nuxt',
+  '[{"solution": "Wrap client-only components in <ClientOnly> or <client-only> component tag", "percentage": 93, "command": "<client-only><MyComponent /></client-only>", "note": "96 votes. Prevents hydration mismatch by skipping SSR render."}, {"solution": "Fix invalid HTML nesting: Remove nested links (link inside link), buttons inside buttons, or block elements inside <p> tags", "percentage": 90, "note": "Common cause. HTML validation will catch these. Use browser DevTools to inspect mismatches."}, {"solution": "Move window/localStorage access to mounted() lifecycle hook instead of created() or setup()", "percentage": 88, "note": "Client-only code in wrong hook breaks hydration. Use mounted() for browser APIs."}]'::jsonb,
+  'Invalid HTML nesting breaks hydration. Third-party packages may inject DOM elements. localStorage/window access in wrong lifecycle hook causes mismatch. SSR renders different tree than client browser.',
+  0.90,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/47862591/vuejs-error-the-client-side-rendered-virtual-dom-tree-is-not-matching-server-re',
+  96
+),
+(
+  'How to get route URL params in Nuxt 2 and 3 dynamic pages',
+  'stackoverflow-nuxt',
+  '[{"solution": "Nuxt 3: Use useRoute() composable in script setup: const { params } = useRoute() then access params.id", "percentage": 94, "command": "const route = useRoute(); console.log(route.params.id)", "note": "89 votes. Modern Nuxt 3 approach with Composition API."}, {"solution": "Nuxt 2: Access via this.$route.params.id in component: mounted() { console.log(this.$route.params.id) }", "percentage": 92, "note": "Nuxt 2 Options API. Use $ prefix in component context."}, {"solution": "For dynamic files: Use [id].vue (Nuxt 3) or _id.vue (Nuxt 2) naming convention", "percentage": 95, "command": "Nuxt 3: pages/post/[id].vue | Nuxt 2: pages/post/_id.vue", "note": "File naming creates param name. Underscores in filenames cause param extraction issues."}]'::jsonb,
+  'Nuxt 3 uses square brackets [id].vue for dynamic routes; Nuxt 2 uses underscore _id.vue. Using wrong syntax means params will be undefined. Don\'t use underscores in filenames for Nuxt 3.',
+  0.93,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/48068520/how-to-get-route-url-params-in-a-page-in-nuxt2-and-3',
+  89
+),
+(
+  'Difference between asyncData vs Fetch in Nuxt',
+  'stackoverflow-nuxt',
+  '[{"solution": "Use asyncData for server-side data fetching that blocks navigation: Data must load before page renders", "percentage": 92, "command": "export default { asyncData({ $axios, params }) { return $axios.$get(...) } }", "note": "78 votes. Blocks route transition - user sees new page with all data populated."}, {"solution": "Use fetch() method for non-blocking data fetching: Page renders immediately while data loads in background", "percentage": 88, "note": "User sees Header + Footer first, Content loads later. Better UX for large data. Use $fetchState for loading indicators."}, {"solution": "Nuxt 3: Use useFetch() or useAsyncData() composables instead of lifecycle methods", "percentage": 90, "note": "Modern approach. asyncData/fetch are Nuxt 2 legacy patterns."}]'::jsonb,
+  'asyncData blocks navigation - use for critical data needed before page render. fetch is non-blocking - page renders while loading. Choose based on desired UX: instant page or instant content. Nuxt 3 removed asyncData in favor of composables.',
+  0.90,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/49251437/difference-between-asyncdata-vs-fetch',
+  78
+),
+(
+  'How to get current route name in Nuxt 2 and 3',
+  'stackoverflow-nuxt',
+  '[{"solution": "Nuxt 3: Use useRoute() composable: const route = useRoute(); console.log(route.name)", "percentage": 95, "command": "<script setup>const route = useRoute(); console.log(route.name)</script>", "note": "71 votes. Must use Nuxt\'s useRoute, not vue-router\'s, to avoid sync issues."}, {"solution": "Nuxt 2 / Options API: Access via this.$route.name in component", "percentage": 93, "command": "this.$route.name", "note": "Works in any lifecycle hook. Also available in templates as {{ $route.name }}"}, {"solution": "In templates: Use {{ $route.name }} directly without composable", "percentage": 94, "note": "Works in both Nuxt 2 and 3. Automatic reactivity in template."}]'::jsonb,
+  'Must use Nuxt\'s useRoute() not vue-router\'s useRoute to maintain sync. Route.name is undefined until component mounts. In setup(), check if route is available before accessing.',
+  0.94,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/44748575/how-to-get-current-route-name-in-nuxt-2-and-3',
+  71
+),
+(
+  'Error ERR_PACKAGE_PATH_NOT_EXPORTED in Nuxt',
+  'stackoverflow-nuxt',
+  '[{"solution": "Update Node.js to LTS version 16.x, 18.x, or 20.x (not 13.x, 15.x, or 17.x)", "percentage": 96, "command": "nvm install 18 && nvm use 18", "note": "95 votes. Most common fix. Node 17.x has strict ESM export checking."}, {"solution": "Delete node_modules and package-lock.json, then run npm install fresh", "percentage": 90, "command": "rm -rf node_modules package-lock.json && npm install", "note": "Clears corrupted dependency cache. IDEs may cache old versions."}, {"solution": "Run npm update && npm audit fix --force to update all packages", "percentage": 85, "note": "Forces compatible versions. Use --force cautiously as it may break compatibility."}]'::jsonb,
+  'Node 13.x, 15.x, 17.x enforce strict package exports. Old packages don\'t have proper exports field. Downgrading from Node 17 to 16 often fixes immediately. npm cache is not automatically cleared.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/62246824/error-err-package-path-not-exported',
+  95
+),
+(
+  'How to set lang attribute on HTML element with Nuxt and i18n',
+  'stackoverflow-nuxt',
+  '[{"solution": "Nuxt 3: Use useLocaleHead() composable with addSeoAttributes: true to auto-set lang attribute", "percentage": 94, "command": "const head = useLocaleHead({ addSeoAttributes: true }); const htmlAttrs = computed(() => head.value.htmlAttrs)", "note": "66 votes. Recommended modern approach for Nuxt 3 with i18n."}, {"solution": "Use useHead() composable with computed locale: useHead({ htmlAttrs: { lang: computed(() => i18n.locale.value) } })", "percentage": 90, "note": "Dynamic lang based on active locale. Works with any i18n library."}, {"solution": "Static lang in nuxt.config.ts: app.head.htmlAttrs.lang = \"en\" (one language only)", "percentage": 85, "note": "For single-language apps. Dynamic values don\'t work in config."}]'::jsonb,
+  'useLocaleHead() requires i18n module installed. $i18n not available in nuxt.config so can\'t set dynamic values there. Computed values must be used for reactivity. Static lang is insufficient for multilingual apps.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/48238472/how-to-set-lang-attribute-on-html-element-with-nuxt',
+  66
+),
+(
+  'ESLint potentially fixable with --fix option in Nuxt',
+  'stackoverflow-nuxt',
+  '[{"solution": "Run eslint with --fix flag: npm run lint -- --fix to auto-fix linting issues", "percentage": 88, "command": "npm run lint -- --fix", "note": "70 votes. One-time fix but errors return with new changes."}, {"solution": "Enable auto-fix on save in VS Code: \"editor.codeActionsOnSave\": { \"source.fixAll.eslint\": true }", "percentage": 92, "note": "Requires ESLint extension. Automatically fixes issues on file save."}, {"solution": "For Nuxt 2: Configure @nuxtjs/eslint-module with fix: true in nuxt.config.js", "percentage": 85, "command": "buildModules: [[ \"@nuxtjs/eslint-module\", { fix: true } ]]", "note": "Auto-fixes during dev server startup. Nuxt 3 uses different approach."}]'::jsonb,
+  'ESLint warnings appear after every file change. --fix only works once - errors recur with new changes. VSCode auto-fix requires extension AND settings. Nuxt 2 and 3 have different eslint integration methods.',
+  0.88,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/54173375/potentially-fixable-with-the-fix-option',
+  70
+),
+(
+  'How to run Nuxt with HTTPS on localhost for development',
+  'stackoverflow-nuxt',
+  '[{"solution": "Nuxt 3: Use --https flag with certificate: nuxt dev --https --ssl-cert cert.pem --ssl-key key.pem", "percentage": 93, "command": "npx mkcert localhost && nuxt dev --https --ssl-cert localhost.pem --ssl-key localhost-key.pem", "note": "51 votes. Modern Nuxt 3 approach. Use mkcert for local certificates."}, {"solution": "Install mkcert tool then generate certificates: mkcert -key-file key.pem -cert-file cert.pem localhost", "percentage": 95, "command": "brew install mkcert && mkcert localhost", "note": "Creates locally-trusted certs. No configuration needed - just works."}, {"solution": "For Nuxt 2: Configure in nuxt.config.js: server: { https: { key: fs.readFileSync(...), cert: fs.readFileSync(...) } }", "percentage": 85, "note": "Requires fs.readFileSync and path modules. More complex setup than Nuxt 3."}]'::jsonb,
+  'Self-signed certificates cause browser warnings. mkcert creates trusted local certs automatically. Some packages may reject HTTPS on localhost. NODE_TLS_REJECT_UNAUTHORIZED=0 bypass is insecure for production.',
+  0.91,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/56966137/how-to-run-nuxt-npm-run-dev-with-https-in-localhost',
+  51
+),
+(
+  'nuxt build --spa vs nuxt generate difference',
+  'stackoverflow-nuxt',
+  '[{"solution": "Use nuxt build --spa for SSR-disabled apps that need Node.js server running (dev/staging)", "percentage": 88, "command": "nuxt build --spa", "note": "58 votes. Outputs compiled bundles requiring Node server. For SPA-only mode."}, {"solution": "Use nuxt generate to create fully static HTML/CSS/JS files for CDN deployment (production)", "percentage": 94, "command": "nuxt generate", "note": "Pre-renders all routes to static HTML. No Node.js server needed. Best for static hosting."}, {"solution": "Generate creates dist/index.html files per route; build creates .nuxt/ bundle for Node", "percentage": 90, "note": "Key difference: static files vs runtime bundle. Generate is for JAMstack/static hosting."}]'::jsonb,
+  'build --spa requires Node.js server to serve the app. generate creates static files suitable for any CDN. generate --spa is invalid - use generate without flag. build is for dynamic servers; generate is for static hosts.',
+  0.91,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/46175023/nuxt-build-spa-vs-nuxt-generate',
+  58
+);

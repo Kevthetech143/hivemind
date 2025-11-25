@@ -1,0 +1,224 @@
+-- Add Stack Overflow ESLint solutions batch 1
+-- Extracted from highest-voted ESLint questions with accepted answers
+-- Source: Stack Overflow eslint tag sorted by votes
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to disable ESLint rule for a specific line of code',
+    'stackoverflow-eslint',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use eslint-disable-next-line comment before the line: // eslint-disable-next-line no-use-before-define", "percentage": 95, "command": "// eslint-disable-next-line [rule-name]"},
+        {"solution": "Use eslint-disable-line comment at end of line: var x = new Thing(); // eslint-disable-line no-use-before-define", "percentage": 92, "command": "[code] // eslint-disable-line [rule-name]"},
+        {"solution": "Disable all rules on a line with // eslint-disable-line (use sparingly as it masks potential issues)", "percentage": 85, "command": "[code] // eslint-disable-line"},
+        {"solution": "Use multi-line disable blocks for multiple rules: /* eslint-disable rule1, rule2 */ ... /* eslint-enable rule1, rule2 */", "percentage": 88, "note": "Useful for disabling multiple rules or code blocks"}
+    ]'::jsonb,
+    'ESLint installed and configured, Inline configuration enabled (not using --no-inline-config flag), ESLint v7+ recommended for comment explanations',
+    'No ESLint warnings appear on targeted line, Other rules continue functioning elsewhere, IDE no longer flags the disabled violation',
+    'Using // instead of /* */ for file-wide disables - block comments required. Omitting rule names disables all rules and masks problems. Plugin rule names must include namespace (e.g., @typescript-eslint/no-unused-vars). Check inline config flag if comments don''t work.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/27732209/turning-off-eslint-rule-for-a-specific-line'
+),
+(
+    'How to fix missing dependency warning when using useEffect React Hook',
+    'stackoverflow-eslint',
+    'VERY_HIGH',
+    '[
+        {"solution": "Move function declaration inside the useEffect hook to eliminate external dependency: const fetchData = () => {...}; fetchData();", "percentage": 93, "note": "Recommended approach - removes external reference that causes warning"},
+        {"solution": "Wrap function with useCallback hook and include in dependency array: const memoizedFn = useCallback(() => {...}, [dependencies])", "percentage": 88, "note": "Better for frequently-called functions"},
+        {"solution": "Use eslint-disable-line react-hooks/exhaustive-deps comment (last resort only): // eslint-disable-line react-hooks/exhaustive-deps", "percentage": 60, "note": "Suppresses warning but doesn''t fix underlying issue"},
+        {"solution": "Create custom hook wrapper for mount-only initialization behavior", "percentage": 85, "note": "Cleaner approach for complex scenarios"}
+    ]'::jsonb,
+    'React 16.8+ with Hooks support, eslint-plugin-react-hooks installed for linting, Component using useEffect with empty dependency array',
+    'ESLint warning disappears, Effect runs exactly once on component mount, No infinite loop occurs, No runtime errors about cleanup functions',
+    'Including async functions directly as effect callback - must wrap in closure. Forgetting that moving function inside changes scope. Confusing when to memoize versus when to relocate. Using eslint-disable without understanding underlying issue.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/55840294/how-to-fix-missing-dependency-warning-when-using-useeffect-react-hook'
+),
+(
+    'How to disable ESLint rule for an entire file',
+    'stackoverflow-eslint',
+    'VERY_HIGH',
+    '[
+        {"solution": "Place block comment at top of file: /* eslint-disable rule-name */ - disables only that rule", "percentage": 95, "command": "/* eslint-disable [rule-name] */ at top of file"},
+        {"solution": "Disable multiple rules by listing them: /* eslint-disable rule1, rule2 */ at top", "percentage": 92, "command": "/* eslint-disable rule1, rule2 */"},
+        {"solution": "Use overrides in .eslintrc to target file patterns and disable rules selectively", "percentage": 88, "note": "Better for project-wide patterns"},
+        {"solution": "Add patterns to .eslintignore file (disables all rules, not specific ones)", "percentage": 70, "note": "Less precise - ignores entire files"}
+    ]'::jsonb,
+    'ESLint installed and configured in project, Understanding of project''s rule configuration, Block comments must appear at file beginning',
+    'No lint errors for disabled rule in that file, Other rules remain active, Rule enforcement continues in other files',
+    'Using single-line comments (// eslint-disable) instead of block comments (/* */). Placement matters - must be at file top. Using /* eslint-disable */ without specifying rules disables everything. .eslintignore deprecated in newer ESLint versions.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34764287/turning-off-eslint-rule-for-a-specific-file'
+),
+(
+    'parserOptions.project error with @typescript-eslint/parser when linting non-TS files',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Use overrides in eslintrc to apply TypeScript rules only to .ts/.tsx files with project option scoped inside the override block", "percentage": 94, "note": "Scope parserOptions.project within overrides to avoid non-TS file errors"},
+        {"solution": "Add problematic files to .eslintignore to skip them", "percentage": 85, "note": "Simple but less ideal"},
+        {"solution": "Create separate tsconfig.eslint.json extending tsconfig.json with config files in include array", "percentage": 83, "note": "Useful for complex monorepos"},
+        {"solution": "Use ignorePatterns in eslintrc to exclude specific files from linting", "percentage": 82, "note": "ESLint-specific, doesn''t require tsconfig changes"}
+    ]'::jsonb,
+    '@typescript-eslint/parser installed, @typescript-eslint/eslint-plugin configured, Valid tsconfig.json in project root, Non-TypeScript config files present',
+    'No parsing errors when opening non-TypeScript files, TypeScript files receive proper type-aware linting, ESLint runs without project config mismatch errors',
+    'Forgetting IDE restart after config changes. Not specifying file patterns correctly in overrides. Applying project option globally instead of within overrides. Excluding config files from tsconfig.json without using eslint overrides.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/58510287/parseroptions-project-has-been-set-for-typescript-eslint-parser'
+),
+(
+    'ESLint with TypeScript: Unable to resolve path to module error',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Install eslint-import-resolver-typescript and configure in .eslintrc settings block under import/resolver", "percentage": 96, "command": "yarn add -D eslint-import-resolver-typescript"},
+        {"solution": "Configure Node resolver with TypeScript extensions in import/resolver settings", "percentage": 88, "note": "Alternative without additional package"},
+        {"solution": "Extend ESLint config with plugin:import/typescript preset in extends array", "percentage": 85, "note": "Add to eslintrc extends section"},
+        {"solution": "Update eslint-plugin-import to latest version for TypeScript support", "percentage": 80, "note": "Required if using older versions"}
+    ]'::jsonb,
+    'ESLint configured with TypeScript parser, TypeScript project with tsconfig.json, eslint-plugin-import installed',
+    'Module resolution errors disappear, ESLint recognizes .ts and .tsx file imports, No "Unable to resolve path to module" errors during linting',
+    'Missing eslint-import-resolver-typescript package before configuration. Incorrect config placement outside "settings" block. Outdated eslint-plugin-import versions lacking TypeScript support. IDE caching - verify fixes via command line first.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/55198502/using-eslint-with-typescript-unable-to-resolve-path-to-module'
+),
+(
+    'ESLint: How to disable "unexpected console statement" (no-console) in Node.js',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Set rule to off in .eslintrc: "no-console": "off" or "no-console": 0", "percentage": 95, "command": "In .eslintrc: rules: { ''no-console'': ''off'' }"},
+        {"solution": "Use inline disabling for specific lines: // eslint-disable-next-line no-console", "percentage": 92, "command": "// eslint-disable-next-line no-console"},
+        {"solution": "Disable only in development: ''no-console'': process.env.NODE_ENV === ''production'' ? 2 : 0", "percentage": 88, "note": "Environment-based conditional"},
+        {"solution": "Allow specific console methods: ''no-console'': [''warn'', { ''allow'': [''log'', ''error'', ''info''] }]", "percentage": 85, "note": "Granular control"}
+    ]'::jsonb,
+    'ESLint installed in project, Access to configuration file (.eslintrc.js, .eslintrc.json, or package.json), Development server may need restart',
+    'No-console error messages disappear from linter, console.log() statements no longer trigger warnings, Changes apply after saving and restarting dev server',
+    'Forgetting module.exports syntax in .eslintrc.js files. Configuration not reloaded - dev server restart required. Mixing config file formats in same project. Vue CLI projects require package.json configuration, not separate .eslintrc.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34215526/eslint-how-to-disable-unexpected-console-statement-in-node-js'
+),
+(
+    'How to use ESLint with Jest testing framework',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Use overrides with Jest environment scoped to test files: overrides: [{files: [''**/*.test.js''], env: {jest: true}}]", "percentage": 94, "command": "In .eslintrc: overrides > files pattern with env: jest: true"},
+        {"solution": "Install eslint-plugin-jest and extend plugin:jest/recommended in overrides", "percentage": 91, "command": "npm install -D eslint-plugin-jest, then extend in overrides"},
+        {"solution": "Add eslint-env jest directive at top of individual test files", "percentage": 85, "command": "/* eslint-env jest */ at top of test file"},
+        {"solution": "Set global Jest environment in root config (less precise but simpler)", "percentage": 75, "note": "Not recommended - applies Jest globals everywhere"}
+    ]'::jsonb,
+    'ESLint v4+ with overrides support, eslint-plugin-jest package installed, @types/jest for TypeScript support (optional), Test files in known patterns',
+    'Jest globals resolve without undefined errors in test files, Same globals trigger linting errors in non-test source files, Build/lint complete without warnings about jest in production',
+    'Forgetting to install eslint-plugin-jest before referencing it. Using glob patterns that don''t match actual test file locations. Applying Jest environment globally instead of scoped to test files. Incorrect files array patterns.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31629389/how-to-use-eslint-with-jest'
+),
+(
+    'ESLint parsing error: "The keyword const is reserved" ES6 syntax not recognized',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Add env.es6: true in .eslintrc to enable ES6 parsing: { "env": { "es6": true } }", "percentage": 95, "command": "In .eslintrc: env: { es6: true }"},
+        {"solution": "Use parserOptions ecmaVersion: 2015 or higher to specify ES6 version", "percentage": 90, "command": "parserOptions: { ecmaVersion: 2015 }"},
+        {"solution": "For modern versions use ecmaVersion: latest to auto-enable newest syntax", "percentage": 88, "note": "ESLint v7.30.0+"},
+        {"solution": "Add eslint-env directive at top of file: /* eslint-env es6 */ (file-specific only)", "percentage": 82, "note": "Only affects that file"}
+    ]'::jsonb,
+    'ESLint installed in project, Ability to create/modify .eslintrc in project root, For VS Code: may require editor restart after config changes',
+    'const is reserved error disappears, ES6 features (const, let, arrow functions) recognized without warnings, No parsing errors in linted files',
+    'Forgetting editor restart after creating config file (VS Code caches settings). Using JSON syntax in .eslintrc.js files (must use proper JavaScript export). Not specifying files array in override configs for monorepo. Inline comments affect only that file.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/42706584/eslint-error-parsing-error-the-keyword-const-is-reserved'
+),
+(
+    'How to disable ESLint rules for a specific folder',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Use overrides with glob patterns to target folders: overrides: [{files: [''test/*.spec.js''], rules: {''require-jsdoc'': ''off''}}]", "percentage": 93, "command": "In .eslintrc: overrides > files glob pattern with rules"},
+        {"solution": "Use ignorePatterns property: ignorePatterns: [''src/test/*''] (ignores entire directory)", "percentage": 88, "note": "ESLint 6.7.0+"},
+        {"solution": "Use command-line flag at runtime: eslint . --ignore-pattern ''test/*''", "percentage": 82, "note": "Runtime-only, doesn''t persist"},
+        {"solution": "For ESLint 9+ flat config use ignores property in eslint.config.js", "percentage": 80, "note": "New flat config system"}
+    ]'::jsonb,
+    'ESLint installed in project, Configuration file (.eslintrc.json, .eslintrc.js, or eslint.config.js), Knowledge of glob pattern syntax',
+    'Specified rules no longer trigger violations in target folders, Other rules operate normally elsewhere, No warnings about deprecated .eslintignore files',
+    'Starting paths with ./ instead of / or bare paths. Conflicting .eslintrc files in subdirectories overriding parent config. Confusing overrides (disables rules) with ignorePatterns (ignores entire files).',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/42250257/disable-eslint-rules-for-folder'
+),
+(
+    'ESLint parsing error: Unexpected token when using modern JavaScript syntax',
+    'stackoverflow-eslint',
+    'HIGH',
+    '[
+        {"solution": "Install @babel/eslint-parser: npm install @babel/eslint-parser --save-dev and set parser in .eslintrc", "percentage": 96, "command": "npm install -D @babel/eslint-parser, set parser: @babel/eslint-parser in .eslintrc"},
+        {"solution": "Update parserOptions ecmaVersion to 2020 or later for modern syntax support", "percentage": 88, "command": "parserOptions: { ecmaVersion: 2020 }"},
+        {"solution": "For TypeScript projects use @typescript-eslint/parser instead", "percentage": 85, "note": "Better for TS support"},
+        {"solution": "Update parserOptions with @babel/eslint-parser to handle babel.config.js", "percentage": 83, "note": "May require babel configuration"}
+    ]'::jsonb,
+    'Node.js 8+, .eslintrc configuration file, npm or yarn package manager, ESLint installed',
+    'Parsing errors disappear, Code lints without "Unexpected token" messages, Modern JavaScript features recognized properly',
+    'Using deprecated babel-eslint package - upgrade to @babel/eslint-parser. Wrong ecmaVersion values (ESLint 5+ doesn''t accept latest without proper config). Missing @babel/core dependency. Incorrect parser placement (should be root level, not in parserOptions).',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/36001552/how-do-you-fix-eslint-parsing-error-unexpected-token-error'
+),
+(
+    'ESLint linebreak-style error: Expected LF but found CRLF line endings',
+    'stackoverflow-eslint',
+    'MEDIUM',
+    '[
+        {"solution": "Configure linebreak-style rule for your OS in .eslintrc: ''linebreak-style'': [''error'', ''windows''] for Windows", "percentage": 92, "command": "rules: { ''linebreak-style'': [''error'', ''windows''] }"},
+        {"solution": "Disable the rule entirely: ''linebreak-style'': 0 to ignore line ending differences", "percentage": 85, "command": "rules: { ''linebreak-style'': 0 }"},
+        {"solution": "Use cross-platform solution: ''linebreak-style'': [''error'', process.platform === ''win32'' ? ''windows'' : ''unix'']", "percentage": 89, "note": "Works for mixed-OS teams"},
+        {"solution": "Set Prettier endOfLine setting: endOfLine: crlf in prettier.config.js to match ESLint", "percentage": 86, "note": "Integrate with formatter"}
+    ]'::jsonb,
+    'ESLint configured in project, Understanding of Git core.autocrlf setting, Text editor access (VS Code, WebStorm, etc.)',
+    'ESLint runs without linebreak-style errors, Files maintain consistent line endings, No warnings when committing code',
+    'Changing only ESLint config without fixing actual file line endings. Git''s autocrlf=true automatically converting LF to CRLF on checkout. Team members on different OS without coordinated line ending policies. Prettier conflicts with ESLint on line endings.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37826449/expected-linebreaks-to-be-lf-but-found-crlf-linebreak-style'
+),
+(
+    'ESLint no-prototype-builtins: Object.hasOwnProperty() triggers error',
+    'stackoverflow-eslint',
+    'MEDIUM',
+    '[
+        {"solution": "Use Object.prototype.hasOwnProperty.call(obj, prop) to safely access method through prototype chain", "percentage": 94, "command": "Object.prototype.hasOwnProperty.call(obj, ''propertyName'')"},
+        {"solution": "Use modern Object.hasOwn(obj, prop) for Node.js 16.9.0+ and modern browsers", "percentage": 90, "command": "Object.hasOwn(obj, ''propertyName'')", "note": "Official replacement, more concise"},
+        {"solution": "Use property descriptor check: !!Object.getOwnPropertyDescriptor(obj, prop)", "percentage": 75, "note": "Verbose alternative"},
+        {"solution": "Use in operator if inherited properties acceptable: key in obj (less precise)", "percentage": 60, "note": "Checks inherited properties too"}
+    ]'::jsonb,
+    'ESLint configured with no-prototype-builtins rule enabled, JavaScript environment (Node.js or browser), For Object.hasOwn(): Node 16.9.0+ or modern browsers',
+    'ESLint error disappears, Code still correctly checks for own properties, No runtime errors occur',
+    'Using key in obj instead of hasOwnProperty - checks inherited properties too. With Vue/React proxies: Object.prototype.hasOwnProperty.call() can break reactivity. .call() syntax verbose compared to modern Object.hasOwn().',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39282873/object-hasownproperty-yields-the-eslint-no-prototype-builtins-error-how-to'
+);

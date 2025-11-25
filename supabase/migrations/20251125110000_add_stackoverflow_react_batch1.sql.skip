@@ -1,0 +1,189 @@
+-- Stack Overflow top voted React questions and accepted answers batch 1
+-- Category: stackoverflow-react
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Error message "error:0308010C:digital envelope routines::unsupported" in Node.js build',
+    'stackoverflow-react',
+    'HIGH',
+    '[
+        {"solution": "Update dependencies to versions supporting Node.js 17+. Delete node_modules and run npm install.", "percentage": 95, "note": "Addresses root cause of OpenSSL incompatibility"},
+        {"solution": "Upgrade packages to versions released after Node 18 LTS became standard to eliminate security vulnerabilities.", "percentage": 90, "note": "Ensures long-term compatibility"},
+        {"solution": "Set NODE_OPTIONS environment variable before running build: export NODE_OPTIONS=--openssl-legacy-provider (Unix/Mac) or set NODE_OPTIONS=--openssl-legacy-provider (Windows)", "percentage": 70, "note": "Temporary workaround only, not recommended for production"}
+    ]'::jsonb,
+    'Node.js 17+ installed, npm project with dependencies, build script configured',
+    'Build completes without OpenSSL errors, npm install succeeds, application runs',
+    'Legacy provider flag is restricted for security reasons on some Node versions. Do not use as permanent solution. The proper fix is updating dependencies, not working around them.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69692842/error-message-error0308010cdigital-envelope-routinesunsupported'
+),
+(
+    'How can I programmatically navigate using React Router?',
+    'stackoverflow-react',
+    'HIGH',
+    '[
+        {"solution": "For React Router v6.6.1+, use the useNavigate hook: import { useNavigate } from \"react-router-dom\"; const navigate = useNavigate(); then call navigate(\"/path\")", "percentage": 95, "note": "Current recommended approach for React Router v6"},
+        {"solution": "For React Router v5.1.0-v6.5, use useHistory hook (deprecated in v6): const history = useHistory(); then call history.push(\"/path\")", "percentage": 90, "note": "Works with v5.1+, replaced by useNavigate in v6.6+"},
+        {"solution": "For React Router v4, use withRouter HOC: const Button = withRouter(({ history }) => ...); then call history.push(\"/path\")", "percentage": 85, "note": "Legacy approach for older versions"},
+        {"solution": "Use navigate with replace option to replace history entry instead of adding new one: navigate(\"/path\", { replace: true })", "percentage": 88, "note": "Prevents adding to browser history"}
+    ]'::jsonb,
+    'React Router installed and configured, functional component (for hooks) or class component (for HOC)',
+    'Component navigates to specified route, browser URL updates, no console errors',
+    'Using deprecated useHistory in v6+ causes errors. Choose correct hook for your React Router version. withRouter HOC is class component only.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31079081/how-can-i-programmatically-navigate-using-react-router'
+),
+(
+    'Loop inside React JSX - how to render multiple elements from arrays',
+    'stackoverflow-react',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use Array.map() to transform array into JSX elements: {objects.map((object, i) => <ObjectRow obj={object} key={i} />)}", "percentage": 95, "note": "Preferred approach, functional and concise"},
+        {"solution": "For fixed number of iterations, use Array(numrows).fill(null).map((value, index) => <ObjectRow key={index} />)", "percentage": 90, "note": "Creates array of specified length"},
+        {"solution": "Build array outside JSX with traditional for loop, then render in return: let rows = []; for (let i = 0; i < n; i++) rows.push(<Item key={i}/>); return <>{rows}</>;", "percentage": 85, "note": "Alternative when complex logic needed"},
+        {"solution": "Always include key prop on elements in arrays. Use unique identifiers, not index alone: <Item key={item.id} />", "percentage": 92, "note": "Critical for React reconciliation"}
+    ]'::jsonb,
+    'Array of data to iterate, React component(s) to render for each item',
+    'Multiple elements render correctly, each with unique key prop, no console warnings about keys',
+    'Cannot use traditional for loops directly in JSX - they are statements, not expressions. Always provide stable, unique keys. Using index as key causes bugs when array reorders.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/22876978/loop-inside-react-jsx'
+),
+(
+    'What are these three dots (...) in React doing? - Spread operator',
+    'stackoverflow-react',
+    'HIGH',
+    '[
+        {"solution": "The three dots are the ES6 spread operator. {... obj} spreads enumerable properties as discrete attributes: <Modal {...this.props} /> is equivalent to <Modal a={this.props.a} b={this.props.b} />", "percentage": 95, "note": "Fundamental React pattern"},
+        {"solution": "Use spread operator for combining arrays: const arr2 = [\"one\", ...arr1, \"four\"] to insert arr1 elements", "percentage": 90, "note": "Common array manipulation"},
+        {"solution": "Use spread for copying arrays without reference: const arr2 = [...arr] creates new array instance", "percentage": 92, "note": "Prevents mutation issues"},
+        {"solution": "Use spread for merging objects: const merged = {...obj1, ...obj2} with obj2 properties overriding obj1 on key conflicts", "percentage": 88, "note": "Common pattern for immutable updates"},
+        {"solution": "Use spread in function parameters for rest parameters: function sum(...numbers) collects all arguments into numbers array", "percentage": 85, "note": "Function-level usage"}
+    ]'::jsonb,
+    'ES6 JavaScript knowledge, understanding of objects/arrays',
+    'Props spread correctly to component, arrays/objects combine as expected, no syntax errors',
+    'Spread operator only expands enumerable properties. Does not copy methods or prototype properties. In JSX, spreading all props can hide required props from readers.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31048953/what-are-these-three-dots-in-react-doing'
+),
+(
+    'How to pass props to {this.props.children} in React?',
+    'stackoverflow-react',
+    'HIGH',
+    '[
+        {"solution": "Use React.Children.map() with React.cloneElement() to iterate over children and inject props: const childrenWithProps = React.Children.map(children, child => React.isValidElement(child) ? React.cloneElement(child, { injectedProp }) : child)", "percentage": 85, "note": "Direct approach but React docs warn it can lead to fragile code"},
+        {"solution": "Use render props pattern (recommended): Pass children as a function that accepts injected props: <Parent>{(sayHello) => <Child sayHello={sayHello} />}</Parent>", "percentage": 92, "note": "More type-safe and provides clarity about prop flow"},
+        {"solution": "In functional components with cloneElement, check React.isValidElement(child) to avoid errors on non-element children", "percentage": 88, "note": "Prevents crashes on text/fragment children"},
+        {"solution": "Render props pattern avoids React.cloneElement complexity and provides better type inference in TypeScript", "percentage": 90, "note": "Modern recommended approach"}
+    ]'::jsonb,
+    'React component with children, understanding of cloneElement or render props pattern',
+    'Props successfully passed to child components, no console errors, child components receive injected props',
+    'Using cloneElement is uncommon and can lead to fragile code per React docs. Render props pattern is preferred. cloneElement requires checking isValidElement for non-element children.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/32370994/how-to-pass-props-to-this-props-children'
+),
+(
+    'React Router URLs don''t work when refreshing or typing manually - 404 errors',
+    'stackoverflow-react',
+    'HIGH',
+    '[
+        {"solution": "Configure server with catch-all route that returns index.html for all unmatched routes. Browser history sends full URLs to server, not just the base path.", "percentage": 90, "note": "Required for client-side routing to work on refresh"},
+        {"solution": "For Express.js, add final handler: app.use(\"*\", (req, res) => res.sendFile(path.join(__dirname, \"index.html\")))", "percentage": 92, "note": "Express-specific implementation"},
+        {"solution": "Ensure static assets (.js, .css files) are NOT caught by catch-all - serve them before the catch-all handler", "percentage": 88, "note": "Critical to avoid serving HTML for assets"},
+        {"solution": "For Apache, use .htaccess rewrite rules to route all non-file/non-directory requests to index.html", "percentage": 85, "note": "Apache-specific configuration"},
+        {"solution": "Alternative: use hash routing (#/about) which works without server configuration since server only sees / requests", "percentage": 70, "note": "Simpler but URLs less clean"}
+    ]'::jsonb,
+    'React Router configured, web server (Express, Apache, etc.), browserHistory enabled',
+    'Page refresh maintains current route, manually typed URLs load correctly, no 404 errors',
+    'Without catch-all, server sends 404 for routes it doesn''t recognize. Static assets must be excluded from catch-all or they''ll be served as HTML. Hash routing (#) works without server config.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/27928372/react-router-urls-dont-work-when-refreshing-or-writing-manually'
+),
+(
+    'Can you force a React component to rerender without calling setState?',
+    'stackoverflow-react',
+    'MEDIUM',
+    '[
+        {"solution": "In class components, call this.forceUpdate() to trigger rerender without using state: this.forceUpdate() will call render() and skip shouldComponentUpdate()", "percentage": 75, "note": "Works but not recommended"},
+        {"solution": "In functional components, use useReducer hook for forced updates: const [, forceUpdate] = useReducer(x => x + 1, 0); then call forceUpdate()", "percentage": 80, "note": "Workaround for functional components"},
+        {"solution": "Before using forceUpdate, reconsider design - ensure all values affecting render are in component state. Missing state is the real issue.", "percentage": 95, "note": "Address root cause instead"},
+        {"solution": "If deeply nested state doesn''t trigger updates, restructure state or use useState for affected values instead of trying to force updates", "percentage": 92, "note": "Better solution than forceUpdate"}
+    ]'::jsonb,
+    'React component (class or functional), understanding of component lifecycle',
+    'Component rerenders on forceUpdate call, DOM reflects changes',
+    'forceUpdate is officially discouraged by React team. If you need it, you likely have a design issue. Better to ensure state properly reflects data affecting render.',
+    0.65,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/30626030/can-you-force-a-react-component-to-rerender-without-calling-setstate'
+),
+(
+    'How do I conditionally add attributes to React components?',
+    'stackoverflow-react',
+    'HIGH',
+    '[
+        {"solution": "For boolean attributes (required, disabled), pass boolean values directly - React omits them when false: <input disabled={disabled} /> renders without disabled if disabled is false", "percentage": 95, "note": "React handles boolean attributes intelligently"},
+        {"solution": "For custom attributes, use object spreading: <Button {...(condition ? {bsStyle: \"success\"} : {})} /> to conditionally include properties", "percentage": 92, "note": "Works with any attribute"},
+        {"solution": "Use undefined or null to omit properties: <Button bsStyle={condition ? \"success\" : undefined} /> is cleaner than object spreading", "percentage": 90, "note": "More readable alternative"},
+        {"solution": "Important: passing string \"false\" does NOT omit attribute - use boolean false: disabled={false} works, but disabled=\"false\" does not", "percentage": 88, "note": "Common mistake with string values"}
+    ]'::jsonb,
+    'React component with attributes/props, conditional logic',
+    'Attributes present/absent in DOM based on condition, correct attribute values applied',
+    'Passing string \"false\" will NOT omit boolean attributes - must use actual boolean values. React intelligently handles standard boolean HTML attributes but not custom attributes passed as strings.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31163693/how-do-i-conditionally-add-attributes-to-react-components'
+),
+(
+    'Understanding unique keys for array children in React.js - why keys matter',
+    'stackoverflow-react',
+    'VERY_HIGH',
+    '[
+        {"solution": "Keys help React understand component identity during reconciliation, not just performance. React uses keys to maintain component state and DOM associations correctly.", "percentage": 95, "note": "Keys are about identity, not performance"},
+        {"solution": "A key must be unique among siblings and static (never changing between renders). Use stable identifiers from data: <Item key={item.id} /> not key={index}", "percentage": 94, "note": "Critical for correct behavior"},
+        {"solution": "Using array index as key works initially but breaks when array is filtered, reordered, or modified. Index identity becomes disconnected from actual data.", "percentage": 92, "note": "Common anti-pattern"},
+        {"solution": "Without proper keys, React may confuse which DOM elements correspond to which data, causing lost form state, incorrect component state, and rendering bugs", "percentage": 93, "note": "Consequences of missing keys"},
+        {"solution": "Best practice: always use stable, unique identifiers from your data (database IDs) rather than indices or randomly generated values", "percentage": 96, "note": "Prevents all key-related issues"}
+    ]'::jsonb,
+    'Array of data with unique identifiers, React list rendering',
+    'List renders correctly after reordering/filtering, component state preserved, no console warnings about keys',
+    'Index-based keys appear to work but cause subtle bugs on array modification. Keys must be stable throughout component lifecycle. Random keys on every render defeat the purpose entirely.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js'
+),
+(
+    'How to set focus on an input field after rendering in React?',
+    'stackoverflow-react',
+    'MEDIUM',
+    '[
+        {"solution": "In class components, use componentDidMount lifecycle with ref callback: ref={(input) => { this.nameInput = input; }} then call this.nameInput.focus() in componentDidMount", "percentage": 92, "note": "Lifecycle executes after DOM render"},
+        {"solution": "In functional components, use useRef and useEffect: const inputRef = useRef(null); useEffect(() => { inputRef.current?.focus(); }, [])", "percentage": 94, "note": "Modern hooks approach"},
+        {"solution": "For simple cases, use autoFocus attribute on input: <input autoFocus name=\"field\" /> focuses on mount (JSX syntax, not HTML autofocus)", "percentage": 88, "note": "Simplest for initial focus"},
+        {"solution": "Timing is critical - focus must occur after DOM renders. Use componentDidMount (class) or useEffect with empty deps (functional), not render method", "percentage": 90, "note": "Prevents errors from missing DOM nodes"}
+    ]'::jsonb,
+    'React component with input element, ref support, lifecycle methods or hooks',
+    'Input field receives focus after component renders, focus visible to user, no console errors',
+    'Calling focus in render() fails because DOM not yet mounted. autoFocus is camelCase in JSX, not HTML autofocus. useEffect with deps affects when focus occurs.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/28889826/how-to-set-focus-on-an-input-field-after-rendering'
+);

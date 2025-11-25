@@ -1,0 +1,184 @@
+-- Add 10 Stack Overflow Cypress E2E Testing Solutions - Batch 1
+
+INSERT INTO knowledge_entries (query, category, solutions, prerequisites, success_indicators, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, source_url, thumbs_up)
+VALUES
+(
+  'Using Cypress, how to test if element does not exist?',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use cy.get() selector with .should(''not.exist'') to assert element is absent from DOM", "percentage": 95, "command": "cy.get(''.check-box-sub-text'').should(''not.exist'')", "note": "Most reliable for non-existent elements. Retries until timeout if element appears."},
+    {"solution": "Use .should(''have.length'', 0) on parent element to count zero matching children", "percentage": 90, "note": "Better when checking multiple elements or conditional queries"},
+    {"solution": "Use .should(''not.be.visible'') to check hidden elements still in DOM", "percentage": 85, "note": "Different use case - element exists but not visible"}
+  ]'::jsonb,
+  'Cypress installed and configured, valid CSS selector for target element, understanding that not.exist checks DOM presence not visibility',
+  'Test executes without errors, cy.get() with should(''not.exist'') passes assertion, element is confirmed absent from DOM inspection',
+  'Using not.exists (plural) instead of not.exist. Using should(''not.exist'') for elements that may render later (unreliable - use timing instead). Pre-6.0 Cypress: should(''not.be.visible'') falsely passed for removed elements.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/48915773/using-cypress-how-to-test-if-element-does-not-exist',
+  416
+),
+(
+  'How can I run just one test with Cypress?',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use it.only() on test case to run only that specific test", "percentage": 95, "command": "it.only(''only run this one'', () => { /* test code */ })", "note": "Can also use describe.only() for test suites. Don''t forget to remove before commit."},
+    {"solution": "Use cypress run --spec flag from CLI with full file path", "percentage": 90, "command": "cypress run --spec ''path/to/file.spec.js''", "note": "Use single quotes to prevent shell expansion. Supports glob patterns: cypress run --spec ''path/to/*.spec.js''"},
+    {"solution": "Use @cypress/grep plugin for filtering tests without file edits", "percentage": 85, "command": "npm install -D @cypress/grep && npx cypress run --env grep=''TestName''", "note": "Requires additional package installation but no test file modifications needed"}
+  ]'::jsonb,
+  'Cypress installed and configured, test files created with proper naming convention (.spec.js or .cy.js)',
+  'Specified test executes successfully, other tests are skipped, test output confirms single test ran',
+  'Forgetting it.only() remains in code before committing to repo. Not wrapping glob patterns in single quotes causing shell expansion. Using arrow functions with this.skip() (must use regular functions). Confusing --spec with --component for e2e vs component testing.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/55054337/how-can-i-run-just-one-test-with-cypress',
+  295
+),
+(
+  'In Cypress how to count a selection of items and get the length?',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use .should(''have.length'', expectedNumber) to assert collection size", "percentage": 95, "command": "cy.get(''.datatable'').find(''tr'').should(''have.length'', 4)", "note": "Most straightforward approach. Does not work with Cypress.$() notation."},
+    {"solution": "Use .its(''length'') with .should() for more flexible comparisons", "percentage": 92, "command": "cy.get(''.datatable'').find(''tr'').its(''length'').should(''eq'', 4) or .should(''be.gte'', 4)", "note": "Enables gte, lte, and other comparison operators beyond exact equality"},
+    {"solution": "Use .should() with callback function for custom validation logic", "percentage": 88, "command": "cy.get(''.datatable'').find(''tr'').should(($elements) => { expect($elements).to.have.length(4) })", "note": "Allows complex assertions within callback"}
+  ]'::jsonb,
+  'Cypress installed and configured, basic understanding of Cypress command chaining, familiarity with Chai assertion syntax',
+  'Assertion passes without errors, cy.get() returns correct number of elements, length matches expected value',
+  'Attempting direct assertions without .should() - Cypress commands return objects not DOM. Using Cypress.$() with should(''have.length'') - syntax doesn''t work. Trying to capture length outside promise chains - values must stay within .then() blocks. Using .length property before Cypress resolves the query.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/46850694/in-cypress-how-to-count-a-selection-of-items-and-get-the-length',
+  220
+),
+(
+  'ESLint: ''cy'' is not defined (Cypress)',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Install and configure eslint-plugin-cypress in .eslintrc", "percentage": 95, "command": "npm install -D eslint-plugin-cypress && add ''extends: [''plugin:cypress/recommended'']'' to .eslintrc", "note": "Most complete solution - adds all Cypress globals automatically"},
+    {"solution": "Add globals section to .eslintrc manually without plugin", "percentage": 85, "command": "Add to .eslintrc: ''globals'': { ''cy'': ''readonly'', ''Cypress'': ''readonly'', ''describe'': ''readonly'', ''it'': ''readonly'' }", "note": "Avoids plugin dependency but requires manual maintenance"},
+    {"solution": "Add Cypress types reference to tsconfig.json for TypeScript support", "percentage": 80, "command": "In tsconfig.json: ''compilerOptions'': { ''types'': [''cypress''] }", "note": "Solves TypeScript errors but not ESLint - must combine with other solutions"}
+  ]'::jsonb,
+  'ESLint or TypeScript configured in project, eslint-plugin-cypress package available, .eslintrc or tsconfig.json file exists',
+  'ESLint no longer reports cy as undefined, no linting errors on cy.get() calls, test files pass linting checks',
+  'Attempting import cy from ''cypress'' - cy is global not importable. Using only TypeScript reference without ESLint fix. Mixing Jest and Cypress test configurations without proper isolation. ESLint configuration file in wrong location (root vs cypress directory).',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/58982852/eslint-cy-is-not-defined-cypress',
+  139
+),
+(
+  'Cypress causing type errors in jest assertions',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Exclude cypress.config.ts and cypress test files from main tsconfig.json", "percentage": 95, "command": "In tsconfig.json: ''exclude'': [''./cypress.config.ts'', ''cypress'', ''**/*.cy.tsx'', ''node_modules'']", "note": "Cypress types pollute Jest expect types when included. This is the core fix for Cypress v10+."},
+    {"solution": "Create separate tsconfig.spec.json for test files with isolated types", "percentage": 90, "command": "Create tsconfig.spec.json extending main tsconfig, then use it for test build. Main tsconfig excludes *.spec.ts", "note": "Cleaner architectural approach but requires build configuration changes"},
+    {"solution": "Add explicit Jest import to test files if config changes are problematic", "percentage": 75, "command": "At top of Jest test files: import { expect } from ''@jest/globals''", "note": "Workaround if config changes blocked - forces Jest types explicitly"}
+  ]'::jsonb,
+  'TypeScript configured in project, both Cypress and Jest installed, @types/jest dependency available, Cypress v10 or higher recommended',
+  'Jest tests pass linting with no type conflicts, expect() assertions recognized as Jest methods not Cypress, IDE autocomplete shows correct Jest types',
+  'Forgetting to exclude all Cypress-related files (just config is not enough). Not restarting IDE after tsconfig changes - cached types persist. Using .spec.ts for Cypress tests (should use .cy.ts). Missing @jest/globals import when using explicit solution. Moving cypress.config.ts outside root but not updating exclude paths.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/58999086/cypress-causing-type-errors-in-jest-assertions',
+  135
+),
+(
+  'How to select nth item inside select element in cypress',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use .select(index) by index with Cypress v8.5.0+", "percentage": 95, "command": "cy.get(''select'').select(0)  // First option\ncy.get(''select'').select(2)  // Third option", "note": "Modern approach - direct index support. Index starts at 0."},
+    {"solution": "Use .eq() with .then() for older Cypress versions", "percentage": 85, "command": "cy.get(''select[name=subject] > option'').eq(3).then(element => cy.get(''select[name=subject]'').select(element.val()))", "note": "Works on older versions but more verbose"},
+    {"solution": "Create custom command for reusable nth selection", "percentage": 80, "command": "Cypress.Commands.add(''selectNth'', { prevSubject: ''element'' }, (subject, pos) => { cy.wrap(subject).children(''option'').eq(pos).then(e => cy.wrap(subject).select(e.val())) }) // Usage: cy.get(''[name=assignedTo]'').selectNth(2)", "note": "Best for repeated use - encapsulates logic"}
+  ]'::jsonb,
+  'Cypress installed and configured, understanding of jQuery-like selectors (eq abbreviates equals), Cypress v8.5.0 or later recommended for index-based selection',
+  'Correct option selected in dropdown, subsequent cy.get() on select shows correct value attribute, test assertions on selected value pass',
+  'Using .eq() alone without .select() method - doesn''t actually select the option. Off-by-one errors with 0-based indexing. Not properly wrapping elements when chaining methods. Confusing option element selection with select element selection.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/50750956/how-to-select-nth-item-inside-select-element-in-cypress',
+  111
+),
+(
+  'How to access the value of baseURL in Cypress',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use Cypress.config() to retrieve baseUrl value from configuration", "percentage": 95, "command": "const baseUrl = Cypress.config(''baseUrl'');  // or Cypress.config().baseUrl", "note": "Works across all Cypress versions. Returns the value set in cypress.config.js/ts"},
+    {"solution": "Use relative paths with cy.visit() instead of manual baseUrl concatenation", "percentage": 90, "command": "cy.visit(''/'')  // Automatically prepends configured baseUrl", "note": "Preferred approach - simpler code and Cypress handles URL construction"},
+    {"solution": "Store baseUrl in environment variables and access via Cypress.env()", "percentage": 75, "command": "Cypress.env(''baseUrl'') - requires setting via cypress.config.js env property", "note": "Useful for environment-specific URLs"}
+  ]'::jsonb,
+  'Cypress configured with baseUrl property in cypress.config.js/ts (or deprecated cypress.json), understanding of Cypress configuration API structure',
+  'Cypress.config(''baseUrl'') returns correct URL string, API assertion using baseUrl passes, relative paths in cy.visit() resolve to correct full URLs',
+  'Using Cypress.env(''CYPRESS_baseUrl'') - incorrect API. Attempting Cypress.baseUrl - property doesn''t exist. Manual concatenation when relative paths work better. Forgetting baseUrl configuration causing undefined value. Using absolute URLs instead of relative paths defeating the purpose of baseUrl.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/52984769/how-to-access-the-value-of-baseurl-in-cypress',
+  102
+),
+(
+  'How to check if element exists using Cypress.io',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use .then() to wrap element query and check .length property inside promise", "percentage": 95, "command": "cy.get(''body'').then($body => { if ($body.find(''button[data-cy=appDrawerOpener]'').length > 0) { cy.get(''button'').click(); } })", "note": "Respects Cypress async nature. Must check .length inside .then() callback"},
+    {"solution": "Use .should() with callback for conditional element existence logic", "percentage": 90, "command": "cy.get(''selector'').should(($el) => { expect($el).to.exist; })", "note": "Alternative assertion syntax - cleaner for simple existence checks"},
+    {"solution": "Combine cy.get() with .find().length for nested element searches", "percentage": 85, "command": "cy.get(''parent'').then($parent => { const exists = $parent.find(''child'').length > 0; })", "note": "Good for parent-child element relationships"}
+  ]'::jsonb,
+  'Cypress installed and configured, understanding of Cypress asynchronous behavior, familiarity with Promise .then() syntax, knowledge of jQuery .find() method',
+  'Conditional logic executes correctly, .length check returns 0 or positive integer, appropriate branch (element exists or not) executes as expected',
+  'Checking .length outside .then() - returns false due to async nature. Direct cy.get() checks in conditional statements without wrapping. Not waiting for DOM to resolve before checking. Using synchronous checks on async Cypress queries. Assuming Cypress.$ and cy.get() return same data types.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/56145926/how-to-check-if-element-exists-using-cypress-io',
+  100
+),
+(
+  'Cypress - how to find by text content?',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Use cy.contains() method to find elements matching text content", "percentage": 95, "command": "cy.contains(''Customer'')  // Simplest approach", "note": "Most straightforward method. Automatically retries."},
+    {"solution": "Use two-argument cy.contains(selector, text) for better specificity and retry behavior", "percentage": 92, "command": "cy.contains(''button'', ''Customer'')  or  cy.contains(''.mat-content > mat-panel-title'', ''Customer'')", "note": "Recommended for retry reliability. Returns the selector element not innermost text container."},
+    {"solution": "Chain .contains() on cy.get() but watch for innermost element behavior", "percentage": 85, "command": "cy.get(''.YOUR_BUTTON_CLASS'').contains(''Customer'')  // Returns child element containing text, not parent", "note": "Returns innermost element - may not be what you expect"}
+  ]'::jsonb,
+  'Cypress installed and configured, target elements with distinguishable text content, understanding of Cypress selector behavior',
+  'Correct element found and highlighted in Cypress dashboard, subsequent cy actions on found element execute successfully, text content matches query string',
+  'Chaining .get().contains() assumes parent is returned - actually returns innermost text-containing child. Single-command .contains() without selector misses elements that appear after initial query. Using case-sensitive exact matching when partial text matches fail. Not accounting for whitespace or line breaks in text.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/57533756/cypress-how-to-find-by-text-content',
+  98
+),
+(
+  'How can I execute code before all tests suite with Cypress?',
+  'stackoverflow-cypress',
+  '[
+    {"solution": "Add before() hook to support file (cypress/support/e2e.ts) for one-time setup", "percentage": 95, "command": "before(function() { cy.login(); cy.visit(''/dashboard''); })  // Runs once before all tests", "note": "Support file loads automatically before all specs. Most efficient for suite-wide setup."},
+    {"solution": "Place before() or beforeEach() hooks in individual test describe blocks", "percentage": 90, "command": "describe(''My Tests'', () => { before(() => { cy.login(); cy.visit(''/dashboard''); }); it(''test 1'', () => {}); })", "note": "More flexible per-suite control but requires repetition across files"},
+    {"solution": "Use beforeEach() for state reset between tests if needed", "percentage": 85, "command": "beforeEach(() => { cy.login(); })  // Runs before each test - more overhead but cleaner state", "note": "Prefer before() if possible to avoid login overhead"}
+  ]'::jsonb,
+  'Custom Cypress commands defined (e.g., cy.login()), understanding that before = beforeAll in standard test frameworks, async operations supported via cy.request() for HTTP-based login',
+  'Setup code executes once before all tests, subsequent tests run with setup state intact, login/authentication persists across tests if state maintained',
+  'Using beforeEach() unnecessarily adds overhead when once-per-suite suffices. Sharing state between tests creates order-dependent fragile tests. Not considering database state variations for different test scenarios. Mixing global setup with test-specific setup in support file (too broad). Forgetting support file location or naming (must be cypress/support/e2e.ts for v10+).',
+  0.93,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/48110258/how-can-i-execute-code-before-all-tests-suite-with-cypress',
+  87
+);

@@ -1,0 +1,59 @@
+-- Add MCP troubleshooting solutions from Stack Overflow (batch 1 of 3)
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up)
+VALUES
+(
+  'Could not start MCP server spawn npx ENOENT error',
+  'mcp-troubleshooting',
+  '[{"solution": "Use absolute path to node executable instead of npx in command", "percentage": 95, "command": "Find node path with: which node. Then use full path like /usr/local/bin/node in config", "note": "GUI apps inherit different PATH than terminal. Use absolute paths in mcpServers config to avoid PATH resolution issues."}]'::jsonb,
+  'npx not found in PATH for GUI applications like Claude Desktop. Environment variables differ between terminal and Electron apps. Relative commands fail.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'MCP server spawn npx ENOENT in Cline VSCode Windows',
+  'mcp-troubleshooting',
+  '[{"solution": "Use cmd wrapper for npx on Windows", "percentage": 90, "command": "Change command from \"npx\" to \"cmd\" with args: [\"/c\", \"npx\", \"-y\", \"@package/name\"]", "note": "8 upvotes. User also confirmed global install works: npm install -g @package && use full path to node + package index.js"}]'::jsonb,
+  'Windows requires cmd.exe wrapper to execute npx. Direct npx invocation fails with ENOENT. Alternative: global npm install + absolute paths.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'MCP server spawn dotnet ENOENT Claude Desktop macOS',
+  'mcp-troubleshooting',
+  '[{"solution": "Create symlink to make dotnet accessible to Electron", "percentage": 100, "command": "sudo ln -s /usr/local/share/dotnet/dotnet /usr/local/bin/dotnet", "note": "User confirmed after research. Electron cannot locate dotnet unless in standard system paths like /usr/local/bin"}]'::jsonb,
+  'Claude Desktop uses Electron which searches standard OS paths. dotnet not in /usr/local/bin causes ENOENT. MCP inspector works because it uses different PATH.',
+  1.0,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'MCP server exits unexpectedly after initialize Server disconnected',
+  'mcp-troubleshooting',
+  '[{"solution": "Add protocol version in YYYY-MM-DD format to server response", "percentage": 85, "command": "Return version string like \"2025-06-18\" in MCP specification format", "note": "Server must provide version identifier. Also implement tools/list and tools/call methods for Claude to discover tools."}]'::jsonb,
+  'MCP requires string version in YYYY-MM-DD format. Missing version causes immediate disconnect. Server must implement required tool methods (list, call).',
+  0.85,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'MCP resources and prompts not triggering in Claude Desktop',
+  'mcp-troubleshooting',
+  '[{"solution": "Add resources/prompts manually via Claude Desktop UI", "percentage": 70, "command": "Click + icon -> MCP Server -> Prompt/References in Claude Desktop", "note": "Automatic detection not implemented yet. Tools auto-detect but resources/prompts require manual UI configuration. May be fixed in future."}]'::jsonb,
+  'Resources and prompts do not auto-trigger even with correct MCP implementation. Tools work automatically but resources/prompts need manual UI setup.',
+  0.70,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+);

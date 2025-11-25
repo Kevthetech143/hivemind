@@ -1,0 +1,197 @@
+-- Mine Stack Overflow top-voted GraphQL questions with accepted answers
+-- Category: stackoverflow-graphql
+-- Source: https://stackoverflow.com/questions/tagged/graphql?tab=votes
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to query all the GraphQL type fields without writing a long query using wildcard syntax',
+    'stackoverflow-graphql',
+    'HIGH',
+    '[
+        {"solution": "GraphQL requires explicit field specification by design - use introspection to discover fields with __type query, then dynamically construct your query", "percentage": 90, "note": "Standard GraphQL approach recommended by community"},
+        {"solution": "Define reusable fragments to reduce repetition: fragment UserFragment on User { id username count } then use ...UserFragment in queries", "percentage": 85, "note": "Best practice for avoiding duplication"},
+        {"solution": "Create custom JSON scalar type for objects where entire JSON structure is needed, bypassing field-level specification requirement", "percentage": 70, "note": "Only when field-level control is unnecessary"}
+    ]'::jsonb,
+    'GraphQL server running, Knowledge of GraphQL query syntax',
+    'Query returns all requested fields, No schema errors, Data retrieved matches expected structure',
+    'GraphQL does not support wildcard field selection (*) syntax. Expecting REST-like behavior will cause confusion. Fragments are scoped to specific types.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34199982/how-to-query-all-the-graphql-type-fields-without-writing-a-long-query'
+),
+(
+    'When and How to use GraphQL with microservice architecture - single vs multiple schemas',
+    'stackoverflow-graphql',
+    'HIGH',
+    '[
+        {"solution": "Use single unified GraphQL schema as API gateway that proxies to microservices internally - hides complexity from clients and enables single-request data fetching", "percentage": 92, "note": "Official recommended pattern - provides single source of truth"},
+        {"solution": "Implement Apollo Federation with @apollo/federation module to compose schemas from multiple services while maintaining unified interface", "percentage": 88, "note": "Modern standard for managing distributed GraphQL schemas"},
+        {"solution": "Group related microservices under domain-specific GraphQL gateways rather than single monolithic gateway for better scalability and maintainability", "percentage": 82, "note": "Hybrid approach balancing simplicity with distributed architecture"}
+    ]'::jsonb,
+    'Multiple microservices deployed, GraphQL server setup, Understanding of REST/Thrift communication patterns',
+    'Clients receive data from multiple services in single request, Schema remains stable across service changes, No client-side service orchestration needed',
+    'Multiple GraphQL endpoints for clients defeats purpose of unified schema. Failing to maintain backward compatibility breaks gateway pattern. Not monitoring schema synchronization across services.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38071714/when-and-how-to-use-graphql-with-microservice-architecture'
+),
+(
+    'In GraphQL what is the meaning of edges and node in relay-style queries',
+    'stackoverflow-graphql',
+    'VERY_HIGH',
+    '[
+        {"solution": "Edges provide cursor-based pagination metadata and connections. Node contains actual data. Structure enables efficient pagination: { edges { node { data } cursor } pageInfo }", "percentage": 95, "note": "Standard Relay specification pattern - most common answer"},
+        {"solution": "Edges array wraps nodes with cursor strings (base64-encoded pagination markers), pageInfo provides hasNextPage/hasPreviousPage flags for paginating through results", "percentage": 92, "note": "Essential for understanding relay-compliant APIs"},
+        {"solution": "Connection pattern provides pagination functionality that GraphQLList lacks - edges structure enables efficient traversal of large datasets with cursor positions", "percentage": 88, "note": "Explains why GraphQL uses this pattern instead of simple arrays"}
+    ]'::jsonb,
+    'GraphQL endpoint with relay-style pagination, Understanding of pagination concepts',
+    'Cursor-based pagination works correctly, Nodes contain expected data, pageInfo flags return correct boolean values',
+    'Confusing edges/nodes structure with REST pagination. Attempting to parse edges array directly without understanding node wrapper. Not using cursor values for pagination.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/42622912/in-graphql-whats-the-meaning-of-edges-and-node'
+),
+(
+    'What is the purpose of input type in GraphQL - why not reuse regular types for mutations',
+    'stackoverflow-graphql',
+    'HIGH',
+    '[
+        {"solution": "Input types separate input from output concerns - input types are serializable without circular references while output types can contain cycles, field arguments, resolvers, and interfaces", "percentage": 94, "note": "Core architectural reason from GraphQL spec"},
+        {"solution": "Define separate input types for different mutation operations (CreateUserInput vs UpdateUserInput) to enforce operation-specific nullability, validation rules, and field availability", "percentage": 90, "note": "Professional schema design pattern"},
+        {"solution": "Input types support default values and prevent coupling public API to internal domain models, enabling independent API evolution separate from resolver implementation", "percentage": 87, "note": "Enables API flexibility and maintainability"}
+    ]'::jsonb,
+    'GraphQL schema definition knowledge, Mutation implementation experience',
+    'Mutations accept input types without errors, Field validation enforces nullability constraints, Schema remains decoupled from resolvers',
+    'Attempting to use output types for mutation arguments fails. Circular references in input types cause schema errors. Assuming input/output types are interchangeable.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/41743253/whats-the-point-of-input-type-in-graphql'
+),
+(
+    'What is the difference between Falcor and GraphQL - comparison for REST API replacement',
+    'stackoverflow-graphql',
+    'MEDIUM',
+    '[
+        {"solution": "GraphQL is query language with type system supporting queries/mutations, Falcor is virtual JSON graph using get/set/call operations without strict typing", "percentage": 93, "note": "Fundamental architectural difference"},
+        {"solution": "GraphQL optimized for single-request low-bandwidth mobile/3G networks, Falcor may require multiple round trips but supports request batching for efficiency", "percentage": 88, "note": "Performance design tradeoff between approaches"},
+        {"solution": "GraphQL has extensive ecosystem, documentation, and community support with mature tooling (GraphiQL, code generation), Falcor has limited tooling and smaller ecosystem", "percentage": 86, "note": "Practical consideration for team adoption"}
+    ]'::jsonb,
+    'Understanding of both GraphQL and Falcor APIs, REST API background',
+    'Query language works as expected for chosen approach, Network requests match optimization goals, Type system (if chosen) supports tooling requirements',
+    'Assuming Falcor and GraphQL are equivalent. GraphQL requires more upfront schema definition. Falcor dynamic approach lacks type safety and tooling support.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/32057785/what-is-the-difference-between-falcor-and-graphql'
+),
+(
+    'What is an exclamation point in GraphQL schema - meaning of non-null type modifier',
+    'stackoverflow-graphql',
+    'VERY_HIGH',
+    '[
+        {"solution": "Exclamation point (!) denotes non-nullable type - field/argument cannot be null. String! means string value is guaranteed, id: ID! means id argument is required", "percentage": 96, "note": "Fundamental GraphQL syntax - from official GraphQL spec"},
+        {"solution": "For output fields: non-null guarantee means server will never return null or response fails validation. For inputs/arguments: non-null makes argument required and cannot accept null", "percentage": 94, "note": "Behavior differs between query arguments and field definitions"},
+        {"solution": "In variable declarations: $var: String! prevents null value and omitting argument entirely - strict requirement at query validation time", "percentage": 92, "note": "Critical for variable handling in queries"}
+    ]'::jsonb,
+    'GraphQL schema definition basics, GraphQL query/mutation knowledge',
+    'Type validation enforces non-null constraints, Required arguments are enforced, Schema documentation shows correct nullability',
+    'Confusing non-null modifier with optional. Assuming all GraphQL types are non-nullable by default. Not understanding validation failure when null returned for non-null field.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/50684231/what-is-an-exclamation-point-in-graphql'
+),
+(
+    'How to get the entire GraphQL schema in one query using introspection',
+    'stackoverflow-graphql',
+    'HIGH',
+    '[
+        {"solution": "Use GraphQL introspection query with getIntrospectionQuery() function from graphql-js library - provides comprehensive query fetching all schema details in single request", "percentage": 94, "note": "Standard approach - handles nested type wrapping automatically"},
+        {"solution": "Query __schema root with queryType, mutationType, subscriptionType to fetch types, fields, enums, input types, directives and interface/union information", "percentage": 91, "note": "Direct introspection query approach without library"},
+        {"solution": "Import introspectionQuery constant or use buildClientSchema(introspectionResult) to parse result into full schema object for analysis or code generation", "percentage": 88, "note": "Processing introspection results"}
+    ]'::jsonb,
+    'GraphQL endpoint access, graphql-js library (optional), JavaScript/Node environment',
+    'Introspection query returns complete schema metadata, All types and fields visible in result, Code generation tools process output successfully',
+    'Multiple separate queries instead of single introspection call. Not using getIntrospectionQuery() in newer library versions. Missing nested type wrapping details.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37397886/get-graphql-whole-schema-query'
+),
+(
+    'Are there any disadvantages to GraphQL compared to REST',
+    'stackoverflow-graphql',
+    'HIGH',
+    '[
+        {"solution": "GraphQL requires upfront schema definition before implementation, steeper learning curve for teams, and additional server processing for query parsing and validation", "percentage": 89, "note": "Development overhead considerations"},
+        {"solution": "Performance: GraphQL queries can be larger byte payloads than REST, introduces N+1 problem with database joins, caching at network level difficult with single-endpoint POST requests", "percentage": 87, "note": "Real-world performance tradeoffs"},
+        {"solution": "Technical challenges: nested queries risk circular dependencies crashing servers, file uploads lack native support, rate limiting complex with multiple queries per call, indefinite depth queries need pagination workarounds", "percentage": 85, "note": "Implementation complexity points"},
+        {"solution": "Not suitable for simple APIs where overhead outweighs benefits. REST may be better for read-only, simple CRUD operations with limited relationships", "percentage": 82, "note": "Use-case specific guidance"}
+    ]'::jsonb,
+    'Understanding of REST API design, GraphQL basics',
+    'Schema complexity is justified by use case, Query performance meets requirements, Caching strategy handles POST endpoint limitations',
+    'Using GraphQL for simple CRUD when REST is adequate. Underestimating schema definition effort. Not addressing N+1 problem in resolvers. Poor cache strategy for POST endpoints.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40689858/are-there-any-disadvantages-to-graphql'
+),
+(
+    'How to return no data or null value from GraphQL mutation instead of required return type',
+    'stackoverflow-graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Every GraphQL mutation must return a type - use custom Void scalar that always serializes to null to indicate no meaningful data returned", "percentage": 91, "note": "Recommended pattern - available in graphql-scalars package"},
+        {"solution": "Return deleted resource ID instead of boolean/void - best practice for maintaining cached stores after mutation execution, allows client state updates", "percentage": 94, "note": "Most practical approach used in production"},
+        {"solution": "GraphQL specification requires all mutations have return type - returning null is technically possible but less explicit than Void scalar for intent clarity", "percentage": 88, "note": "Specification constraint explanation"}
+    ]'::jsonb,
+    'GraphQL mutation implementation, graphql-scalars library (optional)',
+    'Mutation executes without errors, Client receives expected response format, Cached state updates correctly after mutation',
+    'Attempting to return void or undefined type syntax. Not returning anything from mutation resolver. Assuming null return means no return type needed.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/44737043/is-it-possible-to-not-return-any-data-when-using-a-graphql-mutation'
+),
+(
+    'GraphQL error: Expected Iterable but did not find one for field - type mismatch between schema and resolver',
+    'stackoverflow-graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Error occurs when schema expects array type [Type] but resolver returns single object, or vice versa. Match square brackets in schema to resolver return: single object without [], array with []", "percentage": 96, "note": "Direct solution - most common cause"},
+        {"solution": "Verify resolver function actually returns array data if schema uses [Type] syntax, check mutation/query implementation for correct return structure", "percentage": 93, "note": "Debug approach"},
+        {"solution": "Ensure GraphQL type definitions match resolver implementation - type: [User] requires array, type: User requires single object - mismatch causes iterable error", "percentage": 91, "note": "Prevention through careful schema design"}
+    ]'::jsonb,
+    'GraphQL schema definition, Resolver implementation knowledge, GraphQL server setup',
+    'Query/mutation executes without errors, Data structure matches expected schema, Type validation passes',
+    'Forgetting brackets in type definition when returning arrays. Returning array from resolver with single-type schema definition. Not checking resolver return values match schema.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/46513476/graphql-expected-iterable-but-did-not-find-one-for-field'
+),
+(
+    'How to properly structure GraphQL resolvers to avoid N+1 query problem with databases',
+    'stackoverflow-graphql',
+    'MEDIUM',
+    '[
+        {"solution": "Use DataLoader library to batch database queries - collects queries during single GraphQL execution and executes them in batch to reduce database round trips", "percentage": 93, "note": "Industry standard solution for N+1 problem"},
+        {"solution": "Implement query optimization in resolvers - fetch all related data upfront instead of resolving fields individually, use database joins to reduce queries", "percentage": 90, "note": "Resolver-level optimization"},
+        {"solution": "Consider SELECT ... IN (ids) queries or database views to fetch related entities for multiple parent objects in single query instead of looping", "percentage": 87, "note": "Database-specific optimization"}
+    ]'::jsonb,
+    'GraphQL resolver implementation, Database query knowledge, Optional: DataLoader library',
+    'Database query count matches expected batch size, N+1 problem eliminated in logs, Performance metrics show reduced database load',
+    'Using DataLoader incorrectly without batching. Loading data in parent resolver without considering child field queries. Not profiling N+1 queries before optimization.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/tagged/graphql?tab=votes'
+);

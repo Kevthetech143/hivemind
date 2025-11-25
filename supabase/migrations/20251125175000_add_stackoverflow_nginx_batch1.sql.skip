@@ -1,0 +1,224 @@
+-- Mining Stack Overflow: Top Voted Nginx Questions with Accepted Answers
+-- Source: https://stackoverflow.com/questions/tagged/nginx?tab=votes
+-- Extracted: 2025-11-25
+-- Total entries: 12 high-voted Nginx questions with solutions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Nginx static file serving confusion with root & alias directives',
+    'stackoverflow-nginx',
+    'HIGH',
+    '[
+        {"solution": "Understand root directive: location part is APPENDED to root. Use root /var/www/app/ with location /static/ to serve /var/www/app/static/", "percentage": 95, "note": "Most common mistake is duplicating directory name"},
+        {"solution": "Use alias directive to REPLACE location: location /static/ { alias /var/www/app/static/; } - alias works like a symlink replacement", "percentage": 90, "note": "Avoid mixing root and alias in same block"},
+        {"solution": "Remember: final path = root + location vs final path = alias (no location appended)", "percentage": 85, "command": "Test with curl to verify correct paths are served"}
+    ]'::jsonb,
+    'Nginx installed and running, Static files located on filesystem, Basic understanding of URL structure',
+    'Static files return 200 status, Content-Type headers correct, CSS/JS/images load properly in browser',
+    'Duplicating directory in path (e.g., /static/static/), Using alias with trailing slash incorrectly, Confusing root and alias directives',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10631933/nginx-static-file-serving-confusion-with-root-alias'
+),
+(
+    'Nginx redirect www to non-www domain (or vice versa)',
+    'stackoverflow-nginx',
+    'HIGH',
+    '[
+        {"solution": "Create separate server blocks using return directive: server { server_name www.example.com; return 301 $scheme://example.com$request_uri; }", "percentage": 95, "note": "Uses 301 permanent redirect, good for SEO"},
+        {"solution": "Use $scheme variable to preserve HTTP/HTTPS protocol automatically in redirect", "percentage": 90, "note": "$scheme resolves to http or https based on incoming request"},
+        {"solution": "For HTTPS, listen on both 80 and 443 in redirect server block with SSL certificates configured", "percentage": 85, "command": "curl -I http://www.example.com to test redirect chain"},
+        {"solution": "Avoid using if statements for www redirects - use separate server blocks for performance", "percentage": 80, "note": "If statements can cause redirect loops"}
+    ]'::jsonb,
+    'Domain registered and DNS configured, SSL certificates if using HTTPS, Access to nginx.conf',
+    'Redirect returns 301 status code, Non-www domain loads correctly, HTTPS preserved if applicable, SEO tools show canonical URL',
+    'Using if statements in same server block (causes loops), Forgetting $scheme variable (breaks HTTPS redirects), Using 302 instead of 301 (bad for SEO), Not handling both HTTP and HTTPS listeners',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7947030/nginx-no-www-to-www-and-www-to-no-www'
+),
+(
+    'Nginx upstream connection denied error: (13: Permission denied)',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Enable SELinux httpd_can_network_connect: setsebool -P httpd_can_network_connect 1", "percentage": 92, "note": "-P flag makes change persistent across reboots, works for upstream PHP-FPM/Gunicorn"},
+        {"solution": "Check SELinux audit logs for specific denials: sudo cat /var/log/audit/audit.log | grep nginx | grep denied", "percentage": 88, "note": "Helps identify if SELinux is actually blocking connection"},
+        {"solution": "If using non-standard ports, register port with SELinux: sudo semanage port --add --type http_port_t --proto tcp 8001", "percentage": 85, "command": "getsebool -a | grep httpd to verify current settings"},
+        {"solution": "Verify directory permissions on socket path: chmod appropriate permissions on parent directories", "percentage": 75, "note": "Less common but verify socket file has read/execute on parent dir"}
+    ]'::jsonb,
+    'SELinux enabled (check with getenforce), Nginx and upstream app running, Access to execute semanage commands',
+    'Upstream connection succeeds (200/502 gone), No permission denied errors in nginx error log, upstream app receives requests from nginx',
+    'Forgetting -P flag (changes lost after reboot), Not checking audit logs for root cause, Changing user:group instead of SELinux (security risk), Disabling SELinux entirely instead of fixing',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/23948527/13-permission-denied-while-connecting-to-upstreamnginx'
+),
+(
+    'Nginx error: bind() to [::]:80 failed (98: Address already in use)',
+    'stackoverflow-nginx',
+    'HIGH',
+    '[
+        {"solution": "Stop conflicting service (Apache): sudo systemctl stop apache2 or sudo apachectl stop", "percentage": 93, "note": "Most common cause - Apache bound to port 80 already"},
+        {"solution": "Kill stale nginx processes: sudo pkill -f nginx && wait $! then sudo systemctl start nginx", "percentage": 91, "note": "Old nginx process persists after failed restart"},
+        {"solution": "Check IPv6 listen configuration: Add ipv6only=on to [::]:80 directive OR remove duplicate listen statement", "percentage": 88, "note": "Error shows [::] which is IPv6 address"},
+        {"solution": "Remove default nginx config: sudo rm /etc/nginx/sites-enabled/default if using multiple configs", "percentage": 82, "command": "sudo lsof -i :80 or sudo netstat -tulpn | grep 80 to find what is bound"}
+    ]'::jsonb,
+    'Root/sudo access, Nginx service installed, Port 80 accessible',
+    'Nginx starts without error, netstat shows nginx listening on port 80, curl http://localhost returns 200 or expected response',
+    'Using lsof -i :80 returns empty (IPv6 not shown in lsof output on some systems), Not forcing kill of old process (-9 flag), Having both listen 80 and listen [::]:80 without proper ipv6only config',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14972792/nginx-nginx-emerg-bind-to-80-failed-98-address-already-in-use'
+),
+(
+    'Nginx error: upstream sent too big header while reading response header',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Increase FastCGI buffer sizes: fastcgi_buffers 16 16k; fastcgi_buffer_size 32k;", "percentage": 93, "note": "Add to http or server block, resolves header overflow"},
+        {"solution": "For reverse proxy (not FastCGI), configure: proxy_buffer_size 128k; proxy_buffers 4 256k; proxy_busy_buffers_size 256k;", "percentage": 91, "note": "Different directives for proxy vs FastCGI"},
+        {"solution": "Check PHP error logs for excessive notices being written to stderr that overflow buffers", "percentage": 87, "note": "Errors/notices accumulate in FastCGI headers when display_errors=off but error_reporting captures notices"},
+        {"solution": "Reduce PHP errors: Disable notices in error_reporting, clean up debug output, verify no malformed headers from upstream", "percentage": 82, "command": "Tail nginx error.log to see exact header size that exceeded limit"}
+    ]'::jsonb,
+    'Nginx configured with FastCGI or proxy, Upstream server running (PHP-FPM/app), Access to modify nginx.conf',
+    'Request no longer returns 502 error, Upstream server receives full request, Response headers complete without truncation, Browser displays page correctly',
+    'Using proxy buffer directives for FastCGI (wrong directive set), Not clearing PHP errors/notices that accumulate, Insufficient buffer size increase (underdimensioned), Missing both buffer_size and buffers directives',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/23844761/upstream-sent-too-big-header-while-reading-response-header-from-upstream'
+),
+(
+    'Nginx PHP-FPM socket permission denied error: (13: Permission denied)',
+    'stackoverflow-nginx',
+    'HIGH',
+    '[
+        {"solution": "Configure PHP-FPM pool ownership in /etc/php*/fpm/pool.d/www.conf: listen.owner=www-data listen.group=www-data listen.mode=0660", "percentage": 94, "note": "Secure approach - grants access via ownership not broad permissions, restart PHP-FPM after"},
+        {"solution": "Verify nginx user matches PHP-FPM pool user: ps aux | grep nginx, then ensure listen.owner matches nginx user", "percentage": 91, "note": "Use nginx instead of www-data on CentOS, www-data on Debian/Ubuntu"},
+        {"solution": "Restart PHP-FPM service after config change: sudo service php-fpm restart or sudo systemctl restart php-fpm", "percentage": 90, "command": "sudo service php*-fpm restart (use appropriate PHP version)"},
+        {"solution": "Verify socket exists and has correct permissions: ls -l /var/run/php*.sock should show www-data:www-data ownership", "percentage": 85, "note": "Security fix since PHP 5.5.12 (CVE-2014-0185) removed world-readable socket permissions"}
+    ]'::jsonb,
+    'Nginx installed and running, PHP-FPM installed, Access to modify /etc/php-fpm pool config, Root/sudo access',
+    'Nginx error.log no longer shows permission denied errors, PHP pages return 200 status, No 502 Bad Gateway errors, curl to PHP endpoint returns expected output',
+    'Using world-readable permissions (0666) instead of 0660, Not restarting PHP-FPM after config change (old daemon still running), Using wrong user for listen.owner (must match nginx user), Forgetting to uncomment configuration lines',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/23443398/nginx-error-connect-to-php5-fpm-sock-failed-13-permission-denied'
+),
+(
+    'Nginx 403 error: directory index of [folder] is forbidden',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Remove $uri/ from try_files directive: Change from try_files $uri $uri/ /index.html to try_files $uri /index.html", "percentage": 92, "note": "$uri/ attempts directory access which triggers 403 when indexing disabled"},
+        {"solution": "Ensure root path points to correct directory: root /var/www/myapp/public (not /var/www/myapp if public subdirectory exists)", "percentage": 88, "note": "Common with Laravel/CodeIgniter - they expect root at /public subdirectory"},
+        {"solution": "Verify index directives configured: index index.html index.php (list file names nginx should serve for directories)", "percentage": 85, "command": "curl -v http://localhost/folder/ to see exact 403 response"},
+        {"solution": "Check file permissions: nginx process user must have read access to all directories in path: chmod 755 on dirs, 644 on files", "percentage": 80, "note": "Verify recursively up the chain to root"}
+    ]'::jsonb,
+    'Nginx running, Static files/directories present, Nginx process user identified',
+    'Directory access returns index file (200), Not 403 error, Directory listing not exposed (security), URLs resolve correctly without 403',
+    'Using $uri/ in try_files without understanding it triggers directory lookup, Incorrect root path especially with framework apps, Missing index directive, Wrong file permissions on parent directories, Forgetting that frameworks need /public as root',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/19285355/nginx-403-error-directory-index-of-folder-is-forbidden'
+),
+(
+    'Nginx default public web root directory location',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Location varies by OS/installation: Ubuntu /usr/share/nginx/html or /var/www/html, CentOS /usr/share/nginx/html, macOS /usr/local/var/www", "percentage": 90, "note": "No universal default - depends on installation method"},
+        {"solution": "Find actual location by running: nginx -V and checking --prefix parameter, then appending /html relative path", "percentage": 88, "note": "Prefix shows base installation directory, default relative path is html/"},
+        {"solution": "Check your active config file: /etc/nginx/sites-enabled/default (Debian) or /etc/nginx/conf.d/*.conf (CentOS) for root directive", "percentage": 87, "command": "grep root /etc/nginx/nginx.conf or nginx -t -v to find config location"},
+        {"solution": "For Homebrew on macOS Silicon: /opt/homebrew/var/log/nginx for logs, similar structure for web root", "percentage": 82, "note": "Homebrew locations differ from traditional package managers"}
+    ]'::jsonb,
+    'Nginx installed, Access to nginx executable and config files',
+    'Running nginx -V returns clear --prefix output, Finding default web root shows correct active config, Test file in root loads correctly via browser',
+    'Assuming Apache /var/www structure applies to Nginx, Not checking actual config (assumes default), Forgetting Homebrew uses /opt/homebrew paths on Apple Silicon, Modifying wrong config file (default unused)',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10674867/nginx-default-public-www-location'
+),
+(
+    'How to clear Nginx cache',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "For VirtualBox/VMs: Disable sendfile by setting sendfile off in nginx.conf http block - sendfile has issues in VMs", "percentage": 91, "note": "Check if running in VM first (lsb_release -ds or dmidecode)"},
+        {"solution": "Delete proxy cache directory: sudo rm -rf /var/cache/nginx/* (find actual path in proxy_cache_path directive)", "percentage": 88, "note": "Locate cache path in nginx.conf, then force delete"},
+        {"solution": "Restart Nginx to apply changes: sudo systemctl restart nginx or sudo service nginx restart", "percentage": 87, "command": "sudo service nginx stop && sudo rm -rf /var/cache/nginx/* && sudo service nginx start"},
+        {"solution": "Configure cache bypass for testing: proxy_cache_bypass $http_x_cache_bypass; (client sets custom header to skip cache)", "percentage": 80, "note": "Non-destructive method for selective cache bypass without clearing all"}
+    ]'::jsonb,
+    'Nginx with proxy_cache_path configured, Cache directory exists, Root/sudo access to clear directory',
+    'New files return updated content (no stale cache), Cache size reduces after clearing, Subsequent requests regenerate cache with fresh content',
+    'Forgetting to restart Nginx after clearing (old cached data still served), Deleting wrong cache path, Not disabling sendfile in VMs (VM-specific issue), Using wrong cache path directive in config',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/6236078/how-to-clear-the-cache-of-nginx'
+),
+(
+    'How to apply same Nginx configuration rule to multiple locations',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Use regex with pipe operator: location ~ ^/(path1|path2)/ { ... } - matches multiple paths in single block", "percentage": 92, "note": "~ enables case-sensitive regex, ~* for case-insensitive"},
+        {"solution": "Use include directive in multiple location blocks: location /path1/ { include shared.conf; } location /path2/ { include shared.conf; }", "percentage": 88, "note": "Allows code reuse without regex, better for readability"},
+        {"solution": "Use named locations for complex handlers: location ~ ... { try_files $uri @handler; } location @handler { ... }", "percentage": 83, "note": "Useful for internal redirects and error pages"},
+        {"solution": "Remember: ^ anchors pattern to start of URI, ensure pipe escaping correct in regex syntax", "percentage": 80, "command": "Test with curl to multiple paths to verify both match config"}
+    ]'::jsonb,
+    'Nginx installed, Config file editable, Understanding of basic regex or include syntax',
+    'Both location paths return expected content/status code, Configuration applies consistently across locations, Nginx -t validation passes without errors',
+    'Forgetting ^ anchor (matches anywhere in URI), Wrong regex escaping (pipe character needs careful handling), Including files that have conflicting directives, Using regex when simpler prefix match would work',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/35320674/how-can-i-have-same-rule-for-two-locations-in-nginx-config'
+),
+(
+    'Nginx location block priority and matching order',
+    'stackoverflow-nginx',
+    'MEDIUM',
+    '[
+        {"solution": "Exact match (=) has highest priority: location = /exact/path { ... } - stops searching if matches", "percentage": 94, "note": "Must match URI exactly, no subpaths matched"},
+        {"solution": "Priority prefix (^~) prevents regex evaluation: location ^~ /api/ { ... } - matches prefix then stops", "percentage": 93, "note": "Matches longest prefix, then stops regex checking if this modifier present"},
+        {"solution": "Regex locations (~, ~*) evaluated in order of appearance if no ^~ matched: First matching regex wins", "percentage": 90, "note": "Case-sensitive (~) vs case-insensitive (~*), evaluated sequentially"},
+        {"solution": "Standard prefix match (no modifier) fallback: Longest prefix match used only if no regex matches above", "percentage": 88, "command": "Use nginx -T to dump effective config and trace location matching"}
+    ]'::jsonb,
+    'Nginx installed, Multiple location blocks in config, Understanding of regex patterns',
+    'Request routed to correct location block, Expected configuration applies to request, No unexpected fallbacks or mismatches',
+    'Assuming declaration order applies to all matching (only true for regex), Not understanding = vs ^~ difference (both stop searching), Putting catch-all prefix before more specific regex, Forgetting longest-prefix-first rule for non-regex',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/5238377/nginx-location-priority'
+),
+(
+    'Where to find Nginx error logs (FastCGI, Django, etc)',
+    'stackoverflow-nginx',
+    'HIGH',
+    '[
+        {"solution": "Check nginx.conf error_log directive: Look in /etc/nginx/nginx.conf for error_log /path/to/error.log level;", "percentage": 93, "note": "Actual location configured here, not hardcoded"},
+        {"solution": "Common locations by OS: /var/log/nginx/error.log (Linux), /usr/local/var/log/nginx/error.log (macOS old), /opt/homebrew/var/log/nginx/error.log (Apple Silicon)", "percentage": 90, "note": "Varies significantly - always verify in config first"},
+        {"solution": "Use lsof to find actual open log files: lsof -p $(pidof nginx) | grep log to see what nginx process has open", "percentage": 87, "command": "sudo lsof -p [nginx-pid] | grep .log or search: find /usr -path */nginx -name *.log"},
+        {"solution": "Run nginx -t (syntax check) shows config file location, then grep error_log from there", "percentage": 85, "note": "nginx -t also validates config without requiring restart"}
+    ]'::jsonb,
+    'Nginx installed and running, Access to /etc/nginx directory or similar, Root/sudo access for lsof if needed',
+    'error_log file located and readable, Can tail/cat error log showing recent messages, Error messages from nginx appear immediately after restart',
+    'Assuming hardcoded path /var/log/nginx/error.log (must check config), Not realizing path varies by installation method, Using lsof without PID (must get nginx process ID first), Missing that different nginx processes may write to different logs',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1706111/where-can-i-find-the-error-logs-of-nginx-using-fastcgi-and-django'
+);

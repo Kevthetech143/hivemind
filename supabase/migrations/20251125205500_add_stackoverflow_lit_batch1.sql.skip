@@ -1,0 +1,224 @@
+-- Add Stack Overflow solutions for Lit web components - Batch 1
+-- Source: https://stackoverflow.com/questions/tagged/lit?tab=votes
+-- Extracted: 2025-11-25
+-- Category: stackoverflow-lit
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to create LitElement without Shadow DOM?',
+    'stackoverflow-lit',
+    'HIGH',
+    '[
+        {"solution": "Override the createRenderRoot method to return this instead of creating shadow root", "percentage": 92, "note": "Most reliable approach - direct to light DOM rendering", "command": "createRenderRoot() { return this; }"},
+        {"solution": "Understand that bypassing shadow DOM removes encapsulation benefits", "percentage": 85, "note": "You lose CSS scoping and style isolation"},
+        {"solution": "Be aware slot functionality becomes unavailable without shadow DOM", "percentage": 80, "note": "Shadow DOM features like slots depend on shadow boundary"}
+    ]'::jsonb,
+    'LitElement knowledge, Understanding of Shadow DOM and light DOM',
+    'Element renders without #shadow-root in dev tools, Styles apply globally to component',
+    'Overriding createRenderRoot breaks encapsulation - only use if specifically needed. Component styles can conflict with page styles. Composition becomes harder without shadow boundary.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/55126694/how-to-create-litelement-without-shadow-dom'
+),
+(
+    'What is the difference between lit-element and lit-html?',
+    'stackoverflow-lit',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use lit-html for templating and efficient HTML rendering in any context", "percentage": 90, "note": "lit-html is a standalone template library independent of components"},
+        {"solution": "Use lit-element for building complete web components with lifecycle and state", "percentage": 92, "note": "lit-element extends lit-html with component model"},
+        {"solution": "Understand lit-element internally uses lit-html as its rendering engine", "percentage": 88, "note": "lit-element builds on top of lit-html with component abstraction"},
+        {"solution": "Choose lit-html for template rendering in vanilla code or other frameworks", "percentage": 85, "note": "lit-html works standalone without component model"}
+    ]'::jsonb,
+    'Basic understanding of templating and web components',
+    'Template renders efficiently with correct bindings, State updates trigger re-renders correctly',
+    'Do not confuse dependency: lit-element depends on lit-html internally. lit-html alone is sufficient for templating. lit-element needed for full component lifecycle.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/62413101/what-is-the-difference-between-lit-element-lit-html'
+),
+(
+    'Get raw string value by import with Vite for Lit CSS',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Use ?inline query parameter instead of ?raw for CSS imports in Vite", "percentage": 95, "note": "Correct syntax for Vite CSS imports - returns string without bundling side effects", "command": "import style from \\"./style.css?inline\\""},
+        {"solution": "Avoid using ?raw parameter - use ?inline instead for CSS files", "percentage": 92, "note": "?raw causes CSS bundling issues"},
+        {"solution": "Wrap CSS string with unsafeCSS() when importing inline CSS", "percentage": 88, "note": "Required for using CSS strings with Lit static styles"}
+    ]'::jsonb,
+    'Vite project setup, Lit component knowledge, CSS module understanding',
+    'CSS imports as strings without bundle side effects, Component styles apply correctly',
+    'Using ?raw instead of ?inline causes CSS to be bundled separately. Always use ?inline for CSS files in Vite+Lit projects.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70982306/get-raw-string-value-by-import-with-vite'
+),
+(
+    'shadowRoot.getSelection() cross-browser compatibility issue',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Use shadowRoot.getSelection() in Chromium-based browsers", "percentage": 88, "note": "Non-standard API - works in Chrome, Edge, Brave"},
+        {"solution": "Use document.getSelection() for Firefox compatibility - pierces shadow DOM", "percentage": 90, "note": "Firefox implements standard approach differently"},
+        {"solution": "Use Selection.getComposedRanges() for Safari v17+ - standards-compliant", "percentage": 85, "note": "Modern W3C standard for shadow DOM selection"},
+        {"solution": "Implement browser detection to use appropriate method per browser", "percentage": 82, "note": "No universal solution - requires feature detection"}
+    ]'::jsonb,
+    'Shadow DOM knowledge, Selection API understanding, Cross-browser testing',
+    'Selection detection works across Chrome, Firefox, Safari with appropriate method, Content editable selections detected correctly',
+    'shadowRoot.getSelection() is non-standard and unreliable. Firefox requires document.getSelection(). Safari v17+ supports W3C standard Selection.getComposedRanges().',
+    0.75,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/62054839/shadowroot-getselection'
+),
+(
+    'React-like refs in lit-html and lit-element',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Use @query decorator in LitElement for element references", "percentage": 93, "note": "Native Lit approach - best for LitElement", "command": "@query(''#myid'') myElement;"},
+        {"solution": "Use standard querySelector() since Lit renders to actual DOM", "percentage": 90, "note": "Direct DOM access works unlike React virtual DOM"},
+        {"solution": "Use ref directive in Lit v2.0+ for dynamic element references", "percentage": 88, "note": "Available at lit.dev/docs/api/directives/#ref"},
+        {"solution": "Understand Lit does not need refs like React due to direct DOM rendering", "percentage": 85, "note": "React requires refs because of virtual DOM abstraction"}
+    ]'::jsonb,
+    'React knowledge, Lit basics, Understanding of virtual DOM vs direct DOM',
+    'Element references resolve correctly, Component access to DOM elements works as expected',
+    'Do not try React-style ref patterns - Lit has direct DOM access. @query is preferred over manual querySelector. Lit reduces need for refs entirely.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/59042717/react-like-refs-in-lit-html-lit-element'
+),
+(
+    'How to load external CSS file with Lit component',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Use CSS module imports with ?inline in Vite and wrap with unsafeCSS()", "percentage": 92, "note": "Modern recommended approach for bundled projects", "command": "import style from ''./style.css?inline''; static styles = unsafeCSS(style)"},
+        {"solution": "Use CSS module imports with assertion syntax in native browser environments", "percentage": 88, "note": "Works with import assertions in supported browsers", "command": "import styles from ''./style.css'' with { type: ''css'' }; static styles = [styles]"},
+        {"solution": "Bundle CSS with components rather than loading from external files", "percentage": 85, "note": "Best practice - avoids timing and scope issues"},
+        {"solution": "Use link tags in template only as fallback - expect FOUC issues", "percentage": 70, "note": "Not recommended - causes flash of unstyled content"}
+    ]'::jsonb,
+    'Lit component knowledge, CSS understanding, Build tool setup (Vite or similar)',
+    'Styles apply to component correctly, No flash of unstyled content, Component styling scoped properly',
+    'External stylesheets cause FOUC and scope issues. Avoid link tags in Lit components. Bundle CSS with components. Use unsafeCSS() for string CSS imports.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69613048/how-to-load-external-css-file-with-lit'
+),
+(
+    'Using Lit with JavaScript and no build tools',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Import from CDN: https://cdn.jsdelivr.net/gh/lit/[email protected]/core/lit-core.min.js", "percentage": 94, "note": "Lit v2.2.0+ provides pre-built bundles for browsers", "command": "import {html, css, LitElement} from ''https://cdn.jsdelivr.net/gh/lit/[email protected]/core/lit-core.min.js''"},
+        {"solution": "Use Skypack CDN for Lit: https://cdn.skypack.dev/lit", "percentage": 88, "note": "Alternative CDN source - works with Lit 2+"},
+        {"solution": "Use esm.sh CDN for Lit 3+: https://esm.sh/lit", "percentage": 85, "note": "Supports advanced features and latest versions"},
+        {"solution": "Ensure browser supports ES modules for direct import", "percentage": 90, "note": "Requires modern browser with module support"}
+    ]'::jsonb,
+    'Modern browser with ES module support, Internet connection for CDN, Basic JavaScript knowledge',
+    'Components define and register successfully, render() outputs correct HTML, Properties update correctly',
+    'Most Lit docs assume build tools - CDN approach is not emphasized. Lit v2.2.0+ required for CDN bundles. Older versions need Skypack or esm.sh workarounds.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68614776/using-lit-with-javascript-and-no-build-tools'
+),
+(
+    'How to declare a required property in lit-element',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Implement render-time validation checking properties exist before render", "percentage": 85, "note": "Check properties at render phase and handle missing values gracefully"},
+        {"solution": "Use custom property setters to validate on assignment", "percentage": 82, "note": "Validate in setter before storing value - can throw or warn"},
+        {"solution": "Implement connectedCallback() validation when element enters DOM", "percentage": 80, "note": "Check required properties when component mounts"},
+        {"solution": "Use external validation libraries (joi, zod) for complex validation", "percentage": 75, "note": "More robust solution for large component libraries"},
+        {"solution": "Understand web components support flexible initialization timing", "percentage": 88, "note": "Unlike React, properties can be set anytime - hard to enforce required pattern"}
+    ]'::jsonb,
+    'LitElement knowledge, JavaScript property understanding, Validation patterns familiarity',
+    'Component validation executes appropriately, Missing required properties caught and handled, No runtime errors from missing props',
+    'Web components cannot enforce required properties like React PropTypes. Properties set at unpredictable times. Must implement custom validation. Consider base class pattern for reusability.',
+    0.79,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68008726/how-to-declare-a-required-property-in-lit-element'
+),
+(
+    'Lit TypeScript decorator issue with useDefineForClassFields',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Set experimentalDecorators to true in tsconfig.json", "percentage": 95, "note": "Required for TypeScript decorator support", "command": "\"experimentalDecorators\": true"},
+        {"solution": "Set useDefineForClassFields to false in tsconfig.json", "percentage": 94, "note": "Critical - prevents field shadowing Lit reactivity accessors", "command": "\"useDefineForClassFields\": false"},
+        {"solution": "For Lit 3.0+ with TS 5.2+, use accessor keyword: @property() accessor name", "percentage": 88, "note": "Modern approach without tsconfig workarounds"},
+        {"solution": "Ensure TypeScript version 5.0+ for latest decorator support", "percentage": 82, "note": "Older TS versions have limited decorator support"}
+    ]'::jsonb,
+    'TypeScript project setup, Lit element knowledge, tsconfig.json access',
+    'Decorators compile without errors, Properties update reactively, Class fields work as expected with Lit reactivity',
+    'useDefineForClassFields=true breaks Lit reactivity by overwriting accessors. Must set to false. Modern Lit 3.0+ with TS 5.2+ supports accessor keyword syntax.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76930673/lit-typescript-decorator-issue'
+),
+(
+    'Render lit/lit-html TemplateResult as string',
+    'stackoverflow-lit',
+    'LOW',
+    '[
+        {"solution": "Extract strings and values from TemplateResult and combine them manually", "percentage": 88, "note": "Recursive function can handle nested templates", "command": "const v = [...values, ''''].map(e => typeof e === ''object'' ? getRenderString(e) : e); return strings.reduce((acc, s, i) => acc + s + v[i], '''')"},
+        {"solution": "Use getRenderString helper for basic templates without complex interpolations", "percentage": 80, "note": "Simple implementation for basic use cases"},
+        {"solution": "Reference GitHub gist for robust implementation handling edge cases", "percentage": 75, "note": "More complete solution at https://gist.github.com/jimmont/d472b20f8dcb15bce88f9572751e7a46"},
+        {"solution": "Understand limitations with unquoted attributes and null/undefined values", "percentage": 70, "note": "Basic approach does not handle all edge cases"}
+    ]'::jsonb,
+    'Lit/lit-html knowledge, JavaScript template understanding, Testing requirements',
+    'TemplateResult converts to HTML string correctly, Complex templates render as expected, Testing assertions pass',
+    'Basic string concatenation fails with unquoted attributes. Null/undefined values need handling. Does not work with all Lit features. Reference gist for production implementation.',
+    0.72,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70657298/render-lit-lit-html-templateresult-as-string'
+),
+(
+    'Dynamic HTML with Vaadin LitRenderer in Grid',
+    'stackoverflow-lit',
+    'LOW',
+    '[
+        {"solution": "Use Lit template with array map inside renderer for dynamic list HTML", "percentage": 88, "note": "Most flexible approach - leverages Lit rendering", "command": "LitRenderer.of(\"<ul>${item.eventItems.map((eventItem) => html`<li>${eventItem}</li>`)}</ul>\")"},
+        {"solution": "Use ComponentRenderer with Html() component as fallback", "percentage": 82, "note": "Alternative if Lit template approach fails"},
+        {"solution": "Use innerHTML property binding with string HTML - requires content validation", "percentage": 75, "note": "Less safe - must sanitize HTML"},
+        {"solution": "Create custom Lit element with unsafeHTML directive for controlled rendering", "percentage": 80, "note": "More complex but safer than raw innerHTML"}
+    ]'::jsonb,
+    'Vaadin Grid knowledge, Lit understanding, Java server-side code, XSS prevention understanding',
+    'Dynamic HTML renders in grid cells correctly, Content displays without console errors, Performance acceptable',
+    'Direct innerHTML creates XSS vulnerabilities - always validate/escape content. unsafeHTML still risky - use for trusted content only. Prefer Lit template approach.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71302820/dynamic-html-using-a-vaadin-litrenderer'
+),
+(
+    'Unable to use Web Components in React - JSX type errors',
+    'stackoverflow-lit',
+    'MEDIUM',
+    '[
+        {"solution": "Add JSX namespace declarations for custom elements in react-app-env.d.ts", "percentage": 92, "note": "Tell TypeScript custom elements are valid JSX", "command": "declare namespace JSX { interface IntrinsicElements { ''custom-element'': any; } }"},
+        {"solution": "Import web component library before using in React components", "percentage": 88, "note": "Runtime registration required before JSX use"},
+        {"solution": "Use kebab-case element names in JSX - matches custom element naming", "percentage": 90, "note": "React translates camelCase to kebab-case"},
+        {"solution": "Understand React can render web components without special libraries", "percentage": 85, "note": "Type declarations needed for TypeScript, but runtime works fine"}
+    ]'::jsonb,
+    'React project with TypeScript, Web component library installed, Type declaration file access',
+    'Custom elements render without TypeScript errors, Props pass correctly, Events fire and handle properly',
+    'React works with web components at runtime - errors are TypeScript-only. JSX declarations needed for type checking. Always use kebab-case in JSX for custom elements.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69008101/unable-to-use-web-components-in-react'
+);

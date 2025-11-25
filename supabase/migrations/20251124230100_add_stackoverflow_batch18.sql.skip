@@ -1,0 +1,215 @@
+-- Stack Overflow Solutions: Backend and Data Pipeline (Batch 18)
+-- Domain: Message Queues, Search, Python Backend (Kafka, RabbitMQ, Elasticsearch, Flask, Celery)
+-- Generated: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Kafka consumer not receiving messages',
+    'kafka',
+    'HIGH',
+    '[
+        {"solution": "Check consumer group ID and ensure consumer subscribes to correct topic", "percentage": 90, "note": "Consumer must be subscribed to the same topic producer is sending to"},
+        {"solution": "Verify Kafka broker is reachable", "percentage": 85, "command": "telnet kafka-host 9092"},
+        {"solution": "Check if producer uses unsupported compression (lz4)", "percentage": 75, "note": "Python consumer may not support lz4 compression without warning"},
+        {"solution": "Start consumer with auto_offset_reset=earliest for testing", "percentage": 80, "note": "Consumer offset may be at end of topic"},
+        {"solution": "Call producer.flush() or result.get() after send()", "percentage": 70, "note": "Producer send() is async and needs explicit flush"}
+    ]'::jsonb,
+    'Kafka cluster running, Consumer and producer configured',
+    'Consumer receives messages, Logs show successful poll operations',
+    'Consumer offset may be at end. Producer send() is async and requires flush. Check compression compatibility between producer and consumer.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/35217603/kafka-python-consumer-not-receiving-messages'
+),
+(
+    'Kafka broker not available error',
+    'kafka',
+    'HIGH',
+    '[
+        {"solution": "Verify JDK is installed correctly", "percentage": 85, "note": "Kafka requires proper JDK installation"},
+        {"solution": "Check broker address and port in configuration", "percentage": 90, "command": "telnet kafka-host 9092"},
+        {"solution": "Use --bootstrap-server with correct port (9092), not Zookeeper port (2181)", "percentage": 88, "note": "Bootstrap server uses port 9092, not 2181"},
+        {"solution": "Set unique broker.id for each broker", "percentage": 75, "note": "Each broker needs unique integer ID"},
+        {"solution": "Check kafka-python version compatibility (2.4 or older for auto-discovery)", "percentage": 70, "note": "Auto version discovery only works with Kafka 2.4 or older"}
+    ]'::jsonb,
+    'JDK installed, Kafka broker configuration accessible',
+    'Broker responds to telnet, Producer/consumer can connect successfully',
+    'Using wrong port (2181 vs 9092). Version incompatibility between kafka-python client and broker.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/46158296/kafka-broker-not-available-at-starting'
+),
+(
+    'Kafka consumer group offset management',
+    'kafka',
+    'MEDIUM',
+    '[
+        {"solution": "Reset offsets to earliest", "percentage": 85, "command": "kafka-consumer-groups.sh --bootstrap-server localhost:9092 --reset-offsets --group myConsumer --topic myTopic --to-earliest"},
+        {"solution": "Reset offsets to latest", "percentage": 85, "command": "kafka-consumer-groups.sh --bootstrap-server localhost:9092 --reset-offsets --group myConsumer --topic myTopic --to-latest"},
+        {"solution": "Check current offset position", "percentage": 75, "command": "kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group myConsumer"},
+        {"solution": "Set specific offset value", "percentage": 70, "command": "set /consumers/consumer_group_id/offsets/topic/0 10000"}
+    ]'::jsonb,
+    'Kafka cluster running, Consumer group exists, No active consumers in group',
+    'Consumer starts from desired offset, Messages are consumed from correct position',
+    'Cannot reset offsets while consumers are active. Offsets are stored per (consumer-group-id, topic, partition).',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45670937/kafka-0-11-how-to-reset-offsets'
+),
+(
+    'RabbitMQ connection refused',
+    'rabbitmq',
+    'HIGH',
+    '[
+        {"solution": "Modify rabbitmq.config to accept remote connections for guest user", "percentage": 85, "note": "By default, guest user only accepts localhost connections"},
+        {"solution": "Check RabbitMQ server is running", "percentage": 90, "command": "rabbitmqctl status"},
+        {"solution": "Verify firewall allows port 5672", "percentage": 80, "note": "RabbitMQ uses port 5672 for AMQP"},
+        {"solution": "Use correct hostname format in pika", "percentage": 75, "note": "Use host parameter, not host:port in ConnectionParameters"}
+    ]'::jsonb,
+    'RabbitMQ server installed and configured',
+    'Pika client connects successfully, No connection errors in logs',
+    'Guest user cannot connect remotely by default. Port specification should not be in host parameter.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/27805086/how-to-connect-pika-to-rabbitmq-remote-server-python-pika'
+),
+(
+    'RabbitMQ queue not found',
+    'rabbitmq',
+    'MEDIUM',
+    '[
+        {"solution": "Declare queue before publishing/consuming", "percentage": 90, "command": "channel.queue_declare(queue=queue_name, durable=True)"},
+        {"solution": "Check user permissions to view queue", "percentage": 80, "note": "Users only have permission to view queues they created by default"},
+        {"solution": "Rename default vhost from / to avoid URL encoding issues", "percentage": 70, "note": "URL-escaped slash can cause issues in some tools"},
+        {"solution": "Use correct virtual host in connection", "percentage": 75, "note": "Default virtual host is /"},
+        {"solution": "Force delete stuck queue using rabbitmqctl eval", "percentage": 60, "command": "rabbitmqctl eval Q = {resource, <<\"/\">>, queue, <<\"queue_name\">>}, rabbit_amqqueue:internal_delete(Q)."}
+    ]'::jsonb,
+    'RabbitMQ server running, User has proper permissions',
+    'Queue appears in management UI, Can publish and consume messages',
+    'Queue must be declared before use. Default vhost / can cause URL encoding issues. Check user permissions.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/67231392/not-found-returned-when-creating-rabbitmq-queue-using-rabbitmqadmin'
+),
+(
+    'Elasticsearch connection timeout',
+    'elasticsearch',
+    'HIGH',
+    '[
+        {"solution": "Verify Elasticsearch service is running", "percentage": 90, "command": "curl -X GET http://localhost:9200"},
+        {"solution": "Check connection host and port in client config", "percentage": 85, "note": "Default is localhost:9200"},
+        {"solution": "Increase connection timeout in client", "percentage": 75, "note": "Use request_timeout parameter in Elasticsearch client"},
+        {"solution": "Check firewall allows port 9200", "percentage": 80, "note": "Elasticsearch HTTP API uses port 9200"},
+        {"solution": "Verify SSL/TLS settings if using HTTPS", "percentage": 70, "note": "May need verify_certs=False for self-signed certificates"}
+    ]'::jsonb,
+    'Elasticsearch cluster running, Network connectivity available',
+    'Client successfully connects, Can execute queries without timeout',
+    'Service must be running before connection attempts. Check SSL settings for HTTPS connections.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/25471828/elasticsearch-exceptions-connectionerror'
+),
+(
+    'Elasticsearch index not found',
+    'elasticsearch',
+    'HIGH',
+    '[
+        {"solution": "Create index explicitly before use", "percentage": 90, "command": "PUT /index_name"},
+        {"solution": "Enable auto index creation in elasticsearch.yml", "percentage": 80, "note": "Set action.auto_create_index parameter"},
+        {"solution": "Check index name spelling and case sensitivity", "percentage": 85, "note": "Index names are case-sensitive"},
+        {"solution": "Verify index pattern vs actual index exists", "percentage": 75, "note": "Index pattern is not the same as an index"},
+        {"solution": "Use client.indices.create() instead of deprecated createIndex()", "percentage": 70, "note": "API methods updated in newer elasticsearch.js versions"}
+    ]'::jsonb,
+    'Elasticsearch cluster running, Proper permissions',
+    'Index exists and is accessible, Queries return results without errors',
+    'Index pattern in Kibana is not the same as an index. Index names are case-sensitive. Check API version compatibility.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/41804863/error-index-not-found-exception'
+),
+(
+    'Flask CORS error',
+    'flask',
+    'HIGH',
+    '[
+        {"solution": "Install and configure Flask-CORS extension", "percentage": 95, "command": "pip install flask-cors"},
+        {"solution": "Add CORS(app) after Flask app creation", "percentage": 90, "note": "from flask_cors import CORS; CORS(app)"},
+        {"solution": "Use @cross_origin() decorator on specific routes", "percentage": 85, "note": "For route-specific CORS: @cross_origin(supports_credentials=True)"},
+        {"solution": "Restart Flask server after adding CORS", "percentage": 80, "note": "Changes require server restart to take effect"},
+        {"solution": "Add Flask-Cors to requirements.txt", "percentage": 75, "note": "Ensure Flask-Cors==3.0.10 in requirements.txt for deployment"}
+    ]'::jsonb,
+    'Flask application running, flask-cors package available',
+    'Browser allows cross-origin requests, No CORS errors in console',
+    'Must restart server after configuration changes. Check that server responds with proper CORS headers.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/25594893/how-to-enable-cors-in-flask'
+),
+(
+    'Flask SQLAlchemy connection pool exhausted',
+    'flask',
+    'MEDIUM',
+    '[
+        {"solution": "Configure pool_size in SQLALCHEMY_ENGINE_OPTIONS", "percentage": 85, "note": "app.config[SQLALCHEMY_ENGINE_OPTIONS] = {pool_size: 10, max_overflow: 20}"},
+        {"solution": "Set pool_size and max_overflow explicitly", "percentage": 80, "note": "Default pool_size is 10 for MySQL, overflow is 10"},
+        {"solution": "Use pool_size=1 with max_overflow=0 to detect leaks", "percentage": 70, "note": "Helps identify connection leaks during debugging"},
+        {"solution": "Ensure db sessions are properly closed", "percentage": 90, "note": "Use db.session.remove() or context managers"},
+        {"solution": "Configure pool_pre_ping to handle stale connections", "percentage": 75, "note": "Add pool_pre_ping: True to engine options"}
+    ]'::jsonb,
+    'Flask-SQLAlchemy installed, Database accessible',
+    'Application handles concurrent requests without pool errors, No timeout errors',
+    'Leaked connections accumulate until pool is exhausted. Always close sessions properly. Set pool_size=1 to detect leaks early.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71039080/how-to-control-the-connection-pool-size-in-flask-sqlalchemy'
+),
+(
+    'Celery task not running',
+    'celery',
+    'HIGH',
+    '[
+        {"solution": "Use --pool=solo on Windows", "percentage": 85, "command": "celery -A app_name worker -l info --pool=solo"},
+        {"solution": "Verify broker (Redis/RabbitMQ) is running and accessible", "percentage": 90, "note": "Celery requires message broker to queue tasks"},
+        {"solution": "Check task is registered with @shared_task or @app.task decorator", "percentage": 80, "note": "Tasks must be properly decorated"},
+        {"solution": "Disable worker gossip with --without-gossip", "percentage": 75, "note": "Bug with gossip can cause hangs when CELERY_ACKS_LATE enabled"},
+        {"solution": "Ensure worker is running and polling the queue", "percentage": 85, "command": "celery -A app_name worker -l info"}
+    ]'::jsonb,
+    'Celery installed, Message broker (Redis/RabbitMQ) running',
+    'Worker logs show task received and executed, Task returns expected result',
+    'Celery 4+ does not support Windows without --pool=solo. Worker must be running to execute tasks. Check broker connection.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/48877823/django-celery-receiving-and-accepting-tasks-but-not-executing-them'
+),
+(
+    'Celery worker timeout',
+    'celery',
+    'MEDIUM',
+    '[
+        {"solution": "Set task time_limit parameter", "percentage": 85, "note": "@celery.task(time_limit=20)"},
+        {"solution": "Use SoftTimeLimitExceeded exception for cleanup", "percentage": 80, "note": "Catch SoftTimeLimitExceeded to cleanup before hard timeout"},
+        {"solution": "Configure BROKER_CONNECTION_RETRY settings", "percentage": 75, "note": "BROKER_CONNECTION_RETRY=True, BROKER_CONNECTION_MAX_RETRIES=0"},
+        {"solution": "Set broker_connection_timeout in config", "percentage": 70, "note": "broker_transport_options = {broker_connection_timeout: 10.0}"},
+        {"solution": "Use apply_async with timeout parameter", "percentage": 65, "note": "task.apply_async(timeout=30) (requires Celery 3.1+)"}
+    ]'::jsonb,
+    'Celery worker running, Tasks defined with decorators',
+    'Tasks complete within timeout, Timeout exceptions handled gracefully',
+    'time_limit causes hard termination. Use soft_time_limit with exception handling for cleanup. Timeout in apply_async requires Celery 3.1+.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/11672179/setting-time-limit-on-specific-task-with-celery'
+);

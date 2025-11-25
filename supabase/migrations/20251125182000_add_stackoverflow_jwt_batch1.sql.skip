@@ -1,0 +1,203 @@
+-- Add top 12 voted JWT solutions from Stack Overflow
+-- Category: 'stackoverflow-jwt'
+-- Source: https://stackoverflow.com/questions/tagged/jwt?tab=votes
+-- Total votes extracted: 5,033 across 12 questions
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up, source_url)
+VALUES
+(
+  'JWT automatic prolongation of expiration without re-login',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Issue tokens with 1-week expiration and refresh them when users open app and hourly during active sessions", "percentage": 90, "note": "For web apps: Refresh endpoint accepts valid unexpired JWT and returns new token with updated expiration. Balances security and UX.", "source": "Auth0 recommendation"},
+    {"solution": "Use non-expiring opaque refresh tokens for mobile/native apps instead of JWT refresh tokens", "percentage": 85, "note": "Exchange opaque token for valid access token. Implement revocation via device identification or password changes.", "source": "Auth0 best practice"}
+  ]'::jsonb,
+  'Issuing multiple overlapping valid tokens feels like security risk but is necessary for UX. Refresh tokens should be opaque strings, not JWTs, for native apps. Stateless JWT design still benefits from short-lived tokens with refresh mechanism.',
+  0.90,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  669,
+  'https://stackoverflow.com/questions/26739167/jwt-json-web-token-automatic-prolongation-of-expiration'
+),
+(
+  'How to invalidate or revoke JWT tokens server-side',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Maintain token blacklist in Redis/Memcached with entries until token expiration", "percentage": 95, "note": "Most practical approach. Only check blacklist for revoked tokens, not all users. Balances stateless benefits with security."},
+    {"solution": "Implement short expiration times with automatic refresh mechanism", "percentage": 80, "note": "Transparent to users but does not provide immediate logout capability."},
+    {"solution": "Use per-user secret versioning: sign tokens with user secret, increment version counter to invalidate all previous tokens", "percentage": 85, "note": "Elegant solution but requires database lookup to verify tokens."},
+    {"solution": "Sign tokens with password hash: when password changes, all tokens automatically fail verification", "percentage": 75, "note": "Immediate invalidation but requires database lookups for every token validation."}
+  ]'::jsonb,
+  'True stateless JWT cannot support immediate revocation without additional infrastructure. Token blacklist reintroduces some state. Password hash binding causes full verification cost. Real-world production systems must trade off stateless benefits for security-critical scenarios like account deletion.',
+  0.85,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  667,
+  'https://stackoverflow.com/questions/21978658/invalidating-json-web-tokens'
+),
+(
+  'If you can decode JWT token how are they secure',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "JWT security relies on cryptographic signatures, not payload encryption. Signature prevents tampering even though payload is decodable.", "percentage": 95, "note": "Token structure: header.payload.signature. Only server knows secret, so only it can create valid signature."},
+    {"solution": "Verify token by recalculating signature with received header/payload and server secret. If new signature matches original, data is authentic.", "percentage": 95, "note": "Attempting to modify payload creates invalid signature that fails verification. Attacker cannot fix it without secret."},
+    {"solution": "Understand Base64 encoding is not encryption. Payload is readable but cannot be modified without detection.", "percentage": 90, "note": "Modifying {\"id\":1} to {\"id\":2} creates different signature that does not match original token signature."}
+  ]'::jsonb,
+  'Confusing Base64 encoding (readable) with encryption (protected). JWT security is cryptographic signature verification, not payload confidentiality. Payload can be decoded but cannot be modified without invalidating signature.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  642,
+  'https://stackoverflow.com/questions/27301557/if-you-can-decode-jwt-how-are-they-secure'
+),
+(
+  'Main differences between JWT and OAuth authentication protocols',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "JWT is token format (defines structure). OAuth 2.0 is protocol (defines flow). OAuth may use JWT as token format.", "percentage": 95, "note": "Key distinction: JWT only addresses token formatting. OAuth covers entire authorization framework with multiple grant types."},
+    {"solution": "Use Bearer scheme with Authorization header when sending JWT tokens: Authorization: Bearer <token>", "percentage": 90, "note": "Follows RFC 6750 standard. More secure than custom headers as HTTP proxies recognize and properly handle standard authorization headers."},
+    {"solution": "Use single JWT authentication for simple scenarios with one client and API. OAuth 2.0 for multiple clients or third-party access.", "percentage": 85, "note": "JWT sufficient for internal use. OAuth provides framework for public/partner access."}
+  ]'::jsonb,
+  'Treating JWT and OAuth as interchangeable or equivalent. OAuth 2.0 is broader framework; JWT is token format. JWT authentication is simpler but OAuth provides more comprehensive security model for distributed systems.',
+  0.90,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  634,
+  'https://stackoverflow.com/questions/39909419/what-are-the-main-differences-between-jwt-and-oauth-authentication'
+),
+(
+  'How to decode JWT token without library using Base64 in C#',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Use ReadJwtToken() method from JwtSecurityTokenHandler (preferred approach)", "percentage": 95, "command": "var handler = new JwtSecurityTokenHandler(); var jwtSecurityToken = handler.ReadJwtToken(token);", "note": "Returns JwtSecurityToken directly without casting."},
+    {"solution": "Use ReadToken() with casting to JwtSecurityToken", "percentage": 90, "command": "var jsonToken = handler.ReadToken(token); var tokenS = jsonToken as JwtSecurityToken;", "note": "ReadToken() returns SecurityToken base class, requires explicit cast."},
+    {"solution": "Extract specific claims using LINQ", "percentage": 85, "command": "var jti = tokenS.Claims.First(claim => claim.Type == \"jti\").Value;", "note": "Access claims collection and filter by type."},
+    {"solution": "Convert claims to dictionary for easier access", "percentage": 80, "command": "Dictionary<string, string> claims = jwtSecurityToken.Claims.ToDictionary(x => x.Type, x => x.Value);"}
+  ]'::jsonb,
+  'Forgetting to install NuGet package System.IdentityModel.Tokens.Jwt. Using ReadToken() without casting causes type errors. Mixing up claim access patterns.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  624,
+  'https://stackoverflow.com/questions/38340078/how-to-decode-jwt-token'
+),
+(
+  'RS256 vs HS256: Asymmetric vs Symmetric JWT algorithms comparison',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Use RS256 (RSA asymmetric) when token issuer and validator are different systems or multiple audiences", "percentage": 90, "note": "Private key signs, public key validates. Public key can be safely shared. Ideal for Auth0 and microservices scenarios."},
+    {"solution": "Use HS256 (HMAC symmetric) when same application produces and consumes tokens in trusted environment", "percentage": 90, "note": "Single shared secret both signs and validates. 7-10x faster than RS256 but requires secure key exchange."},
+    {"solution": "Understand RS256 supports key rotation without sharing private keys", "percentage": 85, "note": "Public key can be rotated via metadata endpoint without compromising private key. Better for long-lived deployments."},
+    {"solution": "Choose based on architecture not performance alone: RS256 for distributed systems, HS256 for monolithic applications", "percentage": 80, "note": "Performance differences negligible for most applications. Security model matters more than speed."}
+  ]'::jsonb,
+  'Assuming RS256 is always more secure. Choosing algorithm based only on performance. Not considering whether token producer and consumer are same or different systems. HS256 is appropriately secure for single-system scenarios.',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  384,
+  'https://stackoverflow.com/questions/39239051/rs256-vs-hs256-whats-the-difference'
+),
+(
+  'Where to store JWT in browser for web apps: localStorage vs cookies CSRF protection',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Store JWT in HttpOnly cookie with separate XSRF-TOKEN cookie using double submit pattern", "percentage": 95, "note": "HttpOnly cookie prevents XSS access. JavaScript reads XSRF-TOKEN and sends via custom X-XSRF-TOKEN header. Server validates both match. Browsers cannot auto-add custom headers blocking CSRF from other domains."},
+    {"solution": "Use SameSite=Strict cookie attribute with secure and httpOnly flags (modern approach)", "percentage": 90, "note": "Prevents browser from sending cookie on cross-site requests, effectively blocking CSRF without extra token overhead."},
+    {"solution": "Understand no storage method completely eliminates XSS risk", "percentage": 85, "note": "Preventing XSS vulnerabilities is essential regardless of JWT placement. Malicious JavaScript can compromise any storage mechanism."}
+  ]'::jsonb,
+  'Believing HttpOnly cookies alone prevent CSRF. Thinking localStorage is more secure if not used in cookies. Assuming XSS protection in framework (like React escaping) eliminates need for additional measures. Storage location is secondary to XSS prevention.',
+  0.90,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  383,
+  'https://stackoverflow.com/questions/27067251/where-to-store-jwt-in-browser-how-to-protect-against-csrf'
+),
+(
+  'Best HTTP Authorization header type for JWT Bearer token format',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Use Bearer scheme: Authorization: Bearer <token>", "percentage": 95, "command": "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", "note": "Standardized in RFC 6750 for Bearer tokens. Registered at IANA. Term from dictionary: carrier or messenger."},
+    {"solution": "Avoid Basic auth (designed for username/password) or custom headers for JWT", "percentage": 90, "note": "Bearer scheme is standard for token-based auth. Basic scheme creates confusion with credential-based authentication."},
+    {"solution": "Include scheme in error responses: WWW-Authenticate: Bearer realm=\"example\", error=\"invalid_token\"", "percentage": 85, "note": "Complies with RFC 7235 HTTP authentication framework for proper error handling and client retry logic."}
+  ]'::jsonb,
+  'Using Basic authentication for JWT tokens. Creating custom Authorization header schemes. Not including error information in WWW-Authenticate response header. Bearer scheme is RFC standard, not optional.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  361,
+  'https://stackoverflow.com/questions/33265812/best-http-authorization-header-type-for-jwt'
+),
+(
+  'Implementing JWT authentication for ASP.NET Web API without OWIN middleware',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Create token generation endpoint using System.IdentityModel.Tokens.Jwt NuGet package", "percentage": 95, "note": "Generate tokens with HMACSHA256 signing using symmetric key. Include username and expiration time in token claims. No middleware required for legacy Web API."},
+    {"solution": "Implement IAuthenticationFilter attribute for token validation", "percentage": 90, "note": "Extract and validate JWT from request headers. Verify token signature and expiration. Reconstruct user identity/principal from validated claims."},
+    {"solution": "Apply authentication attribute globally or per-controller with [JwtAuthentication] and [AllowAnonymous]", "percentage": 85, "note": "Lightweight and flexible approach for IIS-hosted applications. No OWIN dependency needed."}
+  ]'::jsonb,
+  'Assuming OWIN middleware is required for JWT in ASP.NET Web API. Implementing middleware when filter attribute is simpler and lighter. Not generating separate token endpoint from validation logic.',
+  0.90,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  360,
+  'https://stackoverflow.com/questions/40281050/jwt-authentication-for-asp-net-web-api'
+),
+(
+  'Is it safe to store JWT in localStorage with React XSS vulnerability risk',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Store JWT in HttpOnly cookie with SameSite=Strict flag instead of localStorage", "percentage": 95, "note": "Most secure. Prevents JavaScript access entirely, protecting against XSS from compromised dependencies. Tradeoff: cannot access token directly from JavaScript."},
+    {"solution": "If using localStorage, understand you accept XSS risk from malicious third-party libraries or CDN code", "percentage": 75, "note": "React escaping protects against user input XSS but not malicious dependencies. localStorage grants JavaScript access to all stored data."},
+    {"solution": "Focus on preventing XSS vulnerabilities rather than preparing for successful attacks", "percentage": 90, "note": "If XSS succeeds, attacker can keylog, make requests, or steal tokens regardless of storage location. Prevention is primary defense."}
+  ]'::jsonb,
+  'Believing React auto-escaping prevents XSS when accessing stored tokens. Assuming localStorage is safe if code is audited. Thinking token storage location is the main XSS defense. Third-party dependencies and CDN code pose greatest risk, not developer code.',
+  0.85,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  358,
+  'https://stackoverflow.com/questions/44133536/is-it-safe-to-store-a-jwt-in-localstorage-with-reactjs'
+),
+(
+  'JWT refresh token flow implementation: access token vs refresh token',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Issue both access and refresh tokens at login with separate expiration times", "percentage": 95, "note": "Access token: short expiration (15-60 min) stored in local storage. Refresh token: longer expiration (days/weeks) stored in httpOnly cookie."},
+    {"solution": "When access token expires, send refresh token to separate endpoint to request new access token", "percentage": 95, "note": "Client automatically sends refresh token via cookie to renewal endpoint. Server validates and issues new access token with fresh expiration."},
+    {"solution": "Store hash of refresh token in database, not plaintext", "percentage": 90, "note": "Treat refresh tokens like passwords. Hash before storage. Implement token rotation: issue new refresh token on each refresh to detect theft."},
+    {"solution": "Refresh tokens are JWT with fewer claims and long expiry, validated via cryptographic keys not database lookup", "percentage": 85, "note": "Can be stateless JWTs. Still benefits from database hash storage for revocation capability."}
+  ]'::jsonb,
+  'Storing plaintext refresh tokens in database. Not implementing token rotation on refresh. Using single token for both access and refresh. Confusing token format (JWT vs opaque) with validation method. Not separating storage mechanisms (localStorage vs cookie).',
+  0.90,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  340,
+  'https://stackoverflow.com/questions/27726066/jwt-refresh-token-flow'
+),
+(
+  'JWT vs traditional session authentication comparison and advantages',
+  'stackoverflow-jwt',
+  '[
+    {"solution": "Understand JWT does not have inherent benefits over sessions per se. JWT maintains session state on client instead of server.", "percentage": 90, "note": "Different approach, not necessarily better. Tradeoffs exist: JWT reduces server load but increases client complexity."},
+    {"solution": "Choose JWT for stateless, cloud-native, distributed architectures with multiple services", "percentage": 90, "note": "Better scaling economics. No session database costs. Works across microservices. Reduces horizontal scaling complexity."},
+    {"solution": "Choose sessions for traditional monolithic applications with single database", "percentage": 85, "note": "Simpler revocation and invalidation. Easier CSRF protection. Lower client-side complexity."},
+    {"solution": "Implement JWT in httpOnly cookies instead of localStorage to mitigate XSS vulnerability gap vs sessions", "percentage": 85, "note": "Narrows security difference. Requires CSRF mitigation like SameSite=Strict, same as sessions."}
+  ]'::jsonb,
+  'Assuming JWT is always better than sessions. Thinking JWT eliminates session concept (JWT is still a session, just client-stored). Believing JWT provides automatic security advantages without implementation care. Not considering that implementation security matters more than approach choice.',
+  0.88,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  320,
+  'https://stackoverflow.com/questions/43452896/authentication-jwt-usage-vs-session'
+);

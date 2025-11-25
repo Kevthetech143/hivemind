@@ -1,0 +1,202 @@
+-- Add Stack Overflow Preact solutions batch 1
+-- Extracted highest-voted Preact questions with accepted answers
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Jest expect.any() not matching in object assertions',
+    'stackoverflow-preact',
+    'HIGH',
+    '[
+        {"solution": "Use toMatchObject() instead of toEqual() for objects with expect.any() matchers", "percentage": 95, "note": "toMatchObject() performs partial matching and properly handles wildcard matchers"},
+        {"solution": "Structure assertions to use toMatchObject() for dynamic properties and toEqual() for fixed ones", "percentage": 85, "note": "Separates strict equality checks from flexible matching"}
+    ]'::jsonb,
+    'Jest testing framework installed, Understanding that toEqual() performs deep equality while toMatchObject() performs partial matching',
+    'Test passes with properties containing expect.any() matchers, Fixed properties maintain strict equality checks, Dynamic properties accept any value of the specified type',
+    'Using toEqual() with expect.any() on complex objects fails silently without clear error messages. Empty arrays in test objects can cause toMatchObject() to behave unexpectedly.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/50676554/jest-expect-any-not-working-as-expected'
+),
+(
+    'Preact: Wrong component rendered after list item deletion',
+    'stackoverflow-preact',
+    'HIGH',
+    '[
+        {"solution": "Replace array index keys with unique identifiers from data (key={tracking} instead of key={index})", "percentage": 98, "note": "Using indices as keys breaks reconciliation during mutations"},
+        {"solution": "Understand that index keys cause framework to assume items stay in place and reuse component instances with new props", "percentage": 90, "note": "This explains why the wrong item appears deleted visually"}
+    ]'::jsonb,
+    'Understanding of React/Preact reconciliation algorithm, Familiarity with virtual DOM diffing concepts, Presence of list items with unique identifiers in state',
+    'Correct items render after deletion operations, No visual discrepancies between state and UI, Proper DOM mutations occur (unmount deleted, not re-use)',
+    'Index keys appear to work initially but fail during list mutations. Problems surface with stateful child components (inputs, internal state). Issues intensify with complex child components.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/42773892/wrong-components-rendered-by-preact'
+),
+(
+    'How to use Yarn with preact create command instead of npx',
+    'stackoverflow-preact',
+    'HIGH',
+    '[
+        {"solution": "Use npx preact-cli create <project-name> --yarn flag to initialize project with Yarn", "percentage": 95, "note": "npx handles initial tool installation, then CLI uses Yarn for dependencies"},
+        {"solution": "Verify yarn.lock file exists after project creation to confirm Yarn was used", "percentage": 90, "command": "ls yarn.lock", "note": "Indicates successful Yarn dependency installation"}
+    ]'::jsonb,
+    'Node.js and npm installed (for npx functionality), Yarn installed on system, Understanding difference between npx preact and npx preact-cli',
+    'Project directory created successfully, Dependencies installed via Yarn (check for yarn.lock), Project scaffolding complete with proper file structure',
+    'Using yarn preact create or yarn dlx preact create won\'t work. Forgetting the preact-cli package name (using just preact fails). Expecting Yarn to handle the initial tool installation—npx still manages that phase.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/66496166/is-there-any-yarn-equivalent-of-npx-preact-create'
+),
+(
+    'When is explicit import { h } from preact necessary for JSX',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Do not explicitly import h when using Preact CLI - Babel configuration handles it automatically", "percentage": 95, "note": "Preact CLI includes @babel/plugin-transform-react-jsx and babel-plugin-jsx-pragmatic"},
+        {"solution": "If not using Preact CLI, manually add: import { h } from \"preact\" at the top of components", "percentage": 90, "note": "Required when Babel setup is manual without auto-inject plugins"}
+    ]'::jsonb,
+    'Using Preact CLI with proper Babel configuration, Or manually configured Babel with JSX plugins, Writing components with JSX syntax',
+    'JSX compiles successfully without explicit import, Application builds and runs without errors, Components render properly',
+    'The automatic import only works with Preact CLI. If using Preact without CLI\'s Babel setup, you must manually import h. This behavior isn\'t prominently documented in beginners guides.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/52417272/import-h-from-preact-when-is-it-necessary'
+),
+(
+    'How to use React Router with Preact to avoid IP licensing concerns',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Install preact-compat: npm i --save preact-compat", "percentage": 90, "note": "Compatibility layer bridges Preact and React libraries"},
+        {"solution": "Configure webpack aliases to redirect React imports to preact-compat", "percentage": 88, "command": "resolve: { alias: { \"react\": \"preact-compat\", \"react-dom\": \"preact-compat\" } }", "note": "Components and routing logic function normally unaware of Preact"},
+        {"solution": "Alternative: Use preact-router or preact-iso for native routing without React dependencies", "percentage": 85, "note": "Recommended for newer projects"}
+    ]'::jsonb,
+    'Familiarity with Preact fundamentals, Webpack or similar bundler supporting module aliases, React Router v3 or compatible version, Understanding of module resolution',
+    'Routes match expected URL patterns without "Location did not match" errors, Components render correctly with proper parameter passing, Redux integration (if applicable) functions as designed',
+    'Early Preact versions struggled with React\'s context API. Props.children edge cases required preact-compat patches. Lesser-used React features may lack full Preact support.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37306197/how-to-use-react-router-with-preact'
+),
+(
+    'TypeScript: Using web components in Preact with type safety',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Use TypeScript module augmentation to extend Preact JSX namespace with custom element definitions", "percentage": 95, "command": "declare module \"preact/src/jsx\" { namespace JSXInternal { interface IntrinsicElements { \"custom-element\": HTMLAttributes<CustomElement>; } } }", "note": "Properly extends Preact internal type definitions"},
+        {"solution": "Declare interface for custom element extending HTMLElement with typed properties", "percentage": 90, "note": "Enables TypeScript type checking for custom element attributes"}
+    ]'::jsonb,
+    'TypeScript configuration recognizing JSX, Preact 10.x or compatible version, Understanding of TypeScript declaration files and module augmentation',
+    'TypeScript compilation succeeds without errors, IDE autocompletion works for custom element attributes, Custom elements render correctly in the browser',
+    'Declaring in wrong namespace (attempting declare global instead of module augmentation). Using incorrect module path (preact vs preact/src/jsx varies by version). Omitting HTMLAttributes type causes attribute validation to fail.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/61015445/using-web-components-within-preact-and-typescript'
+),
+(
+    'How to programmatically navigate with preact-router',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Import and call route() function from preact-router for navigation", "percentage": 96, "command": "import { route } from \"preact-router\"; route(\"/url/to/navigate\");", "note": "Properly triggers routing updates unlike history APIs"},
+        {"solution": "Use second parameter true to replace history entry instead of creating new one", "percentage": 88, "command": "route(\"/url\", true);", "note": "Useful for post-login redirects to prevent returning to login page"}
+    ]'::jsonb,
+    'Preact and preact-router installed, Understanding of ES6 imports, Component method access for navigation',
+    'URL updates in browser location bar, Component corresponding to new route renders, No console errors related to navigation',
+    'Using history.replaceState() or history.pushState() changes URL but doesn\'t trigger router updates. Calling navigation logic during component render methods without proper state management causes issues.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/42705820/how-to-programmatically-navigate-with-preact-router'
+),
+(
+    'Jest: Unexpected token error when testing React/Preact components with JSX',
+    'stackoverflow-preact',
+    'HIGH',
+    '[
+        {"solution": "Install @babel/plugin-transform-react-jsx package: npm i @babel/plugin-transform-react-jsx --save-dev", "percentage": 96, "note": "Required Babel plugin for JSX transformation in tests"},
+        {"solution": "Update .babelrc to include plugin with pragma option for Preact: {\"plugins\": [[\"@babel/plugin-transform-react-jsx\", {\"pragma\":\"h\"}]]}", "percentage": 95, "note": "pragma must be h for Preact (not React default)"},
+        {"solution": "Verify Jest configured with babel-jest transformer and .babelrc in project root", "percentage": 90, "note": "Some projects prefer babel.config.js over .babelrc"}
+    ]'::jsonb,
+    'Babel 7.x installed with preset packages, Jest configured with babel-jest transformer, .babelrc or babel.config.js file in project root, Understanding of Preact h function',
+    'Jest tests run without "Unexpected token <" errors, Coverage reports generate successfully, JSX syntax properly compiles during test execution',
+    'Forgetting to specify pragma option when using Preact (defaults to React). Not installing the plugin despite having other Babel packages. Mixing old .babelrc format with new babel.config.js (some versions prefer one).',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/56952728/jest-tests-on-react-components-unexpected-token'
+),
+(
+    'How Preact handles refs without using preact-compat',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Use callback refs by passing function to ref prop: <Component ref={instance => this.ref = instance} />", "percentage": 95, "note": "Native Preact approach similar to modern React"},
+        {"solution": "Access component instance via assigned property in component methods: this.ref.method()", "percentage": 92, "note": "Direct access without DOM queries"}
+    ]'::jsonb,
+    'Understanding of Preact component lifecycle, Knowledge that string refs are deprecated, Preact core library (no preact-compat needed)',
+    'Component methods can access referenced elements directly, No DOM lookup required (document.getElementById unnecessary), Works in core Preact without preact-compat dependency',
+    'String refs are not supported in Preact. Refs should target specific DOM access needs, not replace proper state management. Attempting deprecated syntax causes errors.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/46247167/how-are-refs-handled-in-preact'
+),
+(
+    'React componentDidMount behavior with Safari bfcache navigation',
+    'stackoverflow-preact',
+    'LOW',
+    '[
+        {"solution": "Detect history navigation using performance API: if (window.performance?.navigation.type === 2) to reset state", "percentage": 75, "note": "React 16 behavior differs from React 15.3 and Preact with bfcache"},
+        {"solution": "Implement polling interval to detect cache restoration: setInterval(() => { if (window.performance.navigation.type === 2) resetState(); }, 500)", "percentage": 65, "note": "Imprecise but functional workaround"}
+    ]'::jsonb,
+    'Understanding of React lifecycle methods, Familiarity with browser caching behavior, Knowledge of Safari bfcache implementation',
+    'State resets properly when users return via browser back button, No UI remains stuck in loading/disabled states after navigation restoration',
+    'onpageshow only triggers one time, requiring full window.location.reload() as fallback. Interval-based solutions are imprecise and resource-inefficient. Exact React 16 mechanism not documented.',
+    0.68,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/56258985/how-does-react-trigger-componentdidmount-with-safari-cache'
+),
+(
+    'TypeScript: Type checking Preact component children with specific types',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Use ComponentChildren type from preact for proper child typing: type Props = { children: ComponentChildren; }", "percentage": 95, "note": "Modern Preact approach replacing React\'s ReactElement pattern"},
+        {"solution": "For strict child type enforcement, avoid VNode<SpecificType> which doesn\'t properly validate child types at compile time", "percentage": 80, "note": "VNode approach compiles even with incorrect child types like div"}
+    ]'::jsonb,
+    'Preact 8.3.0 or newer (ideally modern versions with ComponentChildren support), TypeScript 3.0+, Understanding of generic type constraints',
+    'Type errors appear when passing non-compliant child components, IDE autocomplete reflects proper children type constraints, Code compiles without warnings using ComponentChildren',
+    'Legacy VNode approach doesn\'t enforce specificity. FunctionComponent type is discouraged and automatically accepts both children and ref props. TypeScript only provides compile-time checking; runtime validation requires additional logic.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/51806928/how-to-type-check-component-children-with-preact-and-typescript'
+),
+(
+    'Set base URL for Preact CLI application at non-root path',
+    'stackoverflow-preact',
+    'MEDIUM',
+    '[
+        {"solution": "Create preact.config.js and set config.output.publicPath to desired path", "percentage": 94, "command": "export default (config, env, helpers) => { config.output.publicPath = \"/relativepath/\"; }", "note": "Ensures correct asset references in HTML output"},
+        {"solution": "Add DefinePlugin to expose public path in application via process.env.PUBLIC_PATH", "percentage": 90, "command": "config.plugins.push(new helpers.webpack.DefinePlugin({\"process.env.PUBLIC_PATH\": JSON.stringify(config.output.publicPath || \"/\")}))", "note": "Enables dynamic asset loading from configured path"},
+        {"solution": "Configure routing using HashHistory mode to avoid server routing conflicts for subpaths", "percentage": 85, "note": "Prevents 404 errors on direct navigation or page reloads"}
+    ]'::jsonb,
+    'Preact CLI project initialized, Understanding of webpack configuration basics, Knowledge of hosting environment capabilities, Access to project root for preact.config.js',
+    'Assets load correctly from the relative path, Navigation works without 404 errors, Page reloads maintain functionality at sub-paths',
+    'Forgetting to update DefinePlugin alongside publicPath. Assuming fresh URL loads work without server-side routing configuration. Not testing asset paths (CSS, images, JavaScript bundles).',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45742982/set-base-url-for-preact-cli'
+);

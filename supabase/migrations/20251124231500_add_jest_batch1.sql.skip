@@ -1,0 +1,212 @@
+-- Add Jest testing documentation solutions batch 1
+-- Mined from official Jest documentation (jestjs.io/docs)
+-- Category: jest, testing
+-- Entry count: 12
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Jest error: Timeout - Async callback was not invoked within timeout specified',
+    'jest',
+    'VERY_HIGH',
+    '[
+        {"solution": "Replace conflicting Promise implementation with Jest''s native Promise: globalThis.Promise = jest.requireActual(''promise'');", "percentage": 90, "note": "Most common cause is conflicting Promise polyfills"},
+        {"solution": "Increase test timeout using jest.setTimeout(10000) in test or setup file", "percentage": 85, "command": "jest.setTimeout(10000);"},
+        {"solution": "Ensure async test returns the promise or uses await keyword", "percentage": 95, "note": "Test must wait for async operations to complete"}
+    ]'::jsonb,
+    'Jest configured, Test file with async operations',
+    'Test completes without timeout error, Assertions execute successfully',
+    'Do not mix multiple Promise implementations in the same project. Always return or await promises in tests. Default timeout is 5 seconds.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/troubleshooting'
+),
+(
+    'Jest async test completes before assertions execute',
+    'testing',
+    'VERY_HIGH',
+    '[
+        {"solution": "Return the promise from the test function", "percentage": 95, "note": "Jest waits for returned promises to resolve", "command": "return fetchData().then(data => expect(data).toBe(''value''));"},
+        {"solution": "Use async/await syntax with await keyword before async calls", "percentage": 95, "command": "await expect(fetchData()).resolves.toBe(''value'');"},
+        {"solution": "Use done callback parameter and call done() after assertions", "percentage": 85, "note": "For callback-based async code only"}
+    ]'::jsonb,
+    'Jest test suite, Async function to test',
+    'Assertions execute and appear in test results, No silent passing tests',
+    'Never omit return/await - test will pass without executing assertions. Do not mix done() callback with promise returns - causes memory leak.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/asynchronous'
+),
+(
+    'Jest: Cannot find module from setupFilesAfterEnv',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Use <rootDir> token in path: setupFilesAfterEnv: [''<rootDir>/jest.setup.js'']", "percentage": 90, "note": "Ensures correct path resolution from project root"},
+        {"solution": "Update @testing-library/jest-dom import from /extend-expect to default", "percentage": 85, "command": "setupFilesAfterEnv: [''@testing-library/jest-dom'']", "note": "Breaking change in v6.0"},
+        {"solution": "Clear Jest cache and reinstall dependencies", "percentage": 75, "command": "jest --clearCache && npm install"}
+    ]'::jsonb,
+    'Jest configured, Node modules installed',
+    'Setup file loads without error, Jest runs successfully',
+    'setupFilesAfterEnv files must be valid JS/TS that Jest can resolve. Use absolute paths or <rootDir> token. Check package.json for correct module versions.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/configuration'
+),
+(
+    'Jest tests extremely slow in Docker or CI environment',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Run tests sequentially with --runInBand flag for up to 50% speed improvement", "percentage": 85, "command": "jest --runInBand"},
+        {"solution": "Limit worker pool to 4 workers maximum", "percentage": 80, "command": "jest --maxWorkers=4"},
+        {"solution": "Use --shard flag to parallelize across multiple machines in CI", "percentage": 75, "command": "jest --shard=1/3"}
+    ]'::jsonb,
+    'Jest configured, Tests running in Docker or CI pipeline',
+    'Test execution time reduced by 30-50%, CI builds complete faster',
+    'Docker and CI servers often have limited CPU resources. Running too many parallel workers can cause thrashing. --runInBand disables parallelization entirely.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/troubleshooting'
+),
+(
+    'Jest: Tests must be defined synchronously',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Move test definitions outside of async beforeEach/beforeAll hooks", "percentage": 95, "note": "Jest collects tests before running any setup hooks"},
+        {"solution": "Define test cases synchronously and use async test body for setup", "percentage": 90, "command": "test(''name'', async () => { const data = await setup(); expect(data).toBeDefined(); });"},
+        {"solution": "Avoid using setTimeout or promises to wrap test definitions", "percentage": 95, "note": "test() and describe() must be called synchronously"}
+    ]'::jsonb,
+    'Jest test suite, Test definitions in code',
+    'Jest discovers and runs all tests, Test list appears in output',
+    'Jest collects tests during the initial file scan before executing any code. Cannot use test.each with async data. Define tests synchronously at module level.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/troubleshooting'
+),
+(
+    'Jest mock function returns undefined instead of mocked value',
+    'testing',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use mockResolvedValue for async functions, not mockReturnValue", "percentage": 95, "command": "myFunction.mockResolvedValue(''result'');", "note": "mockReturnValue does not wrap in Promise"},
+        {"solution": "Implement mock with mockImplementation returning Promise", "percentage": 90, "command": "myFunction.mockImplementation(() => Promise.resolve(''result''));"},
+        {"solution": "Ensure mock is defined before the module that uses it is imported", "percentage": 85, "note": "Use jest.mock() at top of test file"}
+    ]'::jsonb,
+    'Jest configured, Function to mock, Test file',
+    'Mock returns expected value, Test assertions pass',
+    'mockReturnValue does not work for async functions - use mockResolvedValue. mockRejectedValue for promise rejections. Mock order matters - define before importing.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/mock-function-api'
+),
+(
+    'Jest: coveragePathIgnorePatterns not working',
+    'jest',
+    'MEDIUM',
+    '[
+        {"solution": "Remove babel-plugin-istanbul from Babel configuration", "percentage": 95, "note": "Jest wraps Istanbul internally - plugin causes conflicts"},
+        {"solution": "Verify patterns use correct regex syntax with proper escaping", "percentage": 85, "command": "coveragePathIgnorePatterns: [''<rootDir>/node_modules/'', ''<rootDir>/dist/'']"},
+        {"solution": "Clear Jest cache after changing coverage configuration", "percentage": 80, "command": "jest --clearCache"}
+    ]'::jsonb,
+    'Jest configured with coverage enabled, Babel configured',
+    'Ignored files excluded from coverage report, Coverage percentages accurate',
+    'babel-plugin-istanbul overrides Jest coverage settings. All Babel-processed files receive instrumentation regardless of ignore patterns when this plugin is present.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/troubleshooting'
+),
+(
+    'Jest moduleNameMapper not working or matching wrong files',
+    'jest',
+    'HIGH',
+    '[
+        {"solution": "Add regex boundaries ^ and $ to patterns: ''^@/(.*)$'' instead of ''@/(.*)''", "percentage": 90, "note": "Without boundaries, patterns match substrings unexpectedly"},
+        {"solution": "Order patterns from most specific to least specific", "percentage": 85, "note": "Jest checks patterns sequentially until one matches"},
+        {"solution": "Avoid using ''.'' in moduleDirectories as it breaks scoped packages", "percentage": 80, "note": "Prevents @scoped/package resolution"}
+    ]'::jsonb,
+    'Jest configured, Module path aliases defined',
+    'Module imports resolve correctly, Tests run without module not found errors',
+    'Pattern without boundaries like ''relay'' matches any module containing ''relay'' as substring. Order matters - first match wins. Using ''.'' in moduleDirectories breaks @scoped packages.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/configuration'
+),
+(
+    'Jest: Unhandled promise rejection in tests',
+    'testing',
+    'HIGH',
+    '[
+        {"solution": "Use expect.assertions(N) to ensure rejection handler executes", "percentage": 90, "command": "expect.assertions(1); return promise.catch(e => expect(e).toMatch(''error''));"},
+        {"solution": "Use .rejects matcher for cleaner async error testing", "percentage": 95, "command": "await expect(fetchData()).rejects.toMatch(''error'');"},
+        {"solution": "Wrap async/await in try-catch and call done(error) in catch", "percentage": 85, "note": "For callback-based tests with done parameter"}
+    ]'::jsonb,
+    'Jest test suite, Async function that may reject',
+    'Rejected promises caught and tested, No unhandled rejection warnings',
+    'Without expect.assertions(), a promise rejection that does not execute the catch block will pass silently. Always verify rejection handlers execute.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/asynchronous'
+),
+(
+    'Jest mock function confusion: mockClear vs mockReset vs mockRestore',
+    'testing',
+    'MEDIUM',
+    '[
+        {"solution": "Use mockClear() to clear call history only, preserves implementation", "percentage": 85, "command": "mockFn.mockClear();"},
+        {"solution": "Use mockReset() to clear history AND remove implementation", "percentage": 85, "command": "mockFn.mockReset();", "note": "Returns undefined after reset"},
+        {"solution": "Use mockRestore() only with jest.spyOn() to restore original implementation", "percentage": 90, "command": "spyFn.mockRestore();", "note": "Only works with spies"}
+    ]'::jsonb,
+    'Jest test with mock functions or spies',
+    'Mock behavior matches expectations, Tests properly isolated from each other',
+    'mockClear only clears history. mockReset also removes implementation. mockRestore only works with jest.spyOn(), not jest.fn(). Do not assign mockFn.mock to variables - gets replaced.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/mock-function-api'
+),
+(
+    'Jest: Memory leak warning when using done() callback',
+    'jest',
+    'MEDIUM',
+    '[
+        {"solution": "Remove return statement when using done callback parameter", "percentage": 95, "note": "Cannot mix done() with returning promises"},
+        {"solution": "Choose either done callback OR promise return, not both", "percentage": 95, "note": "Jest throws error if both are used"},
+        {"solution": "Call done() in try-catch finally block to ensure it is always called", "percentage": 85, "command": "try { expect(x).toBe(y); done(); } catch(e) { done(e); }"}
+    ]'::jsonb,
+    'Jest test suite, Async callback-based code',
+    'No memory leak warnings, Tests complete properly',
+    'Jest throws error if same test function is passed done() callback AND returns a promise. Pick one approach. Always call done() or done(error) to signal completion.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/asynchronous'
+),
+(
+    'Jest transform configuration not working with custom transformers',
+    'jest',
+    'MEDIUM',
+    '[
+        {"solution": "Explicitly include babel-jest when adding custom transformers", "percentage": 90, "command": "transform: { ''^.+\\\\.jsx?$'': ''babel-jest'', ''^.+\\\\.css$'': ''custom-transformer'' }"},
+        {"solution": "Ensure transformer module exports function with correct signature", "percentage": 85, "note": "Must export process() and getCacheKey() functions"},
+        {"solution": "Verify transformIgnorePatterns does not overlap with transform patterns", "percentage": 80, "note": "Ignore patterns take precedence"}
+    ]'::jsonb,
+    'Jest configured, Custom transformer or additional file types to transform',
+    'Files transform correctly, Tests import and execute successfully',
+    'Adding custom transformers removes default babel-jest unless explicitly included. Transformers run once per file unless file changes. Dependencies within transformers are not transpiled.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://jestjs.io/docs/configuration'
+);

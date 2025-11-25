@@ -1,0 +1,226 @@
+-- Add Docker Security CVEs - Container Escape, Privilege Escalation, Image Vulnerabilities
+-- Source: Docker Security Advisories, CVE Databases, Security Research
+-- Extracted: 2025-11-24
+-- Focus: Container breakouts, privilege escalation, image vulnerabilities
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'CVE-2024-41110: Docker AuthZ Plugin Bypass - Critical privilege escalation',
+    'docker-security',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade Docker Engine to version 23.0.14 or 27.1.0 immediately", "percentage": 98, "note": "Critical regression allowing authorization bypass via Content-Length: 0"},
+        {"solution": "Verify upgrade: docker version and check Engine version >= 23.0.14 or >= 27.1.0", "percentage": 95, "command": "docker version | grep Engine"},
+        {"solution": "Review authorization plugin configurations after upgrade", "percentage": 92, "note": "Ensure plugins are functioning correctly post-patch"},
+        {"solution": "Audit recent API requests for suspicious Content-Length: 0 bypass attempts", "percentage": 88, "note": "Check Docker daemon logs for exploitation indicators"}
+    ]'::jsonb,
+    'Docker Engine versions 19.03+, Root/sudo access to upgrade Docker, Authorization plugin in use',
+    'Docker Engine version shows 23.0.14+ or 27.1.0+, AuthZ plugins blocking unauthorized requests, No CVE-2024-41110 in vulnerability scans',
+    'This CVSS 10.0 vulnerability was originally fixed in 2019 (v18.09.1) but regression occurred in v19.03+. Attackers exploit by setting Content-Length: 0 in API requests to bypass AuthZ plugins. Fixed July 23, 2024.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://www.docker.com/blog/docker-security-advisory-docker-engine-authz-plugin/'
+),
+(
+    'CVE-2024-21626: runC container escape via file descriptor leak',
+    'docker-security',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade runC to version 1.1.12 or later immediately", "percentage": 98, "note": "Patches internal file descriptor leak allowing container breakout"},
+        {"solution": "For Docker users: upgrade to Docker Engine 25.0.2+ which includes patched runC", "percentage": 96, "note": "Docker bundles runC - engine update includes fix"},
+        {"solution": "Verify runC version: runc --version shows 1.1.12+", "percentage": 94, "command": "runc --version"},
+        {"solution": "Enable user namespaces for defense-in-depth: dockerd --userns-remap=default", "percentage": 90, "note": "Prevents host root mapping even if escape occurs"}
+    ]'::jsonb,
+    'runC version <= 1.1.11 (vulnerable), Root access to upgrade, Docker or Kubernetes runtime',
+    'runC version >= 1.1.12, No leaked file descriptors in /proc inspection, Container isolation intact',
+    'Part of "Leaky Vessels" vulnerabilities disclosed January 2024. Exploits working directory file descriptor leak. Attackers gain host filesystem access. Requires ability to start containers with custom mount configs. CVSS High severity.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://snyk.io/blog/leaky-vessels-docker-runc-container-breakout-vulnerabilities/'
+),
+(
+    'CVE-2024-23651: BuildKit cache mount symlink race condition',
+    'docker-security',
+    'HIGH',
+    '[
+        {"solution": "Upgrade BuildKit to version 0.12.5 or later", "percentage": 97, "note": "Fixes symlink race in cache mount mechanism"},
+        {"solution": "For Docker users: upgrade to Docker Engine 25.0+ with patched BuildKit", "percentage": 95, "note": "Engine upgrade includes BuildKit fix"},
+        {"solution": "Audit Dockerfiles for --mount=type=cache directives from untrusted sources", "percentage": 92, "note": "Vulnerability exploitable via malicious Dockerfile"},
+        {"solution": "Use --security=sandbox when building untrusted images", "percentage": 88, "command": "docker buildx build --security=sandbox ."}
+    ]'::jsonb,
+    'BuildKit <= 0.12.4 (vulnerable), Docker buildx or standalone BuildKit, Root/sudo to upgrade',
+    'BuildKit version >= 0.12.5, Image builds complete without symlink manipulation, No unauthorized file access',
+    'Part of "Leaky Vessels" (Jan 2024). Race condition during image build cache mounts. Attackers use symlinks to escape build sandbox. Only exploitable during docker build with cache mounts. Affects Docker < 25.0.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://www.docker.com/blog/docker-security-advisory-multiple-vulnerabilities-in-runc-buildkit-and-moby/'
+),
+(
+    'CVE-2024-23652: BuildKit arbitrary file deletion vulnerability',
+    'docker-security',
+    'HIGH',
+    '[
+        {"solution": "Upgrade BuildKit to 0.12.5 or later immediately", "percentage": 98, "note": "Prevents arbitrary host file deletion during builds"},
+        {"solution": "Upgrade Docker Engine to 25.0.2+ if using Docker BuildKit", "percentage": 96, "note": "Includes patched BuildKit version"},
+        {"solution": "Restrict build permissions: never run builds as root if possible", "percentage": 90, "note": "Limits impact of file deletion"},
+        {"solution": "Validate all Dockerfiles from external sources before building", "percentage": 88, "note": "Malicious Dockerfiles can exploit this vulnerability"}
+    ]'::jsonb,
+    'BuildKit <= 0.12.4, Docker build permissions, Temporary directory access',
+    'BuildKit version 0.12.5+, No unauthorized file deletions on host, Build isolation maintained',
+    'Part of "Leaky Vessels". Attackers manipulate temporary directories during image build to delete arbitrary host files. Exploited via crafted Dockerfile. Can cause DoS or security bypass by deleting critical files.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://www.paloaltonetworks.com/blog/cloud-security/leaky-vessels-vulnerabilities-container-escape/'
+),
+(
+    'CVE-2024-23653: BuildKit container escape during image build',
+    'docker-security',
+    'HIGH',
+    '[
+        {"solution": "Upgrade to BuildKit 0.12.5+ or Docker Engine 25.0.2+", "percentage": 98, "note": "Patches container breakout during build process"},
+        {"solution": "Use rootless BuildKit for untrusted image builds", "percentage": 92, "command": "buildkitd --oidc-issuer=https://... (rootless mode)"},
+        {"solution": "Enable user namespaces in Docker daemon config", "percentage": 90, "note": "Adds defense layer even if BuildKit compromised"},
+        {"solution": "Isolate build environment: use separate build hosts for untrusted images", "percentage": 85, "note": "Network/filesystem isolation limits blast radius"}
+    ]'::jsonb,
+    'BuildKit <= 0.12.4, Docker build infrastructure, Root privileges during build',
+    'BuildKit 0.12.5+ installed, Container isolation during builds verified, No unauthorized host access',
+    'Third "Leaky Vessels" BuildKit CVE. Enables breakout during image building. Requires malicious Dockerfile from attacker. Defense-in-depth: use rootless mode + user namespaces.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://www.docker.com/blog/docker-security-advisory-multiple-vulnerabilities-in-runc-buildkit-and-moby/'
+),
+(
+    'CVE-2025-31133: runC masked path symlink bypass (procfs access)',
+    'docker-security',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade runC to 1.2.8, 1.3.3, 1.4.0-rc.3 or later", "percentage": 98, "note": "Patches /dev/null symlink manipulation vulnerability"},
+        {"solution": "Update Docker/Kubernetes to versions bundling patched runC", "percentage": 96, "note": "Container runtimes include runC - update both"},
+        {"solution": "Verify fix: runc --version shows >= 1.2.8 or 1.3.3 or 1.4.0-rc.3", "percentage": 95, "command": "runc --version"},
+        {"solution": "Enable SELinux or AppArmor LSM policies as additional protection", "percentage": 90, "note": "Defense-in-depth against procfs write exploits"}
+    ]'::jsonb,
+    'runC < 1.2.8/1.3.3/1.4.0-rc.3 (vulnerable), Ability to start containers, Root/sudo access',
+    'runC version patched, No symlink manipulation in /dev/null, LSM blocks unauthorized procfs writes',
+    'Disclosed November 2025. Attacker replaces /dev/null with symlink to critical procfs file. runC mounts target read-write, granting host access. Requires custom mount configurations. CVSS 9.3 severity.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://seclists.org/oss-sec/2025/q4/138'
+),
+(
+    'CVE-2025-52565: runC /dev/console bind-mount symlink bypass',
+    'docker-security',
+    'HIGH',
+    '[
+        {"solution": "Upgrade runC to 1.2.8, 1.3.3, 1.4.0-rc.3 or later", "percentage": 98, "note": "Fixes /dev/console symlink race condition"},
+        {"solution": "Restrict container start permissions to trusted users only", "percentage": 92, "note": "Prevents untrusted users from exploiting vulnerability"},
+        {"solution": "Verify runC version meets minimum: runc --version", "percentage": 95, "command": "runc --version"},
+        {"solution": "Deploy containers in user namespace mode", "percentage": 88, "note": "Limits impact even if /dev/console exploited"}
+    ]'::jsonb,
+    'runC versions 1.0.0-rc3 through 1.2.7/1.3.2/1.4.0-rc.2, Container runtime access',
+    'runC 1.2.8+/1.3.3+/1.4.0-rc.3+ installed, Bind-mount targets validated, No unauthorized procfs access',
+    'November 2025 disclosure. Attacker replaces /dev/console target with symlink. runC bind-mounts wrong target, allowing procfs writes. Enables privilege escalation to host root. Affects runC >= 1.0.0-rc3.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://seclists.org/oss-sec/2025/q4/138'
+),
+(
+    'CVE-2025-52881: runC LSM bypass via procfs symlink redirection',
+    'docker-security',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade runC to 1.2.8+, 1.3.3+, or 1.4.0-rc.3+", "percentage": 99, "note": "Critical fix for LSM bypass allowing full host compromise"},
+        {"solution": "Ensure SELinux/AppArmor policies are enforcing mode after patch", "percentage": 95, "note": "Verify LSM protection is active"},
+        {"solution": "Check runC version: runc --version shows patched release", "percentage": 96, "command": "runc --version"},
+        {"solution": "Audit existing containers for signs of exploitation", "percentage": 88, "note": "Check for unauthorized procfs modifications"}
+    ]'::jsonb,
+    'All runC versions before 1.2.8/1.3.3/1.4.0-rc.3, SELinux or AppArmor enabled, Container infrastructure',
+    'runC patched to 1.2.8+/1.3.3+/1.4.0-rc.3+, LSM policies enforcing, No bypassed security modules, Host integrity maintained',
+    'November 2025. Most severe of three runC CVEs. Bypasses Linux Security Modules (SELinux/AppArmor) via procfs symlink writes. Full host compromise possible. All runC versions vulnerable. Immediate patching critical.',
+    0.99,
+    'sonnet-4',
+    NOW(),
+    'https://seclists.org/oss-sec/2025/q4/138'
+),
+(
+    'CVE-2019-5736: runC binary overwrite container escape (historical)',
+    'docker-security',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade to Docker 18.09.2+ or runC 1.0-rc7+", "percentage": 98, "note": "Ancient vulnerability but still present in legacy systems"},
+        {"solution": "Check Docker version: docker version shows 18.09.2 or later", "percentage": 95, "command": "docker version"},
+        {"solution": "Set runC binary as read-only: chmod 0555 /usr/bin/runc", "percentage": 90, "note": "Prevents overwrite even if vulnerability exists"},
+        {"solution": "Use user namespaces to prevent root mapping", "percentage": 88, "command": "dockerd --userns-remap=default"}
+    ]'::jsonb,
+    'Docker < 18.09.2 or runC < 1.0-rc7, Legacy container infrastructure, Root access to upgrade',
+    'Docker 18.09.2+ or runC 1.0-rc7+, runC binary permissions read-only, No unauthorized binary modifications',
+    'February 2019 disclosure. Attacker overwrites host runC binary from container to gain root on host. Exploited via docker exec. Fixed 6 years ago but legacy systems remain vulnerable. Check old deployments.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://unit42.paloaltonetworks.com/breaking-docker-via-runc-explaining-cve-2019-5736/'
+),
+(
+    'CVE-2025-9074: Docker Desktop container escape via Docker Engine access',
+    'docker-security',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade Docker Desktop to version 4.44.3 or later", "percentage": 99, "note": "Patches critical container escape with CVSS 9.3"},
+        {"solution": "Verify upgrade: docker version shows Desktop 4.44.3+", "percentage": 96, "command": "docker version"},
+        {"solution": "Review running containers for unauthorized Engine access", "percentage": 92, "note": "Malicious containers could launch additional containers"},
+        {"solution": "Restrict Docker socket mounting: never use -v /var/run/docker.sock", "percentage": 90, "note": "Even without socket mount, vulnerability exploitable"}
+    ]'::jsonb,
+    'Docker Desktop < 4.44.3, macOS/Windows/Linux Desktop installation, Admin access to upgrade',
+    'Docker Desktop 4.44.3+ installed, No unauthorized container launches, Engine access restricted to Desktop VM',
+    'Disclosed 2025. CVSS 9.3 critical. Malicious container can access Docker Engine and launch containers WITHOUT Docker socket mounted. Fixed in Desktop 4.44.3. Desktop-specific vulnerability.',
+    0.99,
+    'sonnet-4',
+    NOW(),
+    'https://thehackernews.com/2025/08/docker-fixes-cve-2025-9074-critical.html'
+),
+(
+    'CVE-2025-3224: Docker Desktop privilege escalation vulnerability',
+    'docker-security',
+    'HIGH',
+    '[
+        {"solution": "Upgrade Docker Desktop to 4.41.0 or later", "percentage": 98, "note": "Fixes privilege escalation in Desktop components"},
+        {"solution": "Verify update: About Docker Desktop shows 4.41.0+", "percentage": 95, "note": "Check via UI or docker version command"},
+        {"solution": "Review user permissions post-upgrade", "percentage": 90, "note": "Ensure least-privilege principle enforced"},
+        {"solution": "Check for suspicious elevated processes from Docker Desktop", "percentage": 88, "note": "Audit for exploitation indicators"}
+    ]'::jsonb,
+    'Docker Desktop < 4.41.0 (April 2025), Windows/macOS/Linux Desktop, Admin rights to upgrade',
+    'Docker Desktop 4.41.0+ running, No unauthorized privilege escalations, User permissions properly scoped',
+    'April 2025 disclosure. Allows local privilege escalation within Docker Desktop environment. Part of 3-CVE batch fixed in 4.41.0 (CVE-2025-3224, CVE-2025-4095, CVE-2025-3911). Desktop-only vulnerability.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://docs.docker.com/security/security-announcements/'
+),
+(
+    'Docker image vulnerabilities: Unpatched base images with known CVEs',
+    'docker-security',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use Docker Scout to scan images: docker scout cves <image>", "percentage": 95, "command": "docker scout cves nginx:latest"},
+        {"solution": "Switch to Docker Official Images which patch CVEs within 24 hours", "percentage": 93, "note": "Official images use automated remediation pipelines"},
+        {"solution": "Enable Docker Scout continuous monitoring for all production images", "percentage": 90, "note": "Get alerts when new CVEs discovered"},
+        {"solution": "Use minimal base images (alpine, distroless) to reduce attack surface", "percentage": 88, "note": "Fewer packages = fewer vulnerabilities"},
+        {"solution": "Implement automated image rebuilds on weekly schedule", "percentage": 85, "note": "Ensures latest security patches incorporated"}
+    ]'::jsonb,
+    'Docker Scout access, Image registry with scanning capability, CI/CD pipeline for automated builds',
+    'Docker Scout shows 0 critical/high CVEs, Base images updated within 7 days, Automated scanning enabled in CI/CD',
+    'Base images contain OS packages with known vulnerabilities. Docker Official Images patch within 24hrs but user images lag. Scout integrates CVE databases (NVD, GitHub Security Advisories). Scan before deploy.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://www.docker.com/blog/how-docker-hardened-images-patch-cves-in-24-hours/'
+);

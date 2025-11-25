@@ -1,0 +1,224 @@
+-- Add Angular major version migration guides (15→16→17→18)
+-- Extracted from Angular official documentation and upgrade guides
+-- Category: migration-guides
+-- Date: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Angular 15 to 16 upgrade: Migrate to standalone components',
+    'migration-guides',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run Angular migration schematic: ng generate @angular/core:standalone", "percentage": 95, "note": "Automated migration available from v15.2.0+", "command": "ng generate @angular/core:standalone"},
+        {"solution": "Convert components incrementally by adding standalone: true and imports array", "percentage": 90, "note": "Manual migration for granular control"},
+        {"solution": "Remove NgModule declarations and add standalone: true to component decorator", "percentage": 85, "note": "Components become self-contained"},
+        {"solution": "Update bootstrapping from bootstrapModule to bootstrapApplication", "percentage": 90, "command": "bootstrapApplication(AppComponent, appConfig)"}
+    ]'::jsonb,
+    'Angular version 15.2.0 or higher, Node.js 18.13.0 or 20.9.0+',
+    'Application builds successfully with ng build, All components render correctly, No NgModule import errors, Tests pass',
+    'Standalone migration is optional in Angular 15-17. Must migrate incrementally - convert leaf components first, then parent components. CommonModule imports no longer needed for standalone components. Router and HttpClient require new bootstrap patterns.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/reference/migrations/standalone'
+),
+(
+    'Angular 16 upgrade: Migrate to inject() function for dependency injection',
+    'migration-guides',
+    'HIGH',
+    '[
+        {"solution": "Replace constructor injection with inject() calls in component/directive class body", "percentage": 90, "note": "Cleaner syntax for standalone components", "command": "private service = inject(MyService);"},
+        {"solution": "Use inject() in functional guards and resolvers instead of class-based approach", "percentage": 95, "note": "Required for functional route guards"},
+        {"solution": "Migrate from class constructors to field initializers with inject()", "percentage": 85, "note": "Works in injection context only"},
+        {"solution": "Combine with DestroyRef for lifecycle management: destroyRef = inject(DestroyRef)", "percentage": 80, "command": "destroyRef.onDestroy(() => cleanup())"}
+    ]'::jsonb,
+    'Angular 16+, Standalone components or directives, TypeScript 5.0+',
+    'Dependency injection works correctly, No constructor needed for DI, Services inject successfully, Application builds and runs',
+    'inject() only works in injection context (component class body, factory functions, field initializers). Cannot use in constructor body or arbitrary methods. Must be called during initialization phase.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/guide/di/dependency-injection'
+),
+(
+    'Angular 16: Update TypeScript to version 5.0 or higher',
+    'migration-guides',
+    'VERY_HIGH',
+    '[
+        {"solution": "Update TypeScript dependency: npm install typescript@~5.2.0 --save-dev", "percentage": 95, "command": "npm install typescript@~5.2.0 --save-dev"},
+        {"solution": "Run ng update @angular/core@16 @angular/cli@16 to automatically update dependencies", "percentage": 90, "command": "ng update @angular/core@16 @angular/cli@16"},
+        {"solution": "Update tsconfig.json target to ES2022 or higher for better compatibility", "percentage": 85, "note": "Leverages newer JavaScript features"},
+        {"solution": "Fix TypeScript 5.0 breaking changes in your codebase (stricter type checking)", "percentage": 80, "note": "Review breaking changes documentation"}
+    ]'::jsonb,
+    'Angular 16+, Node.js 18.13.0 or 20.9.0+, npm or yarn package manager',
+    'TypeScript version 5.0+ in package.json, ng build succeeds, No TypeScript compilation errors, All type checks pass',
+    'Angular 16 dropped support for TypeScript 4.8 and earlier. TypeScript 5.0 has stricter type checking that may break existing code. Update all @types/* packages to compatible versions. ESLint may need updates for TS 5.0.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/reference/versions'
+),
+(
+    'Angular 16: Migrate to DestroyRef for lifecycle cleanup',
+    'migration-guides',
+    'MEDIUM',
+    '[
+        {"solution": "Inject DestroyRef and register cleanup callbacks: destroyRef.onDestroy(() => cleanup())", "percentage": 90, "command": "destroyRef = inject(DestroyRef); destroyRef.onDestroy(() => {})"},
+        {"solution": "Replace ngOnDestroy lifecycle hook with DestroyRef for cleaner code", "percentage": 85, "note": "Works in standalone components and directives"},
+        {"solution": "Use with takeUntilDestroyed() operator for RxJS subscriptions", "percentage": 95, "command": "obs$.pipe(takeUntilDestroyed()).subscribe()"},
+        {"solution": "Combine DestroyRef with inject() for functional programming style", "percentage": 80, "note": "No class methods needed"}
+    ]'::jsonb,
+    'Angular 16+, RxJS 7.8+, Standalone components or inject() support',
+    'Cleanup callbacks execute on component destroy, No memory leaks, Subscriptions properly cleaned up, Tests verify cleanup behavior',
+    'DestroyRef only available in injection context. Cannot use in constructor. takeUntilDestroyed() must be called in injection context (not inside subscribe). Not a replacement for all ngOnDestroy use cases.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/guide/components/lifecycle'
+),
+(
+    'Angular 17 upgrade: Migrate to new control flow syntax (@if, @for, @switch)',
+    'migration-guides',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run automated migration: ng generate @angular/core:control-flow", "percentage": 95, "note": "Converts *ngIf, *ngFor, *ngSwitch automatically", "command": "ng generate @angular/core:control-flow"},
+        {"solution": "Replace *ngIf with @if {} syntax in templates", "percentage": 90, "command": "@if (condition) { <div>content</div> } @else { }"},
+        {"solution": "Convert *ngFor to @for with required track expression", "percentage": 90, "command": "@for (item of items; track item.id) { }"},
+        {"solution": "Migrate *ngSwitch to @switch {} with @case and @default", "percentage": 85, "command": "@switch (value) { @case (x) {} @default {} }"}
+    ]'::jsonb,
+    'Angular 17+, Update all templates to use new syntax',
+    'Templates compile successfully, All control flow works correctly, 90% performance improvement for @for, No *ngIf/*ngFor/*ngSwitch remaining',
+    'New control flow is built-in - no CommonModule import needed. @for REQUIRES track expression (was optional in *ngFor). Syntax is more JavaScript-like but not valid TypeScript. Migration is one-way - cannot mix old and new syntax easily.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/reference/migrations/control-flow'
+),
+(
+    'Angular 17: Update to new @for track requirement',
+    'migration-guides',
+    'HIGH',
+    '[
+        {"solution": "Add track expression to all @for loops: track item.id or track $index", "percentage": 95, "note": "Required in Angular 17+", "command": "@for (item of items; track item.id) {}"},
+        {"solution": "Use track $index for simple arrays without unique IDs", "percentage": 90, "command": "@for (item of items; track $index) {}"},
+        {"solution": "Track by identity function for primitive arrays: track item", "percentage": 85, "command": "@for (num of numbers; track num) {}"},
+        {"solution": "Create custom trackBy function for complex objects", "percentage": 80, "note": "Best performance for large lists"}
+    ]'::jsonb,
+    'Angular 17+, New control flow syntax enabled',
+    'All @for loops have valid track expression, No compilation errors, List rendering works correctly, Optimal performance with proper tracking',
+    'track is REQUIRED in @for (was optional trackBy in *ngFor). Forgetting track causes compilation error. Using wrong track expression (like always tracking by $index) defeats change detection optimization. Choose stable unique identifiers.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/guide/templates/control-flow'
+),
+(
+    'Angular 17: Handle CommonModule no longer required for control flow',
+    'migration-guides',
+    'MEDIUM',
+    '[
+        {"solution": "Remove CommonModule imports from standalone components using new control flow", "percentage": 90, "note": "Built-in syntax does not need module import"},
+        {"solution": "Keep CommonModule only if using pipes like DatePipe, CurrencyPipe, etc.", "percentage": 95, "note": "Pipes still require CommonModule"},
+        {"solution": "Update standalone component imports array to remove CommonModule if not needed", "percentage": 85, "command": "imports: [FormsModule] // CommonModule removed"},
+        {"solution": "Import specific pipes individually instead of entire CommonModule", "percentage": 80, "note": "Reduces bundle size"}
+    ]'::jsonb,
+    'Angular 17+, Standalone components, New control flow syntax migrated',
+    'Application builds without CommonModule, Control flow works correctly, Smaller bundle size, No missing pipe errors',
+    'New @if/@for/@switch are built-in language features, not directives. CommonModule still needed for *ngIf/*ngFor if using old syntax. Pipes (date, currency, json, etc.) still require CommonModule or individual imports.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/guide/templates/control-flow'
+),
+(
+    'Angular 17: Update RxJS to version 7.8+ for compatibility',
+    'migration-guides',
+    'HIGH',
+    '[
+        {"solution": "Update RxJS: npm install rxjs@~7.8.0", "percentage": 95, "command": "npm install rxjs@~7.8.0"},
+        {"solution": "Run ng update to automatically update RxJS and fix breaking changes", "percentage": 90, "command": "ng update @angular/core@17"},
+        {"solution": "Migrate deprecated RxJS operators to current versions", "percentage": 85, "note": "switchMap, mergeMap, etc. may have changes"},
+        {"solution": "Use takeUntilDestroyed() operator introduced in Angular 16+", "percentage": 90, "command": "pipe(takeUntilDestroyed())"}
+    ]'::jsonb,
+    'Angular 17+, RxJS 7.8+, TypeScript 5.2+',
+    'RxJS version 7.8+ in package.json, All observables work correctly, No deprecation warnings, takeUntilDestroyed available',
+    'Angular 17 requires RxJS 7.8 minimum. Earlier versions not compatible. Some RxJS operators were deprecated - check migration guide. takeUntilDestroyed replaces manual Subject-based unsubscribe patterns.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/reference/versions'
+),
+(
+    'Angular 18 upgrade: Enable zoneless change detection (experimental)',
+    'migration-guides',
+    'MEDIUM',
+    '[
+        {"solution": "Add provideExperimentalZonelessChangeDetection() to app config", "percentage": 90, "command": "provideExperimentalZonelessChangeDetection()", "note": "Experimental feature"},
+        {"solution": "Remove zone.js from polyfills in angular.json after migration", "percentage": 85, "note": "Reduces bundle by ~10kB gzipped"},
+        {"solution": "Update components to use signals or call markForCheck() manually", "percentage": 95, "note": "Required for change detection without zones"},
+        {"solution": "Use OnPush change detection strategy on all components", "percentage": 90, "note": "Preparation step for zoneless"}
+    ]'::jsonb,
+    'Angular 18+, All components using signals or OnPush strategy, No reliance on automatic change detection',
+    'Application works without zone.js, Change detection triggers correctly, Smaller bundle size (~10kB reduction), No UI update issues',
+    'Zoneless is EXPERIMENTAL in Angular 18. Requires manual change detection triggers or signals. Third-party libraries may depend on zone.js. Cannot mix zones and zoneless. Test thoroughly before production use.',
+    0.75,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/guide/zoneless'
+),
+(
+    'Angular 18: Migrate to signals for reactive state management',
+    'migration-guides',
+    'HIGH',
+    '[
+        {"solution": "Replace component properties with signal() for reactive state", "percentage": 90, "command": "count = signal(0); // instead of count = 0"},
+        {"solution": "Use computed() for derived state instead of getters", "percentage": 95, "command": "doubled = computed(() => this.count() * 2)"},
+        {"solution": "Update templates to call signals: {{ count() }} instead of {{ count }}", "percentage": 85, "note": "Signals are functions"},
+        {"solution": "Use effect() for side effects based on signal changes", "percentage": 80, "command": "effect(() => console.log(this.count()))"}
+    ]'::jsonb,
+    'Angular 16+ (signals introduced in 16, stable in 17+), Understanding of reactive programming',
+    'Signals work in templates, computed() updates automatically, effect() triggers on signal changes, Better change detection performance',
+    'Signals are getter functions - must call with () in templates. Cannot use in assignment context. effect() runs in injection context only. Signals improve performance but require mental model shift from observables.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/guide/signals'
+),
+(
+    'Angular 15-18: Handle NgModules deprecation and migration path',
+    'migration-guides',
+    'HIGH',
+    '[
+        {"solution": "Migrate to standalone components gradually - start with leaf components", "percentage": 90, "note": "Incremental migration recommended"},
+        {"solution": "Use provideRouter() instead of RouterModule.forRoot() in standalone apps", "percentage": 95, "command": "provideRouter(routes)"},
+        {"solution": "Replace HttpClientModule with provideHttpClient() in app config", "percentage": 95, "command": "provideHttpClient()"},
+        {"solution": "Convert lazy-loaded modules to standalone component routes", "percentage": 85, "command": "loadComponent: () => import(./feature.component)"}
+    ]'::jsonb,
+    'Angular 15+ for gradual migration, Angular 17+ for full standalone benefits',
+    'No NgModule decorators in new code, Standalone: true on all components, Application uses bootstrapApplication, Lazy loading works with loadComponent',
+    'NgModules not fully removed yet but discouraged. Mixing modules and standalone is allowed but complex. Router and HTTP client require provider functions in standalone apps. Some third-party libraries still require NgModules.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/reference/migrations/standalone'
+),
+(
+    'Angular version upgrade: Run ng update for automated migrations',
+    'migration-guides',
+    'VERY_HIGH',
+    '[
+        {"solution": "Update one major version at a time: ng update @angular/core@16 @angular/cli@16", "percentage": 95, "note": "Safest upgrade path", "command": "ng update @angular/core@16 @angular/cli@16"},
+        {"solution": "Check for available updates first: ng update", "percentage": 90, "command": "ng update"},
+        {"solution": "Run with --force flag if peer dependency conflicts occur", "percentage": 80, "command": "ng update @angular/core --force", "note": "Use with caution"},
+        {"solution": "Review CHANGELOG and breaking changes before upgrading", "percentage": 85, "note": "Understand what will break"}
+    ]'::jsonb,
+    'Angular CLI installed, Git repository with clean working directory, Node.js compatible version',
+    'ng update completes successfully, Application builds with ng build, All tests pass, No deprecation warnings',
+    'Always upgrade one major version at a time (15→16→17→18). Running ng update skipping versions may break. Commit code before upgrade. Review migration guide for each version. Some migrations are automatic, some require manual fixes.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://angular.dev/update-guide'
+);

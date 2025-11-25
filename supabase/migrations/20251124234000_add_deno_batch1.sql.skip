@@ -1,0 +1,217 @@
+-- Deno documentation mining batch 1
+-- Covers: permission errors, import/module errors, compatibility issues
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Deno permission denied - file read/write',
+    'deno',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add --allow-read flag to enable file reading: deno run --allow-read script.ts", "percentage": 95, "note": "Most common solution for file access"},
+        {"solution": "Use granular permissions for specific paths: deno run --allow-read=./data,./config script.ts", "percentage": 90, "note": "More secure than allowing all reads"},
+        {"solution": "Add --allow-write flag for write operations: deno run --allow-write=./ script.ts", "percentage": 95, "note": "Required for file write operations"},
+        {"solution": "Deny specific paths while allowing broader access: deno run --allow-read --deny-read=/etc/hosts script.ts", "percentage": 85, "note": "Deny flags take precedence over allow flags"}
+    ]'::jsonb,
+    'Deno runtime installed, Valid file paths exist',
+    'File operations execute without permission errors, Script runs successfully',
+    'Default behavior denies all file access. Deny flags override allow flags. Never use --allow-all (-A) in production without understanding security implications.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/security/'
+),
+(
+    'Deno permission denied - network access',
+    'deno',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add --allow-net flag to enable network access: deno run --allow-net script.ts", "percentage": 95, "note": "Enables all network operations"},
+        {"solution": "Restrict to specific hosts: deno run --allow-net=github.com,jsr.io script.ts", "percentage": 90, "note": "More secure, specify exact domains needed"},
+        {"solution": "Include ports in restrictions: deno run --allow-net=example.com:443 script.ts", "percentage": 85, "note": "Even more granular control"},
+        {"solution": "Deny specific domains: deno run --allow-net --deny-net=github.com script.ts", "percentage": 80, "note": "Allow all except specific domains"}
+    ]'::jsonb,
+    'Deno runtime installed, Valid network endpoints',
+    'HTTP requests succeed without permission errors, API calls work correctly',
+    'Network requests, sockets, and DNS resolution all blocked by default. HTTPS required for web imports. Deny flags take precedence.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/security/'
+),
+(
+    'Deno permission denied - environment variables',
+    'deno',
+    'HIGH',
+    '[
+        {"solution": "Add --allow-env flag to access all environment variables: deno run --allow-env script.ts", "percentage": 90, "note": "Enables access to all env vars"},
+        {"solution": "Specify individual variables: deno run --allow-env=HOME,DATABASE_URL script.ts", "percentage": 95, "note": "More secure, whitelist specific variables"},
+        {"solution": "Use wildcards for variable groups (v2.1+): deno run --allow-env=\"AWS_*\" script.ts", "percentage": 85, "note": "Matches all variables with prefix"},
+        {"solution": "Deny specific variables: deno run --allow-env --deny-env=AWS_SECRET_ACCESS_KEY script.ts", "percentage": 80, "note": "Allow most but deny sensitive ones"}
+    ]'::jsonb,
+    'Deno runtime v2.0+, Environment variables set in shell',
+    'Deno.env.get() returns expected values, No permission errors',
+    'Cannot read or write environment variables by default. Wildcards only available in Deno v2.1+. Deny flags override allow flags.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/security/'
+),
+(
+    'Deno permission denied - subprocess spawn',
+    'deno',
+    'HIGH',
+    '[
+        {"solution": "Add --allow-run flag to spawn any subprocess: deno run --allow-run script.ts", "percentage": 90, "note": "Allows all subprocess execution"},
+        {"solution": "Restrict to specific programs: deno run --allow-run=\"curl,node,whoami\" script.ts", "percentage": 95, "note": "More secure, whitelist specific executables"},
+        {"solution": "Deny specific programs: deno run --allow-run --deny-run=\"whoami\" script.ts", "percentage": 80, "note": "Allow most but deny specific commands"}
+    ]'::jsonb,
+    'Deno runtime installed, Executables available in PATH',
+    'Subprocesses spawn successfully, Commands execute without permission errors',
+    'Avoid --allow-run=deno unless parent has --allow-all. Dynamic libraries execute outside sandbox. Deny flags take precedence.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/security/'
+),
+(
+    'Deno import error - missing file extension',
+    'deno',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add file extension to local imports: change \"./calc\" to \"./calc.ts\"", "percentage": 98, "note": "Required by ECMAScript modules specification"},
+        {"solution": "Use --unstable-sloppy-imports flag to omit extensions: deno run --unstable-sloppy-imports script.ts", "percentage": 75, "note": "Not recommended, does not work with deno compile"},
+        {"solution": "Configure import map in deno.json to handle extensionless imports", "percentage": 80, "note": "Better than sloppy-imports for production"}
+    ]'::jsonb,
+    'Deno runtime installed, Import files exist at specified paths',
+    'Script runs without module resolution errors, Imports load successfully',
+    'ECMAScript modules require full file extensions for local imports. --unstable-sloppy-imports does not support deno compile and has performance overhead.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/modules/'
+),
+(
+    'Deno module not found in frozen lockfile',
+    'deno',
+    'HIGH',
+    '[
+        {"solution": "Temporarily unfreeze lockfile: deno run --frozen=false main.ts", "percentage": 95, "note": "Allows new dependencies to be resolved"},
+        {"solution": "Update deno.json config: set \"lock\": { \"frozen\": false }", "percentage": 90, "note": "Persistent configuration change"},
+        {"solution": "Regenerate lockfile completely: delete deno.lock then run deno cache main.ts", "percentage": 85, "note": "Nuclear option for corrupted lockfiles"},
+        {"solution": "Add missing dependency explicitly: deno cache https://example.com/dependency/mod.ts", "percentage": 88, "note": "Pre-cache specific dependency"}
+    ]'::jsonb,
+    'Deno runtime installed, deno.lock file exists, Internet connection available',
+    'New dependencies resolve successfully, Lockfile updates with new entries, Script executes without module errors',
+    'Frozen lockfiles prevent new dependencies in CI/production. Message format: \"The lockfile is frozen. Cannot add new entry for X\". Always unfreeze temporarily, never commit unfrozen config to production.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/modules/'
+),
+(
+    'Supabase Edge Function error - missing environment variable',
+    'deno',
+    'VERY_HIGH',
+    '[
+        {"solution": "Set secrets via CLI: supabase secrets set MY_SECRET=value", "percentage": 95, "note": "Secrets persist across deployments"},
+        {"solution": "Add to local .env file for development: echo MY_SECRET=value >> supabase/functions/.env", "percentage": 90, "note": "Local development only, auto-loaded on supabase start"},
+        {"solution": "Use --env-file flag for custom env files: supabase functions serve --env-file .env.local", "percentage": 88, "note": "Useful for managing different environments"},
+        {"solution": "Verify secret exists: supabase secrets list", "percentage": 85, "command": "supabase secrets list"}
+    ]'::jsonb,
+    'Supabase CLI authenticated, Project created, Function deployed',
+    'Deno.env.get(''MY_SECRET'') returns expected value, Function executes without error, No undefined environment variable errors',
+    'Secrets must be set before deployment. Local .env files not used in production. Use supabase secrets, not dashboard environment variables. Never commit .env files to Git.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/functions/secrets'
+),
+(
+    'Deno require() not defined error',
+    'deno',
+    'HIGH',
+    '[
+        {"solution": "Use .cjs file extension for CommonJS modules: rename file.js to file.cjs", "percentage": 92, "note": "Deno automatically treats .cjs as CommonJS"},
+        {"solution": "Create require() manually: import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);", "percentage": 95, "note": "Enables require() in ESM files"},
+        {"solution": "Add package.json with \"type\": \"commonjs\" to project directory", "percentage": 85, "note": "Makes all .js files treated as CommonJS"},
+        {"solution": "Convert to ESM imports: replace require(\"module\") with import from \"module\"", "percentage": 98, "note": "Recommended modern approach"}
+    ]'::jsonb,
+    'Deno runtime installed, Node.js compatibility mode enabled',
+    'require() statements work without errors, Modules load successfully',
+    'Deno uses ESM by default. require() only works with .cjs extension or explicit configuration. Error message: \"module is not defined\" indicates CommonJS without proper setup.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/node/'
+),
+(
+    'Deno __dirname or __filename not defined',
+    'deno',
+    'HIGH',
+    '[
+        {"solution": "Replace __dirname with import.meta.dirname", "percentage": 98, "note": "Modern ESM equivalent for directory path"},
+        {"solution": "Replace __filename with import.meta.filename", "percentage": 98, "note": "Modern ESM equivalent for file path"},
+        {"solution": "Use import.meta.url for file URL: new URL(import.meta.url).pathname", "percentage": 85, "note": "Alternative approach using URL API"}
+    ]'::jsonb,
+    'Deno runtime installed, Using ES modules',
+    'No reference errors for __dirname or __filename, File path operations work correctly',
+    'CommonJS globals __dirname and __filename not available in ESM. Use import.meta equivalents instead.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/node/'
+),
+(
+    'Deno node built-in module not found',
+    'deno',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add node: prefix to built-in imports: import * as os from \"node:os\"", "percentage": 98, "note": "Required for all Node.js built-in modules"},
+        {"solution": "Check Deno hint message for correct module name", "percentage": 90, "note": "Deno provides helpful error messages with suggestions"},
+        {"solution": "Use npm: prefix for npm packages: import pkg from \"npm:package-name\"", "percentage": 95, "note": "For external npm packages, not built-ins"}
+    ]'::jsonb,
+    'Deno runtime installed with Node.js compatibility',
+    'Node built-in modules import successfully, No module not found errors',
+    'Missing node: prefix is most common cause. Error hint: \"If you want to use a built-in Node module, add a ''node:'' prefix\". Do not confuse with npm: prefix for packages.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/fundamentals/node/'
+),
+(
+    'Deno unstable API error - feature flag required',
+    'deno',
+    'MEDIUM',
+    '[
+        {"solution": "Add specific unstable flag: deno run --unstable-kv script.ts", "percentage": 95, "note": "Use granular flags for specific features"},
+        {"solution": "Configure in deno.json: add to \"unstable\" array: [\"kv\", \"cron\"]", "percentage": 90, "note": "Persistent configuration"},
+        {"solution": "Set environment variable: export DENO_UNSTABLE_KV=1", "percentage": 80, "note": "Alternative to CLI flags"},
+        {"solution": "Use --unstable flag for all unstable features (deprecated): deno run --unstable script.ts", "percentage": 70, "note": "Being removed, use granular flags instead"}
+    ]'::jsonb,
+    'Deno runtime installed, Unstable feature available in current version',
+    'Unstable APIs work without errors, Features execute as expected',
+    'Unstable features require explicit opt-in. --unstable flag deprecated for new features. API specifications may change before stabilization. --unstable-sloppy-imports does not work with deno compile.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.deno.com/runtime/reference/cli/unstable_flags/'
+),
+(
+    'Deno importing from esm.sh fails in Edge Functions',
+    'deno',
+    'MEDIUM',
+    '[
+        {"solution": "Add ?target=deno to esm.sh import URL: import Stripe from \"https://esm.sh/stripe@11.2.0?target=deno\"", "percentage": 95, "note": "Tells esm.sh to bundle for Deno runtime"},
+        {"solution": "Use npm: prefix instead: import Stripe from \"npm:stripe@11.2.0\"", "percentage": 90, "note": "Native npm compatibility in Deno"},
+        {"solution": "Use JSR registry when available: import from \"jsr:@scope/package\"", "percentage": 85, "note": "Deno-first registry"}
+    ]'::jsonb,
+    'Deno runtime or Supabase Edge Functions environment, Internet connection',
+    'Module imports successfully, No compatibility errors, Code executes correctly',
+    'esm.sh serves different bundles per target. Default target may not work with Deno. ?target=deno parameter required for Deno compatibility.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/orgs/supabase/discussions/14303'
+);

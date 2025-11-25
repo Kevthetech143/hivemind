@@ -1,0 +1,7 @@
+-- Remove 2 unconfirmed solutions (no maintainer/user verification)
+
+DELETE FROM knowledge_entries
+WHERE id IN (121, 124);
+
+-- #121: VS Code password change - workaround described but no confirmation it worked
+-- #124: CLAUDE.md violations - user suggestions only, no "this worked" confirmation

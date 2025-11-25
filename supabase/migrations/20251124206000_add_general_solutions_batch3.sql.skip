@@ -1,0 +1,48 @@
+-- Add general Claude Code solutions from Stack Overflow (batch 3 of 3)
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up)
+VALUES
+(
+  'VSCode keybindings interfere with Claude Code terminal Shift+Enter sends backslash',
+  'general',
+  '[{"solution": "Use terminalShellType condition to detect Claude Code vs normal shell", "percentage": 95, "command": "In keybindings.json use when: \"terminalFocus && !terminalShellType\". terminalShellType is null when Claude running.", "note": "User confirmed terminalShellType is \"pwsh\" or \"gitbash\" for normal terminals, null for Claude Code. Allows selective keybinding."}]'::jsonb,
+  '/terminal-setup creates Shift+Enter binding that disrupts regular terminal. Normal shells have terminalShellType set, Claude Code sets it to null.',
+  0.95,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'Claude Code settings.json deny block not respected reads .env despite restrictions',
+  'general',
+  '[{"solution": "Bug fixed in later version OR use .claude/settings.local.json", "percentage": 90, "note": "User confirmed: \"after a few weeks tested this again with updated Claude version and this time Claude it saying it cannot access .env file anymore\". Alternative: use .claude/settings.local.json instead of .claude/settings.json for permissions."}]'::jsonb,
+  'Deny permissions in .claude/settings.json were not working initially. Fixed in subsequent Claude update. May need .claude/settings.local.json format.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'Claude connected to GitHub but private repositories not showing only 4 of 10 visible',
+  'general',
+  '[{"solution": "Configure permissions at github.com/apps/claude-for-github/installations/select_target", "percentage": 80, "command": "Visit URL, select user/org, grant access to all/specific repos. Can also paste GitHub URL in Claude app for unlisted repos.", "note": "6 upvotes. Some repos may not list but can add via \"paste Github URL\" link in Claude desktop even after permission grants."}]'::jsonb,
+  'GitHub app permissions not configured. Even after granting access, some repos stay unlisted but can be added manually via URL paste in Claude app.',
+  0.80,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'Claude Code through AWS Bedrock authentication fails',
+  'authentication',
+  '[{"solution": "Set CLAUDE_CODE_USE_BEDROCK=1 and pass AWS_PROFILE environment variable", "percentage": 75, "command": "export CLAUDE_CODE_USE_BEDROCK=1 && export ANTHROPIC_MODEL=\"us.anthropic.claude-3-7-sonnet-20250219-v1:0\" && export AWS_PROFILE=bedrock", "note": "GitHub issue #2260 comment suggests AWS_PROFILE is required. Can also use: claude config set --global env with all three variables."}]'::jsonb,
+  '/login forces Anthropic auth. Bedrock requires all 3 env vars: CLAUDE_CODE_USE_BEDROCK, ANTHROPIC_MODEL, AWS_PROFILE. Missing AWS_PROFILE causes auth failure.',
+  0.75,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+);

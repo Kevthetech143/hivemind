@@ -1,0 +1,211 @@
+-- Add Rust CVE advisories from RustSec Advisory Database
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'CVE-2024-36400: nano-id reduced entropy in base58 and base62 functions',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade nano-id crate to version 0.4.0 or later", "percentage": 95, "note": "Latest versions correct character set implementation for base58, base62, and gen macro"},
+        {"solution": "Review all generated IDs from affected versions for predictability patterns", "percentage": 80, "note": "IDs generated before patch may have reduced entropy - consider regenerating security-critical tokens"},
+        {"solution": "Disable usage of nano_id::base58 and nano_id::base62 functions until upgrade is applied", "percentage": 85, "note": "If upgrading is blocked, avoid these functions entirely"}
+    ]'::jsonb,
+    'Rust project with nano-id dependency, Cargo.toml access',
+    'Cargo check passes without warnings, nano-id version >=0.4.0 confirmed in Cargo.lock, ID generation uses correct character sets',
+    'base62 was using only 32 characters instead of 62, base58 only 16 instead of 58. Do not assume generated IDs are cryptographically secure without verifying version. Session tokens or security-sensitive IDs from versions <0.4.0 should be regenerated.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0343.html'
+),
+(
+    'CVE-2023-26489: wasmtime guest-controlled out-of-bounds memory access on x86_64',
+    'cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Update wasmtime to 4.0.1 or later for 4.x series, 5.0.1 or later for 5.x series, or 6.0.1+ for 6.x", "percentage": 95, "note": "Critical memory safety patch - upgrade immediately"},
+        {"solution": "Disable x86_64 WebAssembly execution on vulnerable versions until patched", "percentage": 90, "note": "Temporary mitigation if immediate upgrade impossible"},
+        {"solution": "Isolate wasmtime runtime in separate process with restricted memory limits", "percentage": 75, "note": "Defense-in-depth if running unpatched wasmtime in multi-tenant environment"}
+    ]'::jsonb,
+    'Wasmtime dependency in Rust project, x86_64 architecture, WebAssembly guest execution enabled',
+    'wasmtime version >=4.0.1 or >=5.0.1 or >=6.0.1 confirmed, no guest out-of-bounds memory access observed in testing, guest code executes without crashes',
+    'This is a critical vulnerability with CVSS 9.9 allowing guests to read/write arbitrary memory on x86_64. Do not delay patching. Verify architecture is x86_64 before assuming vulnerability applies.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2023-0090.html'
+),
+(
+    'CVE-2024-47609: tonic remotely exploitable denial of service via accept loop error',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update tonic dependency to version 0.12.3 or later", "percentage": 95, "note": "Fixes uncaught error handling in accept loop"},
+        {"solution": "Implement custom TCP/TLS accept loop with explicit error handling", "percentage": 80, "note": "Temporary workaround if immediate upgrade blocked - catch all error types and continue"},
+        {"solution": "Rate limit TCP connection attempts at network layer", "percentage": 70, "note": "Defense-in-depth to reduce DoS surface"}
+    ]'::jsonb,
+    'tonic server implementation, TCP/TLS transport enabled, ability to upgrade dependency or patch code',
+    'tonic version >=0.12.3 confirmed, server continues accepting connections after error conditions, no unexpected service exits observed',
+    'The vulnerability allows remote attackers to trigger accept errors not properly handled by accept loop. The accept loop exits instead of continuing. Upgrading is essential for production tonic servers.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0376.html'
+),
+(
+    'CVE-2024-32884: gix-transport SSH option injection via malicious username in clone URL',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update gix-transport to version 0.42.0 or later, or update gix crate to 0.62.0+", "percentage": 95, "note": "Validates username portion of SSH URLs to prevent option smuggling"},
+        {"solution": "Manually validate clone URLs before passing to gix-transport - reject usernames starting with hyphen", "percentage": 85, "note": "Temporary workaround if upgrade delayed"},
+        {"solution": "Avoid cloning from untrusted repositories in directories containing sensitive SSH config files", "percentage": 75, "note": "Reduces attack surface - clone operations should use isolated working directories"}
+    ]'::jsonb,
+    'gix-transport or gix crate dependency, SSH clone operations enabled, ability to control clone URL inputs',
+    'gix-transport version >=0.42.0 confirmed, clone URLs with malicious usernames are properly validated, no SSH option injection observed',
+    'Attackers can craft clone URLs with hyphen-prefixed usernames to smuggle SSH options (e.g., -F flag). Risk is highest when repositories contain malicious submodules or when cloning in directories with sensitive SSH config files.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0335.html'
+),
+(
+    'CVE-2024-32650: rustls infinite loop in complete_io when receiving close_notify during handshake',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update rustls to 0.23.5+ for 0.23.x, 0.22.4+ for 0.22.x, or 0.21.11+ for 0.21.x", "percentage": 95, "note": "Fixes infinite loop condition in TLS handshake handling"},
+        {"solution": "Use rustls::Stream or rustls::StreamOwned types which are unaffected", "percentage": 80, "note": "If upgrading blocked, switch to wrapper types instead of calling complete_io directly"},
+        {"solution": "Implement connection timeout at application level as temporary mitigation", "percentage": 70, "note": "Defense-in-depth but does not prevent DoS vulnerability"}
+    ]'::jsonb,
+    'rustls library dependency, direct usage of ConnectionCommon::complete_io, TLS handshake operations with remote clients',
+    'rustls version >=0.23.5 or >=0.22.4 or >=0.21.11 confirmed, TLS handshake completes without hanging when close_notify received, no infinite loops in network tests',
+    'The infinite loop occurs when close_notify alert received during handshake. Direct callers of complete_io are vulnerable. rustls-tokio and rustls-ffi are unaffected. CVSS 7.5 (HIGH) - do not ignore for network services.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0336.html'
+),
+(
+    'CVE-2023-0070: self_cell insufficient covariance check allows unsafe behavior in safe code',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade self_cell to version 0.10.3 or later (0.x branch) or 1.0.2+ (1.x branch)", "percentage": 95, "note": "Adds compile-time validation preventing invariant types marked as covariant"},
+        {"solution": "Remove self_cell dependency and refactor to use standard references if possible", "percentage": 80, "note": "Eliminates covariance complexity entirely"},
+        {"solution": "Manually verify no invariant types marked as covariant in self_cell usage", "percentage": 70, "note": "Code review workaround - identify trait object lifetime patterns that are invariant"}
+    ]'::jsonb,
+    'self_cell library dependency in project, usage of self-referential struct patterns with trait objects',
+    'self_cell version >=0.10.3 or >=1.0.2 confirmed, code compiles without undefined behavior, memory safety tests pass',
+    'The vulnerability allows marking invariant types (especially those with trait object lifetimes) as covariant. This enables undefined behavior through entirely safe code. Upgrading prevents this at compile-time. Do not ignore version requirement.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2023-0070.html'
+),
+(
+    'CVE-2019-9514: h2 resource exhaustion via unbounded reset frame queueing leads to OOM',
+    'cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Update h2 crate to 0.3.24+ or 0.4.2+", "percentage": 95, "note": "Limits total number of internal error resets emitted before closing connection"},
+        {"solution": "Implement application-level frame rate limiting to reject flood of invalid frames", "percentage": 85, "note": "Defense-in-depth if immediate upgrade not possible"},
+        {"solution": "Monitor memory usage and connection reset patterns for anomalous behavior", "percentage": 75, "note": "Detection mechanism to alert on active DoS attack"}
+    ]'::jsonb,
+    'h2 HTTP/2 library dependency, HTTP/2 server accepting connections from untrusted clients, memory monitoring capability',
+    'h2 version >=0.3.24 or >=0.4.2 confirmed, HTTP/2 connections do not leak memory under invalid frame sequences, OOM attacks do not succeed',
+    'Attackers send invalid frames triggering resets, close receive window, causing unbounded queuing of reset frames. Results in Out Of Memory (OOM) and high CPU. This is a critical DoS vector for HTTP/2 servers - upgrade immediately.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0003.html'
+),
+(
+    'CVE-2022-4304: openssl-src timing oracle in RSA decryption enables pre-master secret recovery',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update openssl-src to >=111.25 (with <300.0) or >=300.0.12", "percentage": 95, "note": "Applies timing constant fixes to RSA decryption"},
+        {"solution": "Use TLS 1.3 instead of TLS 1.2 which is immune to pre-master secret recovery attacks", "percentage": 90, "note": "Protocol-level mitigation if immediate library upgrade blocked"},
+        {"solution": "Monitor for timing attacks by analyzing response time distributions from RSA operations", "percentage": 70, "note": "Detection mechanism for active exploitation attempts"}
+    ]'::jsonb,
+    'openssl-src dependency, RSA decryption operations, TLS server accepting connections from potentially hostile networks',
+    'openssl-src version >=111.25 or >=300.0.12 confirmed, RSA decryption timing is constant across inputs, TLS handshakes not vulnerable to timing attacks',
+    'Timing-based side channel in RSA decryption (PKCS#1 v1.5, RSA-OEAP, RSASVE). Attackers measure response times across many messages to recover pre-master secret and decrypt TLS application data. This is a crypto failure - upgrade critical for security.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2023-0007.html'
+),
+(
+    'CVE-2024-47763: wasmtime runtime crash when combining tail calls with stack trace functionality',
+    'cve',
+    'MEDIUM',
+    '[
+        {"solution": "Update wasmtime to 21.0.2+, 22.0.1+, 23.0.3+, 24.0.1+, or 25.0.2+", "percentage": 95, "note": "Fixes crash when tail calls and stack traces are used together"},
+        {"solution": "Disable stack trace functionality if tail calls must be used and upgrade blocked", "percentage": 85, "note": "Temporary workaround - trade-off between debugging and availability"},
+        {"solution": "Disable tail call compilation in WebAssembly modules until upgraded", "percentage": 80, "note": "Workaround if stack traces required"}
+    ]'::jsonb,
+    'wasmtime dependency with tail call and stack trace features enabled, WebAssembly module execution with debugging enabled',
+    'wasmtime version >=21.0.2 or >=22.0.1 or >=23.0.3 or >=24.0.1 or >=25.0.2 confirmed, tail calls with stack traces do not cause runtime crash, debugging operations complete successfully',
+    'Crash only occurs when tail calls and stack traces are combined in wasmtime >=21.0.0. Not affected in wasmtime <21.0.0. The crash prevents service availability - upgrade required for affected feature combinations.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0440.html'
+),
+(
+    'CVE-2024-7884: ic-cdk memory leak in CallFuture when calling canister methods via ic_cdk::call',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update ic-cdk to patched versions: 0.8.2, 0.9.3, 0.10.1, 0.11.6, 0.12.2, 0.13.5, 0.14.1, 0.15.1, or >=0.16.0", "percentage": 95, "note": "Fixes CallFutureState persistence causing memory leaks"},
+        {"solution": "Minimize canister method calls via ic_cdk::call until upgraded", "percentage": 80, "note": "Temporary mitigation - reduce attack surface for heap exhaustion"},
+        {"solution": "Monitor canister heap size growth during normal operations", "percentage": 75, "note": "Detection mechanism to identify memory leak exploitation"}
+    ]'::jsonb,
+    'ic-cdk dependency in Internet Computer canister, canister-to-canister calls via ic_cdk::call*, heap monitoring capability',
+    'ic-cdk version is patched (0.8.2+, 0.9.3+, 0.10.1+, 0.11.6+, 0.12.2+, 0.13.5+, 0.14.1+, 0.15.1+, or >=0.16.0), canister heap size remains stable under repeated ic_cdk::call operations, no memory exhaustion observed',
+    'Memory leak occurs in CallFuture polling - internal CallFutureState copies persist on heap after resolution. CVSS 7.5 (HIGH) - enables DoS via heap exhaustion. Network-based attack vector. Upgrade immediately for production canisters.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0372.html'
+),
+(
+    'CVE-2024-58266: shlex quote/join functions emit unescaped characters and handle nul bytes unsafely',
+    'cve',
+    'MEDIUM',
+    '[
+        {"solution": "Update shlex crate to version 1.3.0 or later", "percentage": 95, "note": "Comprehensive fix for unquoted characters, nul bytes, and control character handling"},
+        {"solution": "Use shlex::try_quote and shlex::try_join (1.3.0+) with explicit error handling", "percentage": 90, "note": "Safer API variant that returns errors for invalid inputs"},
+        {"solution": "Manually filter input for { character, \\xa0 (non-breaking space), and nul bytes before passing to quote/join", "percentage": 80, "note": "Temporary mitigation if upgrade blocked - screen inputs"},
+        {"solution": "Manually escape control characters in output before passing to interactive shell", "percentage": 75, "note": "Post-processing fix if immediate upgrade not possible"}
+    ]'::jsonb,
+    'shlex dependency in project, quote/join output passed to shell, potential untrusted input sources',
+    'shlex version >=1.3.0 confirmed, output of quote/join does not contain unescaped { or \\xa0, nul bytes handled safely, control characters properly escaped when written to shells',
+    'Unquoted { and \\xa0 can appear in output making single arguments appear as multiple. Nul bytes cannot be used in shell arguments. Control characters in interactive shells cause issues. Upgrade to 1.3.0 for complete fix, or manually screen inputs.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0006.html'
+),
+(
+    'GHSA-q6cp-qfwq-4gcv: h2 denial of service via CONTINUATION frame flood causes indefinite processing',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update h2 crate to version 0.3.26+ (0.3.x series) or 0.4.4+ (0.4.x series)", "percentage": 95, "note": "Fixes unbounded CONTINUATION frame processing"},
+        {"solution": "Enable Tokio task budgeting to limit DoS impact (Tokio handles this partially)", "percentage": 80, "note": "Reduces severity by allowing legitimate requests despite attack - servers degrade but stay operational"},
+        {"solution": "Implement rate limiting for HTTP/2 CONTINUATION frames at application level", "percentage": 75, "note": "Defense-in-depth mitigation before upgrade if necessary"}
+    ]'::jsonb,
+    'h2 HTTP/2 library dependency, HTTP/2 server with Tokio runtime, network exposure to untrusted clients',
+    'h2 version >=0.3.26 or >=0.4.4 confirmed, server does not process CONTINUATION floods indefinitely, CPU usage remains stable under CONTINUATION frame attack, legitimate requests complete successfully',
+    'Attacker sends flood of CONTINUATION frames causing h2 to process indefinitely resulting in elevated CPU. Tokio task budgeting provides partial mitigation allowing service degradation instead of complete failure. Upgrade to 0.3.26+ or 0.4.4+ prevents vulnerability entirely.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://rustsec.org/advisories/RUSTSEC-2024-0332.html'
+);

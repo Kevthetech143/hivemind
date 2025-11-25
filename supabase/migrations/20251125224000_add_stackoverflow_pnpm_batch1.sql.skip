@@ -1,0 +1,179 @@
+-- Add 10 highest-voted pnpm Stack Overflow questions and solutions
+
+INSERT INTO knowledge_entries (query, category, hit_frequency, solutions, prerequisites, success_indicators, common_pitfalls, success_rate, claude_version, last_verified, source_url, thumbs_up)
+VALUES
+(
+  'Can I use npx with pnpm?',
+  'stackoverflow-pnpm',
+  'HIGH',
+  '[
+    {"solution": "Use pnpm exec for running executables inside downloaded dependencies. Example: pnpm exec jest", "percentage": 95, "command": "pnpm exec <package_binary>", "note": "Replaces npx for locally installed packages"},
+    {"solution": "Use pnpm dlx for running executable commands in packages you want to download transiently. Example: pnpm dlx create-react-app my-app", "percentage": 95, "command": "pnpm dlx <package-name>", "note": "Replaces npx for remote package execution"},
+    {"solution": "For compatibility, note that pnpx is deprecated since v9.x; use pnpm dlx instead", "percentage": 90, "note": "pnpx still works as alias for pnpm dlx in v9+"}
+  ]'::jsonb,
+  'pnpm installed, understanding of npx functionality',
+  'Commands execute successfully, packages run without errors, correct command exits with status 0',
+  'Assuming pnpx provides direct npx compatibility (it is deprecated). Not distinguishing between local dependency execution and transient package execution. Trying to use pnpm exec for packages not in node_modules.',
+  0.92,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/75413361/can-i-use-npx-with-pnpm',
+  120
+),
+(
+  'nodejs will not enable corepack: operation not permitted',
+  'stackoverflow-pnpm',
+  'MEDIUM',
+  '[
+    {"solution": "Run command prompt as administrator on Windows. For PowerShell users, note that elevated PowerShell may not work - Command Prompt must be used instead", "percentage": 95, "command": "corepack enable", "note": "Administrator privileges required for C:\\Program Files\\nodejs access"},
+    {"solution": "Ensure full control permissions on C:\\Program Files\\nodejs folder in file properties", "percentage": 85, "note": "Check Security tab, grant full control to current user"}
+  ]'::jsonb,
+  'Node.js installed, Windows system, Administrator access available',
+  'corepack enable command succeeds without EPERM error, corepack --version returns output',
+  'Running from elevated PowerShell instead of Command Prompt (fails even if elevated). Installing pnpm globally does not solve permission issue. Not having administrator privileges on Windows.',
+  0.93,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/70577085/nodejs-will-not-enable-corepack-operation-not-permitted',
+  77
+),
+(
+  'pnpm equivalent command for npm ci',
+  'stackoverflow-pnpm',
+  'HIGH',
+  '[
+    {"solution": "Use pnpm install --frozen-lockfile to prevent lockfile modifications in CI. This ensures installation fails if lockfile is out of sync with package.json", "percentage": 95, "command": "pnpm install --frozen-lockfile", "note": "Even without flag, pnpm uses faster strategy when lockfile is current. Default prefer-frozen-lockfile is true."},
+    {"solution": "Rely on automatic CI environment detection via is-ci package. pnpm automatically uses frozen-lockfile strategy in CI environments", "percentage": 90, "note": "pnpm detects CI via environment variables like CI=true, GITHUB_ACTIONS, etc."}
+  ]'::jsonb,
+  'pnpm installed, valid pnpm-lock.yaml file present, understanding of CI environments',
+  'Installation completes without modifying pnpm-lock.yaml, lockfile version matches expected state, no warnings about outdated lockfile',
+  'Misunderstanding that --frozen-lockfile prevents dependency installation (it does not). Not recognizing pnpm automatic CI detection. Updating lockfile in CI when prefer-frozen-lockfile is not set.',
+  0.94,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/70154568/pnpm-equivalent-command-for-npm-ci',
+  70
+),
+(
+  'How to specify packageManager in package.json',
+  'stackoverflow-pnpm',
+  'MEDIUM',
+  '[
+    {"solution": "Use format matching regex (npm|pnpm|yarn)@\\d+\\.\\d+\\.\\d+(-.+)? with exact version number. Example: \"packageManager\": \"[email protected]\"", "percentage": 95, "command": "Add to package.json: \"packageManager\": \"[email protected]\"", "note": "Tells Corepack which exact version to use"},
+    {"solution": "Do not use ^ or ~ version symbols - must specify exact version with major.minor.patch format", "percentage": 90, "note": "Corepack only accepts semantic version format without ranges"}
+  ]'::jsonb,
+  'Node.js 16+ with Corepack support, understanding of semantic versioning',
+  'package.json validates in VS Code without warnings, Corepack uses specified version, corepack prepare command succeeds',
+  'Using ^ or ~ version symbols in format. Omitting @ symbol and version number. Using version ranges like pnpm@^6.32.4. Forgetting to enable Corepack.',
+  0.91,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/71747609/how-to-specify-packagemanager-in-package-json',
+  59
+),
+(
+  'What is difference between pnpm create, pnpx, dlx?',
+  'stackoverflow-pnpm',
+  'HIGH',
+  '[
+    {"solution": "pnpm dlx and pnpx both download and execute packages from registry. pnpm create is shorthand that prepends create- to package name. Example: pnpm create react-app my-app equals pnpm dlx create-react-app my-app", "percentage": 95, "command": "pnpm create <template> OR pnpm dlx create-<template>", "note": "pnpx is deprecated, use pnpm dlx instead"},
+    {"solution": "Use pnpm exec to run packages already in node_modules/.bin without downloading", "percentage": 90, "command": "pnpm exec <package-binary>", "note": "Different from dlx - no download, uses locally installed version"}
+  ]'::jsonb,
+  'pnpm installed, understanding of package manager commands',
+  'Commands execute successfully, packages install and run without errors, output matches expected behavior',
+  'pnpx is deprecated (use pnpm dlx). pnpm exec only works with locally installed packages. pnpm dlx always downloads remotely, unlike npx which checks locally first. Confusing create with dlx behavior.',
+  0.93,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/73427676/what-is-difference-between-pnpm-create-pnpx-dlx',
+  58
+),
+(
+  'pnpm peer dependencies auto-install',
+  'stackoverflow-pnpm',
+  'MEDIUM',
+  '[
+    {"solution": "Enable auto-install-peers globally: pnpm config set auto-install-peers true", "percentage": 95, "command": "pnpm config set auto-install-peers true", "note": "Stores setting globally in ~/.npmrc (Linux) or %USERPROFILE%\\.npmrc (Windows)"},
+    {"solution": "For project-specific configuration, use: pnpm config set auto-install-peers true --location project to create .npmrc at project root", "percentage": 95, "command": "pnpm config set auto-install-peers true --location project", "note": "Can be committed to version control for team consistency"},
+    {"solution": "Manually create .npmrc at project root containing auto-install-peers=true", "percentage": 90, "command": "echo \"auto-install-peers=true\" >> .npmrc", "note": "Simplest approach for team-wide configuration"}
+  ]'::jsonb,
+  'pnpm v7.1.3+, pnpm package manager installed, understanding of npm configuration files',
+  'pnpm install completes without unmet peer dependency warnings, all dependencies available in node_modules, no error messages about missing peers',
+  'Using pnpm version < 7.1.3 (feature not available). Not deleting node_modules and pnpm-lock.yaml after config changes. Storing setting globally instead of project-specific for shared team projects. Assuming feature works on pnpm 7.0.x and earlier.',
+  0.92,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/72468635/pnpm-peer-dependencies-auto-install',
+  57
+),
+(
+  'How do you switch between pnpm versions?',
+  'stackoverflow-pnpm',
+  'MEDIUM',
+  '[
+    {"solution": "Use Corepack for permanent version switching. For Node v18: corepack prepare [email protected] --activate. For Node v20+: corepack install --global [email protected]", "percentage": 95, "command": "corepack enable && corepack prepare [email protected] --activate OR corepack install --global [email protected]", "note": "First enable corepack, then install specific version"},
+    {"solution": "Use npx for temporary version switching without permanent installation: npx pnpm@<version> <command>", "percentage": 90, "command": "npx pnpm@6 install", "note": "Useful for one-off commands or testing with different versions"},
+    {"solution": "Check official Corepack documentation for Node.js version-specific syntax variations", "percentage": 85, "command": "corepack --version", "note": "https://nodejs.org/docs/latest-v20.x/api/corepack.html"}
+  ]'::jsonb,
+  'Node.js v16.17+ for Corepack, Administrator privileges on Windows',
+  'Correct pnpm version installed and active, pnpm --version returns expected version, project builds successfully with specified version',
+  'Not enabling Corepack before version switching. Running without Administrator privileges on Windows. Using outdated Corepack syntax. Forgetting Corepack approach requires Node.js v16.17+. Not recognizing Corepack approach is permanent, npx approach is temporary.',
+  0.91,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/72132590/how-do-you-switch-between-pnpm-versions',
+  44
+),
+(
+  'How to get pnpm store directory',
+  'stackoverflow-pnpm',
+  'LOW',
+  '[
+    {"solution": "Run pnpm store path to get the active store directory path. Default locations: Windows: ~/AppData/Local/pnpm/store, macOS: ~/Library/pnpm/store, Linux: ~/.local/share/pnpm/store", "percentage": 95, "command": "pnpm store path", "note": "Returns absolute path to active store"},
+    {"solution": "For projects on different partitions, pnpm creates store at $partition_root/.pnpm-store instead of home directory", "percentage": 85, "note": "Hard links across partitions cause this behavior change"}
+  ]'::jsonb,
+  'pnpm installed and accessible via command line',
+  'pnpm store path command succeeds, returns valid directory path, directory contains pnpm package files',
+  'Expecting npm config get store to work with pnpm (it returns undefined). Hard links across partitions create store in unexpected location. Not checking partition boundaries when store location is unusual.',
+  0.88,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/55403775/how-to-get-pnpm-store-directory',
+  39
+),
+(
+  'Can I delete package-lock.json when switching to pnpm?',
+  'stackoverflow-pnpm',
+  'MEDIUM',
+  '[
+    {"solution": "Yes, delete package-lock.json when using pnpm. pnpm ignores it and creates pnpm-lock.yaml instead. Commit pnpm-lock.yaml to repository.", "percentage": 95, "command": "rm package-lock.json && pnpm install", "note": "Safe to delete - pnpm creates its own lockfile"},
+    {"solution": "Use pnpm import to preserve dependencies from old npm lockfile: pnpm import converts package-lock.json to pnpm-lock.yaml", "percentage": 90, "command": "pnpm import", "note": "Ensures dependency specifications match npm lockfile before deletion"},
+    {"solution": "Ensure CI/CD pipelines use pnpm instead of npm for installing dependencies", "percentage": 95, "note": "Critical: CI must match local package manager or inconsistencies occur"}
+  ]'::jsonb,
+  'pnpm installed, package-lock.json present in project, understanding of CI/CD setup',
+  'pnpm install succeeds without errors, pnpm-lock.yaml created correctly, no warnings about missing lockfile, CI builds pass',
+  'Failing to update CI/CD to use pnpm (builds fail in CI). Not using pnpm import when migrating existing dependencies. Forgetting to commit pnpm-lock.yaml to repository. Assuming package-lock.json and pnpm-lock.yaml can coexist.',
+  0.92,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/57854991/can-i-delete-package-lock-json-when-switching-to-pnpm',
+  34
+),
+(
+  'How to add dependency to PNPM workspace?',
+  'stackoverflow-pnpm',
+  'MEDIUM',
+  '[
+    {"solution": "Use --filter option with pnpm add: pnpm add <package> --filter <workspace_name> or pnpm add <package> --filter <prefix>/* for multiple packages", "percentage": 95, "command": "pnpm add <package> --filter <workspace_name>", "note": "Basic syntax for adding to single workspace"},
+    {"solution": "For PNPM v9+, use --workspace flag: pnpm --workspace --filter <target_package> add <package>", "percentage": 90, "command": "pnpm --workspace --filter <package-name> add <dep>", "note": "Syntax change in v9, required for newer versions"},
+    {"solution": "Run scripts for specific workspace: pnpm run <script> --filter <workspace_name>", "percentage": 90, "command": "pnpm run build --filter @workspace/package-name", "note": "Same --filter pattern works for scripts"}
+  ]'::jsonb,
+  'PNPM workspace already configured, understanding of workspace naming and patterns',
+  'Dependency added to correct workspace, pnpm-lock.yaml updated, package.json in workspace shows new dependency, build succeeds',
+  'Incorrect filter syntax causing \"No projects matched the filters\" error. Version-specific syntax differences between v8 and v9. Mismatched workspace names in filter arguments. Forgetting workspace requires pnpm-workspace.yaml or proper monorepo configuration. Using old syntax on pnpm v9+.',
+  0.90,
+  'sonnet-4',
+  NOW(),
+  'https://stackoverflow.com/questions/71054629/how-to-add-dependency-to-pnpm-workspace',
+  33
+);

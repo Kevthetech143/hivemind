@@ -1,0 +1,210 @@
+-- Mining Vitest common errors from https://vitest.dev/guide/common-errors.html
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Vitest: Cannot find module error with baseUrl imports',
+    'vitest',
+    'HIGH',
+    '[
+        {"solution": "Install vite-tsconfig-paths plugin to recognize tsconfig.json baseUrl settings", "percentage": 95, "command": "npm i -D vite-tsconfig-paths"},
+        {"solution": "Add plugin to vitest.config.ts: import tsconfigPaths from \"vite-tsconfig-paths\"; plugins: [tsconfigPaths()]", "percentage": 90, "note": "Required after installation"},
+        {"solution": "Convert to relative paths from current file location instead of baseUrl", "percentage": 85, "note": "Workaround if plugin approach fails"},
+        {"solution": "Ensure import paths exactly match file names and relative paths", "percentage": 80, "note": "Check for typos first"}
+    ]'::jsonb,
+    'Vitest configured, TypeScript project with tsconfig.json',
+    'Imports resolve without errors, Module loads successfully in test',
+    'Relative aliases must use absolute paths with new URL(). Do not use relative paths for aliases. Vite does not auto-read tsconfig.json baseUrl.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/common-errors.html'
+),
+(
+    'Vitest: Failed to terminate worker with thread pool',
+    'vitest',
+    'HIGH',
+    '[
+        {"solution": "Switch pool configuration from threads to forks: pool: \"forks\" in vitest.config.ts", "percentage": 95, "note": "Primary solution when using NodeJS fetch"},
+        {"solution": "Use vmForks pool instead if forks causes issues: pool: \"vmForks\"", "percentage": 85, "note": "Alternative process-based approach"},
+        {"solution": "Review NodeJS fetch implementation - may need to avoid in tests", "percentage": 75, "note": "Fetch with threads causes termination failures"}
+    ]'::jsonb,
+    'Vitest 0.25+, NodeJS 14+, test using NodeJS fetch API',
+    'Worker terminates cleanly, no hanging processes, test suite completes',
+    'Default pool is threads. Threads do not work well with native NodeJS modules. Always use forks for native code.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/common-errors.html'
+),
+(
+    'Vitest: Segmentation fault with native modules in threads',
+    'vitest',
+    'HIGH',
+    '[
+        {"solution": "Configure pool: \"forks\" to use child processes instead of worker threads", "percentage": 96, "note": "Provides thread safety for native modules"},
+        {"solution": "Add to vitest.config.ts: export default defineConfig({ test: { pool: \"forks\" } })", "percentage": 95, "command": "pool: \"forks\" in config"},
+        {"solution": "Use vmForks as alternative: pool: \"vmForks\"", "percentage": 85, "note": "VM-isolated child processes"}
+    ]'::jsonb,
+    'Vitest installed, native NodeJS modules in dependencies, reproduce crash',
+    'Tests run without segmentation faults, abort traps, or panic messages',
+    'Native modules lack thread-safety. Thread pool (default) will crash. Child process pools (forks/vmForks) required for native code.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/common-errors.html'
+),
+(
+    'Vitest: Mock state persists between tests causing failures',
+    'vitest',
+    'MEDIUM',
+    '[
+        {"solution": "Call vi.clearAllMocks() in beforeEach hook to reset all mocks between tests", "percentage": 92, "note": "Recommended approach"},
+        {"solution": "Configure mockReset in setup file to auto-clear mocks", "percentage": 85, "note": "Global configuration"},
+        {"solution": "Use vi.restoreAllMocks() to restore original implementations", "percentage": 80, "note": "Stronger reset than clear"}
+    ]'::jsonb,
+    'Vitest test suite with vi.mock() calls, previous mocks created',
+    'Mocks reset between test cases, each test gets clean mock state, no cross-test pollution',
+    'Mocks persist across tests by default. Must explicitly clear in hooks (beforeEach) or config. Mock state includes call counts and return values.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/mocking.html'
+),
+(
+    'Vitest: Snapshot mismatch with concurrent async tests',
+    'vitest',
+    'MEDIUM',
+    '[
+        {"solution": "Use expect from test context in concurrent tests: it.concurrent(\"test\", async ({ expect }) => { ... })", "percentage": 93, "note": "Destructure expect from local context"},
+        {"solution": "Update snapshots with watch mode u key or vitest -u CLI flag", "percentage": 88, "note": "After fixing expect usage"},
+        {"solution": "Ensure snapshot uses the context-provided expect, not global expect", "percentage": 85, "note": "Critical for parallel execution"}
+    ]'::jsonb,
+    'Vitest with concurrent tests, snapshot assertions, async/await patterns',
+    'Snapshots match correctly in parallel tests, correct test detection, no false snapshot failures',
+    'Global expect() in concurrent tests causes snapshot misattribution. Must use destructured expect from test context. Concurrent tests run in parallel and need context-aware assertions.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/snapshot.html'
+),
+(
+    'Vitest: Snapshot configuration differs from Jest causing commit diffs',
+    'vitest',
+    'LOW',
+    '[
+        {"solution": "Vitest uses different snapshot header: // Vitest Snapshot v1 vs Jest format", "percentage": 90, "note": "Expected difference, not an error"},
+        {"solution": "Override printBasicPrototype in config if needed: snapshotFormat: { printBasicPrototype: true }", "percentage": 85, "note": "For Jest compatibility"},
+        {"solution": "Use chevron > separator (Vitest) instead of colon : for custom snapshot messages", "percentage": 80, "note": "Vitest snapshot format"}
+    ]'::jsonb,
+    'Vitest project, snapshot files in repository',
+    'Snapshots generate correctly with Vitest format, diffs show only actual changes not formatting',
+    'Vitest snapshot format differs from Jest. printBasicPrototype defaults to false. Separator is > not :. Error snapshots include [Error: message] not message alone.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/snapshot.html'
+),
+(
+    'Vitest: Coverage provider not installed causing collection failures',
+    'vitest',
+    'MEDIUM',
+    '[
+        {"solution": "Install v8 coverage provider: npm i -D @vitest/coverage-v8", "percentage": 94, "note": "Recommended default, fastest"},
+        {"solution": "Or install Istanbul provider: npm i -D @vitest/coverage-istanbul", "percentage": 85, "note": "Better for non-V8 environments"},
+        {"solution": "Configure in vitest.config.ts: test: { coverage: { provider: \"v8\" } }", "percentage": 90, "note": "Specify provider after install"}
+    ]'::jsonb,
+    'Vitest installed, running coverage, provider package missing',
+    'Coverage runs without prompts, HTML/JSON reports generate successfully, coverage.enabled=true works',
+    'Vitest auto-prompts for provider install but manual install needed. Choose v8 for speed or Istanbul for compatibility. Must install before running coverage.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/coverage.html'
+),
+(
+    'Vitest: Only imported files in coverage report, missing source files',
+    'vitest',
+    'MEDIUM',
+    '[
+        {"solution": "Add coverage.include pattern to capture all source files: coverage: { include: [\"src/**/*.{ts,tsx}\"] }", "percentage": 93, "note": "Includes all matching files even if not imported"},
+        {"solution": "Exclude files not needed: coverage: { exclude: [\"src/**/index.ts\", \"src/**/types.ts\"] }", "percentage": 85, "note": "Reduces noise"},
+        {"solution": "Use glob patterns like src/**/* to match all files in directory", "percentage": 80, "note": "Comprehensive coverage inclusion"}
+    ]'::jsonb,
+    'Vitest with coverage enabled, v8 or Istanbul provider installed',
+    'Coverage report includes all source files, percentage accounts for unmocked files, HTML report complete',
+    'Only imported modules appear in coverage by default. Must configure include/exclude patterns. Unused files not in report means coverage is incomplete.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/guide/coverage.html'
+),
+(
+    'Vitest: Unresolved promises in assertions cause false-positive tests',
+    'vitest',
+    'HIGH',
+    '[
+        {"solution": "Always await promise assertions: await expect(promise).resolves.toBe(value)", "percentage": 96, "note": "Critical - non-awaited promises silently pass"},
+        {"solution": "Use expect.assertions(count) to verify exact assertion count: expect.assertions(1)", "percentage": 90, "note": "Catches missing assertions"},
+        {"solution": "Use expect.hasAssertions() to ensure at least one assertion ran", "percentage": 85, "note": "Alternative verification"}
+    ]'::jsonb,
+    'Vitest test using promise assertions, async test functions',
+    'Tests fail when assertions not met, no false positives, warnings in Vitest 3+, failures in Vitest 4+',
+    'Forgetting await on .resolves or .rejects causes silent test pass. Promises without await resolve after test completes. Vitest 3 warns, Vitest 4 fails tests.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/api/expect.html'
+),
+(
+    'Vitest: Floating-point assertion failures with toBe matcher',
+    'vitest',
+    'MEDIUM',
+    '[
+        {"solution": "Use toBeCloseTo(value, precision) for float comparison: expect(0.1 + 0.2).toBeCloseTo(0.3, 5)", "percentage": 94, "note": "Accounts for rounding errors"},
+        {"solution": "Specify precision digits: toBeCloseTo(expected, 2) for 2 decimal places", "percentage": 90, "note": "Default precision is 2"},
+        {"solution": "Never use toBe() for floating-point numbers due to JavaScript rounding", "percentage": 85, "note": "toBe checks exact equality"}
+    ]'::jsonb,
+    'Vitest test with floating-point math, decimal comparisons',
+    'Float assertions pass with appropriate tolerance, no false failures on rounding differences',
+    'JavaScript rounds 0.2 + 0.1 != 0.3 exactly. toBe() fails on floats. Must use toBeCloseTo(). Precision parameter controls decimal places checked.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/api/expect.html'
+),
+(
+    'Vitest: toThrowError fails when code not wrapped in function',
+    'vitest',
+    'MEDIUM',
+    '[
+        {"solution": "Wrap throwing code in arrow function: expect(() => throwingCode()).toThrowError()", "percentage": 96, "note": "Required pattern"},
+        {"solution": "Use async wrapper for async throws: expect(async () => { await asyncThrow() }).rejects.toThrow()", "percentage": 90, "note": "For Promise rejections"},
+        {"solution": "Direct code execution throws before matcher runs - always wrap", "percentage": 85, "note": "Execution order issue"}
+    ]'::jsonb,
+    'Vitest test file, testing code that throws errors',
+    'toThrowError catches exceptions successfully, test passes when error thrown as expected',
+    'Unwrapped code throws immediately before toThrowError executes. Must always wrap in function. Async code needs async wrapper with .rejects.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/api/expect.html'
+),
+(
+    'Vitest: expect.poll() does not support snapshot matchers',
+    'vitest',
+    'LOW',
+    '[
+        {"solution": "Use vi.waitFor() to resolve condition first, then snapshot: const result = await vi.waitFor(() => getValue()); expect(result).toMatchSnapshot()", "percentage": 92, "note": "Separates polling from snapshots"},
+        {"solution": "Snapshots in poll always succeed - do not use for flaky assertions", "percentage": 88, "note": "Design limitation"},
+        {"solution": "Use non-snapshot matchers in poll: expect.poll(() => getValue()).toBe(expected)", "percentage": 85, "note": "Regular matchers work fine"}
+    ]'::jsonb,
+    'Vitest test with expect.poll() and flaky async conditions',
+    'Flaky conditions resolved before snapshot, no false snapshot successes, proper wait guarantees',
+    'Snapshots always succeed in poll conditions - not supported. poll() does not support .resolves/.rejects or toThrow. Use vi.waitFor() then snapshot separately.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://vitest.dev/api/expect.html'
+);

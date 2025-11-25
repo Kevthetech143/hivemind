@@ -1,0 +1,95 @@
+-- Fix type mismatch in search_knowledge trigram fallback
+-- similarity() returns double precision but we need real
+
+DROP FUNCTION IF EXISTS search_knowledge(text, integer);
+
+CREATE OR REPLACE FUNCTION search_knowledge(
+    search_query TEXT,
+    result_limit INTEGER DEFAULT 5
+)
+RETURNS TABLE (
+    id BIGINT,
+    query TEXT,
+    category TEXT,
+    hit_frequency TEXT,
+    solutions JSONB,
+    common_pitfalls TEXT,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    view_count INTEGER,
+    command_copy_count INTEGER,
+    repeat_search_rate REAL,
+    success_rate REAL,
+    search_rank REAL
+) AS $$
+BEGIN
+    -- First try: Weighted full-text search
+    RETURN QUERY
+    SELECT
+        ke.id,
+        ke.query,
+        ke.category,
+        ke.hit_frequency,
+        ke.solutions,
+        ke.common_pitfalls,
+        ke.created_at,
+        ke.updated_at,
+        ke.view_count,
+        ke.command_copy_count,
+        ke.repeat_search_rate,
+        ke.success_rate,
+        ts_rank_cd(
+            setweight(to_tsvector('english', ke.query), 'A') ||
+            setweight(to_tsvector('english', COALESCE(ke.common_pitfalls, '')), 'B') ||
+            setweight(to_tsvector('english', ke.category), 'C'),
+            plainto_tsquery('english', search_query)
+        ) as search_rank
+    FROM knowledge_entries ke
+    WHERE
+        setweight(to_tsvector('english', ke.query), 'A') ||
+        setweight(to_tsvector('english', COALESCE(ke.common_pitfalls, '')), 'B') ||
+        setweight(to_tsvector('english', ke.category), 'C')
+        @@ plainto_tsquery('english', search_query)
+    ORDER BY
+        search_rank DESC,
+        ke.success_rate DESC NULLS LAST,
+        ke.view_count DESC
+    LIMIT result_limit;
+
+    IF FOUND THEN
+        RETURN;
+    END IF;
+
+    -- Fallback: Trigram similarity search for fuzzy/typo matching
+    RETURN QUERY
+    SELECT
+        ke.id,
+        ke.query,
+        ke.category,
+        ke.hit_frequency,
+        ke.solutions,
+        ke.common_pitfalls,
+        ke.created_at,
+        ke.updated_at,
+        ke.view_count,
+        ke.command_copy_count,
+        ke.repeat_search_rate,
+        ke.success_rate,
+        -- Cast double precision to real to match return type
+        (
+            similarity(ke.query, search_query) * 0.6 +
+            similarity(ke.category, search_query) * 0.2 +
+            similarity(COALESCE(ke.common_pitfalls, ''), search_query) * 0.2
+        )::REAL as search_rank
+    FROM knowledge_entries ke
+    WHERE
+        ke.query % search_query OR
+        ke.category % search_query OR
+        COALESCE(ke.common_pitfalls, '') % search_query
+    ORDER BY
+        search_rank DESC,
+        ke.success_rate DESC NULLS LAST,
+        ke.view_count DESC
+    LIMIT result_limit;
+END;
+$$ LANGUAGE plpgsql;

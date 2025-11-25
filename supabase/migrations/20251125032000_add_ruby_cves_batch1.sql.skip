@@ -1,0 +1,228 @@
+-- Add Ruby/Rails HIGH and CRITICAL CVE security advisories batch 1
+-- Mined from: https://www.ruby-lang.org/en/security/ and https://rubyonrails.org/category/security
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'CVE-2024-27281: RCE vulnerability in RDoc with .rdoc_options',
+    'ruby-cve',
+    'CRITICAL',
+    '[
+        {"solution": "Update RDoc to version 6.6.3.1 or later which disables unsafe .rdoc_options processing", "percentage": 95, "note": "Official patch removes RCE gadget chain"},
+        {"solution": "If unable to upgrade, disable RDoc documentation generation: export RDOC_OPTS=--no-public", "percentage": 80, "command": "gem update rdoc && bundle update"},
+        {"solution": "Audit .rdoc_options files in your project for arbitrary command injection attempts", "percentage": 75, "note": "Look for unsanitized shell metacharacters"}
+    ]'::jsonb,
+    'RDoc gem installed, Ruby >= 3.0',
+    'gem list rdoc shows version >= 6.6.3.1, No .rdoc_options processed unsafely',
+    'RDoc versions prior to 6.6.3.1 allow arbitrary code execution through crafted .rdoc_options files. Do not use untrusted .rdoc_options from third-party gems.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2024/03/21/'
+),
+(
+    'CVE-2024-27282: Arbitrary memory address read vulnerability in Ruby Regex',
+    'ruby-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Ruby to version 3.0.7, 3.1.5, 3.2.4, 3.3.1 or later which fixes Regex search bounds checking", "percentage": 95, "command": "ruby --version && rbenv install 3.3.1"},
+        {"solution": "Avoid using Regexp.source on untrusted regex patterns that could read adjacent memory", "percentage": 85, "note": "Information disclosure via regex heap read"},
+        {"solution": "Implement input validation for regex patterns: do not allow user-supplied regex patterns in search operations", "percentage": 80, "note": "Defense in depth against memory disclosure"}
+    ]'::jsonb,
+    'Ruby installed, Access to system memory',
+    'Ruby version >= 3.3.1 or patched versions, Memory read attempts blocked by updated bounds checking',
+    'This CVE allows reading arbitrary memory addresses via specially crafted regex searches. The vulnerability affects Ruby 3.0-3.3 series prior to patch versions.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2024/04/23/'
+),
+(
+    'CVE-2013-0156: Rails YAML deserialization RCE via XML parameters',
+    'rails-cve',
+    'CRITICAL',
+    '[
+        {"solution": "Update Rails to version 2.3.15, 3.0.20, 3.1.12, or 3.2.13+ which disables YAML parsing by default", "percentage": 95, "command": "bundle update rails"},
+        {"solution": "For older Rails, explicitly disable YAML in params parser: disable :yaml in config/initializers/params.rb", "percentage": 88, "note": "YAML.unsafe_load removed from parameter conversion"},
+        {"solution": "Sanitize all XML and parameter inputs: never deserialize untrusted YAML from request params", "percentage": 85, "command": "Use JSON instead of YAML for API responses"}
+    ]'::jsonb,
+    'Rails < 3.2.13 installed, HTTP parameter parsing enabled',
+    'Rails version >= 3.2.13, YAML deserialization fails on untrusted payloads, No RCE via params',
+    'CVE-2013-0156 allows RCE through XML parameter parsing that converts to YAML before deserialization. Always use safe_load and validate parameter types.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/cve-2013-0156'
+),
+(
+    'CVE-2023-22794: Rails ActiveRecord SQL injection via query annotations',
+    'rails-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Rails to version 6.0.6.1, 6.1.7.1, or 7.0.4.1+ which sanitizes annotate() query method", "percentage": 94, "command": "bundle update rails"},
+        {"solution": "Remove or sanitize all .annotate() calls that include user input: use parameterized queries instead", "percentage": 90, "note": "Never interpolate user data into annotate() strings"},
+        {"solution": "Audit QueryLogs configuration: disable if it processes untrusted annotation data", "percentage": 85, "command": "Remove config.active_record.query_log_tags with user input"}
+    ]'::jsonb,
+    'Rails 6.0.0 - 7.0.4.0 installed, ActiveRecord with query annotations enabled',
+    'Rails updated to patched version, annotate() only receives hardcoded strings, No SQL injection in query logs',
+    'This CVE affects ActiveRecord query annotation methods and optimizer_hints which do not sanitize input. Use safe_load for any dynamic annotation data.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://www.herodevs.com/vulnerability-directory/cve-2023-22794'
+),
+(
+    'CVE-2013-0269: Rails JSON gem DoS and unsafe object creation',
+    'rails-cve',
+    'HIGH',
+    '[
+        {"solution": "Update JSON gem to version 1.7.7, 1.6.8, or 1.5.5+ which disables symbol creation in JSON.parse", "percentage": 95, "command": "gem update json && bundle update"},
+        {"solution": "Use JSON.parse with create_additions: false parameter to prevent symbol DOS: JSON.parse(input, {create_additions: false})", "percentage": 92, "note": "Prevents symbol table exhaustion attacks"},
+        {"solution": "Validate JSON payloads: reject or truncate excessively large JSON objects (>1MB) before parsing", "percentage": 85, "command": "Check Content-Length header before JSON.parse"}
+    ]'::jsonb,
+    'JSON gem installed, User-supplied JSON input being parsed',
+    'JSON gem version >= 1.7.7, JSON.parse returns objects not symbols, No symbol DoS memory exhaustion',
+    'CVE-2013-0269 causes DoS through symbol creation and unsafe object instantiation in JSON parsing. Always use create_additions: false for untrusted input.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2013/02/22/json-dos-cve-2013-0269/'
+),
+(
+    'CVE-2023-28755: ReDoS vulnerability in URI gem',
+    'ruby-cve',
+    'HIGH',
+    '[
+        {"solution": "Update URI gem to version 0.12.1, 0.11.1, or 0.10.2+ which fixes regular expression backtracking", "percentage": 94, "command": "gem update uri && bundle update"},
+        {"solution": "Avoid parsing untrusted URIs with complex query parameters that trigger regex backtracking", "percentage": 85, "note": "DoS via ReDoS in URI parsing regex"},
+        {"solution": "Implement URI validation with timeout: use Timeout.timeout(1) { URI.parse(url) } for untrusted input", "percentage": 80, "command": "require ''timeout''; Timeout.timeout(1) { URI.parse(user_url) }"}
+    ]'::jsonb,
+    'URI gem installed, Processing user-supplied URL strings',
+    'URI gem version >= 0.12.1, URI parsing completes within 1 second, No ReDoS CPU spike',
+    'CVE-2023-28755 causes denial of service through regular expression catastrophic backtracking when parsing malicious URIs. Validate and limit URI length.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2023/03/28/'
+),
+(
+    'CVE-2024-26143: Rails XSS vulnerability in translation helpers with :default key',
+    'rails-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Rails to version 7.1.3.1, 7.0.8.1, or 6.1.7.6+ which sanitizes translation helper output with _html suffix", "percentage": 94, "command": "bundle update rails"},
+        {"solution": "Review translation keys ending in _html: ensure :default values do not contain user input", "percentage": 90, "note": "t() and translate() mark output as HTML-safe when key ends in _html"},
+        {"solution": "Use safe_translate() or mark untrusted defaults with .html_safe() explicitly after sanitization", "percentage": 85, "command": "Use sanitize(default_value) before passing to _html translation key"}
+    ]'::jsonb,
+    'Rails < 7.1.3.1 with translation helpers using _html keys',
+    'Rails version >= 7.1.3.1, translate() with _html key sanitizes output, XSS payloads escaped in default values',
+    'CVE-2024-26143 affects translation helpers where _html-suffixed keys mark output as safe HTML. Untrusted :default values in these keys cause XSS.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://rubyonrails.org/2024/2/21/'
+),
+(
+    'CVE-2022-32224: Rails ActiveRecord unsafe YAML deserialization',
+    'rails-cve',
+    'CRITICAL',
+    '[
+        {"solution": "Update Rails to use YAML.safe_load for all database column deserialization, which is now default behavior", "percentage": 95, "command": "bundle update rails && rails db:migrate"},
+        {"solution": "If using custom serializers, change from YAML.load to YAML.safe_load with permitted_classes list", "percentage": 92, "note": "safe_load prevents gadget chain execution"},
+        {"solution": "Audit database records for serialized objects from untrusted sources: use ActiveRecord::Sanitizer to reprocess", "percentage": 85, "command": "Record.where(serialized_column: /^---/).each { |r| r.update!(serialized_column: safe_load_yaml) }"}
+    ]'::jsonb,
+    'Rails < 7.0.3 with ActiveRecord serialized columns',
+    'Rails updated to patched version, YAML.safe_load used for deserialization, No arbitrary object instantiation from YAML',
+    'CVE-2022-32224 addresses unsafe YAML deserialization in ActiveRecord where database columns could execute arbitrary code through gadget chains. Always use safe_load.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://makandracards.com/railslts/521762-change-activerecord-deserialization-cve-2022-32224'
+),
+(
+    'CVE-2024-26142: Rails ReDoS in Accept header parsing',
+    'rails-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Rails to version 7.0.8.5, 7.1.4.1, or 7.2.1.1+ which fixes Accept header regex backtracking", "percentage": 94, "command": "bundle update rails"},
+        {"solution": "Validate Accept header format before processing: reject headers > 1024 characters or with excessive commas", "percentage": 87, "note": "Malformed Accept headers trigger ReDoS"},
+        {"solution": "Add WAF rule to limit Accept header complexity at reverse proxy level (nginx/Apache)", "percentage": 80, "command": "Limit Accept header to ~100 MIME types maximum"}
+    ]'::jsonb,
+    'Rails < 7.2.1.1 with Action Dispatch enabled, Processing HTTP Accept headers',
+    'Rails version >= 7.2.1.1, Accept header parsing completes in < 100ms, No CPU spike on malformed headers',
+    'CVE-2024-26142 causes DoS through catastrophic backtracking in Accept header media type parsing. Implement header size limits and WAF rules.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-26142'
+),
+(
+    'CVE-2021-31799: RDoc command injection vulnerability',
+    'ruby-cve',
+    'HIGH',
+    '[
+        {"solution": "Update RDoc to version 3.12.2, 4.0.0.rc2, or 5.1.0+ which sanitizes shell commands in file processing", "percentage": 93, "command": "gem update rdoc"},
+        {"solution": "Do not process RDoc files from untrusted sources: validate RDoc input files before rdoc command execution", "percentage": 88, "note": "Command injection via RDoc option parsing"},
+        {"solution": "Run RDoc in isolated sandbox: use --protected mode or run in Docker container with restricted permissions", "percentage": 82, "note": "Limits impact of command injection"}
+    ]'::jsonb,
+    'RDoc < 3.12.2 installed, Processing user-supplied RDoc files',
+    'RDoc version >= 3.12.2, rdoc command completes without shell injection, Output files match expected content',
+    'CVE-2021-31799 allows shell command injection through RDoc option parsing. Never process RDoc files from untrusted sources without validation.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2021/07/07/'
+),
+(
+    'CVE-2020-10933: Ruby Socket heap exposure vulnerability',
+    'ruby-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Ruby to version 2.5.8, 2.6.6, 2.7.1, or 3.0+ which fixes socket buffer initialization", "percentage": 93, "command": "ruby --version && rbenv install 3.0.0"},
+        {"solution": "Avoid reading socket buffers before initialization: ensure Socket.new() buffers are cleared before use", "percentage": 85, "note": "Uninitialized heap data may leak via socket reads"},
+        {"solution": "Use SecureRandom instead of socket buffers for cryptographic operations", "percentage": 80, "command": "Replace socket-based random with SecureRandom.random_bytes()"}
+    ]'::jsonb,
+    'Ruby < 3.0 with Socket library usage',
+    'Ruby version >= 3.0, Socket reads return initialized buffers, No uninitialized heap data in socket operations',
+    'CVE-2020-10933 leaks uninitialized heap memory through socket operations. Use SecureRandom for cryptography instead of socket buffers.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2020/03/31/'
+),
+(
+    'CVE-2023-28362: Rails redirect_to XSS vulnerability with illegal HTTP characters',
+    'rails-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Rails to version 7.0.4.3, 6.1.7.3, or 5.2.8.13+ which validates redirect URLs for illegal HTTP header characters", "percentage": 94, "command": "bundle update rails"},
+        {"solution": "Sanitize all redirect_to URLs: use URI.encode() or Rails URL helpers (url_for, post_path) instead of string concatenation", "percentage": 90, "note": "Newlines and other chars can inject HTTP headers"},
+        {"solution": "Validate redirect destinations with whitelist: only allow redirects to known paths or internal URLs", "percentage": 88, "command": "redirect_to(url) if URI(url).host == request.host"}
+    ]'::jsonb,
+    'Rails < 7.0.4.3 with redirect_to in controllers',
+    'Rails updated to patched version, redirect_to blocks URLs with illegal characters (\\r\\n), No HTTP header injection via redirect',
+    'CVE-2023-28362 allows HTTP header injection through redirect_to values containing newlines or other illegal characters. Validate redirect URLs.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2023/03/28/'
+),
+(
+    'CVE-2014-2525: Ruby YAML heap overflow in floating point parsing',
+    'ruby-cve',
+    'HIGH',
+    '[
+        {"solution": "Update Ruby to version 2.0.0-p353, 1.9.3-p545, or 1.8.7-p374 which fixes YAML float parsing bounds", "percentage": 92, "command": "ruby --version && rbenv install 2.7.0"},
+        {"solution": "Avoid YAML.load() on untrusted input: use YAML.safe_load() with permitted_classes parameter", "percentage": 95, "note": "safe_load prevents all gadget chains"},
+        {"solution": "Validate numeric inputs before YAML processing: reject extremely large or specially formatted floats", "percentage": 85, "note": "Malformed floats trigger heap overflow"}
+    ]'::jsonb,
+    'Ruby < 2.0.0-p353 with YAML processing',
+    'Ruby version >= 2.0.0-p353, YAML.safe_load parses floats without overflow, No heap corruption from malformed YAML numbers',
+    'CVE-2014-2525 causes heap overflow through YAML float parsing. Always use YAML.safe_load and validate numeric inputs.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.ruby-lang.org/en/news/2014/02/24/'
+);

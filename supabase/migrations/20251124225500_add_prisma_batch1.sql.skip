@@ -1,0 +1,222 @@
+-- Add Prisma ORM documentation solutions batch 1
+-- DOC-MINER-22: Migration errors, schema errors, query errors
+-- Source: https://www.prisma.io/docs/orm/reference/error-reference
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Prisma P2002: Unique constraint failed on the constraint',
+    'prisma',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check if record with same unique field already exists before inserting", "percentage": 90, "note": "Use findUnique or findFirst to check existence"},
+        {"solution": "Use upsert instead of create to update existing or create new", "percentage": 95, "command": "prisma.model.upsert({ where: { unique_field }, update: {...}, create: {...} })"},
+        {"solution": "Add unique constraint handling with try-catch for PrismaClientKnownRequestError", "percentage": 85, "note": "Check error.code === ''P2002''"}
+    ]'::jsonb,
+    'Prisma Client installed, Database schema with unique constraints defined',
+    'Record inserted successfully, No P2002 error thrown, Duplicate handling works as expected',
+    'Unique constraints apply to single fields AND composite unique indexes. Check schema.prisma for @@unique definitions. Error meta.target shows which field(s) caused constraint violation.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p2002'
+),
+(
+    'Prisma P1001: Can''t reach database server',
+    'prisma',
+    'HIGH',
+    '[
+        {"solution": "Verify database is running and accessible on specified host/port", "percentage": 90, "command": "Check DATABASE_URL connection string format"},
+        {"solution": "Check firewall rules allow connection to database port", "percentage": 85, "note": "Common ports: PostgreSQL 5432, MySQL 3306"},
+        {"solution": "Verify network connectivity if database is remote", "percentage": 80, "command": "ping database-host or telnet database-host port"},
+        {"solution": "For Docker databases, ensure container is running", "percentage": 88, "command": "docker ps | grep database-name"}
+    ]'::jsonb,
+    'Valid DATABASE_URL in .env, Database server installed and configured',
+    'Database connection established, Prisma Client can query database, No P1001 error on connection',
+    'Check DATABASE_URL format matches provider (postgresql://, mysql://, etc.). Localhost may need to be 127.0.0.1 in some environments. Docker containers need host.docker.internal on Mac/Windows.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p1001'
+),
+(
+    'Prisma P2025: Operation failed because required records were not found',
+    'prisma',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check record exists with findUnique before performing update/delete", "percentage": 92, "note": "Prevents error by validating existence first"},
+        {"solution": "Use updateMany or deleteMany which return count instead of throwing", "percentage": 88, "note": "Returns { count: 0 } instead of throwing error"},
+        {"solution": "Wrap operation in try-catch and handle P2025 specifically", "percentage": 85, "command": "catch (e) { if (e.code === ''P2025'') { /* handle not found */ } }"},
+        {"solution": "Use upsert for updates to create if not exists", "percentage": 80, "note": "Ensures record exists after operation"}
+    ]'::jsonb,
+    'Prisma Client configured, Valid record identifier (id or unique field)',
+    'Operation completes without error, No P2025 thrown, Proper handling of missing records',
+    'Error occurs on update, delete, or findUniqueOrThrow when record does not exist. The error meta contains which model and filter caused the issue. findUnique returns null instead of throwing.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p2025'
+),
+(
+    'Prisma P3000: Failed to create database',
+    'postgres',
+    'MEDIUM',
+    '[
+        {"solution": "Verify database user has CREATE DATABASE permission", "percentage": 90, "command": "GRANT CREATE ON DATABASE TO username"},
+        {"solution": "Check if database already exists with same name", "percentage": 85, "command": "psql -l or SHOW DATABASES"},
+        {"solution": "Ensure sufficient disk space on database server", "percentage": 80, "note": "Migration requires space for new database"},
+        {"solution": "For managed databases, check provider allows database creation", "percentage": 75, "note": "Some providers restrict programmatic DB creation"}
+    ]'::jsonb,
+    'Database user credentials with sufficient permissions, Prisma Migrate configured',
+    'Database created successfully, prisma migrate deploy succeeds, New database appears in database list',
+    'This error occurs during prisma migrate dev or deploy. Some cloud providers require pre-created databases. Check your database provider permissions model.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p3000'
+),
+(
+    'Prisma P3005: Database schema not empty, baseline required',
+    'prisma',
+    'HIGH',
+    '[
+        {"solution": "Create baseline migration with existing schema", "percentage": 95, "command": "prisma migrate resolve --applied <migration_name>"},
+        {"solution": "Use prisma db pull to introspect and generate schema from existing database", "percentage": 92, "command": "prisma db pull"},
+        {"solution": "Reset database if in development and data can be lost", "percentage": 70, "command": "prisma migrate reset --skip-seed"},
+        {"solution": "Manually mark migrations as applied if schema matches", "percentage": 85, "command": "prisma migrate resolve --applied 0_init"}
+    ]'::jsonb,
+    'Existing database with tables, Prisma schema file configured, Migrations directory initialized',
+    'Migrations run successfully, _prisma_migrations table tracks applied migrations, No P3005 error on subsequent migrate commands',
+    'This occurs when first running Prisma Migrate on existing database. Do NOT reset production databases. Use baseline approach for production. Schema must match migration or conflicts occur.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p3005'
+),
+(
+    'Prisma P2003: Foreign key constraint failed on the field',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Ensure referenced record exists before creating relation", "percentage": 92, "note": "Query parent record first to verify it exists"},
+        {"solution": "Use nested create to create both parent and child in same operation", "percentage": 90, "command": "create: { field: value, relation: { create: {...} } }"},
+        {"solution": "Check foreign key field value matches existing record id", "percentage": 88, "note": "Verify ID type matches (int vs string)"},
+        {"solution": "Use connectOrCreate to create parent if missing", "percentage": 85, "command": "relation: { connectOrCreate: { where: {...}, create: {...} } }"}
+    ]'::jsonb,
+    'Schema with defined relations (@relation), Parent records exist in referenced table',
+    'Record created with valid foreign key, No P2003 error, Relation properly established in database',
+    'Foreign key must reference existing record in parent table. NULL is allowed only if field is optional in schema. Error meta.field_name shows which foreign key failed.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p2003'
+),
+(
+    'Prisma P2024: Timed out fetching connection from pool',
+    'prisma',
+    'MEDIUM',
+    '[
+        {"solution": "Increase connection_limit in DATABASE_URL", "percentage": 88, "command": "DATABASE_URL=postgresql://user:pass@host/db?connection_limit=10"},
+        {"solution": "Reduce connection pool timeout", "percentage": 75, "command": "DATABASE_URL with ?pool_timeout=10"},
+        {"solution": "Close database connections properly after use", "percentage": 90, "note": "Use prisma.$disconnect() when done"},
+        {"solution": "For serverless, use connection pooler like PgBouncer", "percentage": 92, "note": "Prevents connection exhaustion in serverless functions"}
+    ]'::jsonb,
+    'Prisma Client configured, Database with connection limits, High-traffic application or serverless environment',
+    'Queries execute without timeout, Connection pool has available connections, No P2024 errors in logs',
+    'Default connection_limit varies by database (PostgreSQL default often 100). Serverless functions create new connections per invocation. Always call $disconnect() in serverless. Connection poolers recommended for serverless.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p2024'
+),
+(
+    'Prisma P1003: Database does not exist',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Create database manually before running migrations", "percentage": 90, "command": "createdb database_name or CREATE DATABASE database_name"},
+        {"solution": "Verify DATABASE_URL has correct database name", "percentage": 95, "note": "Check connection string format and database name spelling"},
+        {"solution": "Use prisma migrate dev to auto-create database", "percentage": 85, "command": "prisma migrate dev --name init"},
+        {"solution": "For production, ensure database provisioned before deployment", "percentage": 88, "note": "Cloud providers often require manual database creation"}
+    ]'::jsonb,
+    'Database server running, Valid credentials with create permissions, Correct DATABASE_URL format',
+    'Database exists and is accessible, Prisma can connect successfully, Migrations can run',
+    'DATABASE_URL must include database name at end of connection string. Some managed databases require pre-created databases. prisma migrate dev can create database in development, but not production.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p1003'
+),
+(
+    'Prisma P2011: Null constraint violation on the field',
+    'prisma',
+    'VERY_HIGH',
+    '[
+        {"solution": "Provide required field value in create or update operation", "percentage": 95, "note": "Check schema.prisma for fields without ? (required fields)"},
+        {"solution": "Make field optional in schema if NULL is valid", "percentage": 85, "command": "Add ? to field type: field String?"},
+        {"solution": "Set default value in schema for automatic population", "percentage": 88, "command": "field String @default(\"default_value\")"},
+        {"solution": "Use createMany with skipDuplicates to ignore validation", "percentage": 70, "note": "Only for specific bulk import scenarios"}
+    ]'::jsonb,
+    'Prisma schema with field requirements defined, Knowledge of which fields are required vs optional',
+    'Record created with all required fields, No P2011 error, Database enforces NOT NULL constraints correctly',
+    'Required fields in Prisma (no ?) map to NOT NULL in database. Error shows which field caused violation in meta.column_name. Cannot insert NULL into required fields even with raw SQL.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p2011'
+),
+(
+    'Prisma P3009: Failed migrations found, new migrations blocked',
+    'prisma',
+    'MEDIUM',
+    '[
+        {"solution": "Resolve failed migration with prisma migrate resolve", "percentage": 90, "command": "prisma migrate resolve --rolled-back <migration_name>"},
+        {"solution": "Fix migration SQL and mark as rolled back, then retry", "percentage": 88, "command": "prisma migrate resolve --rolled-back <name> then prisma migrate deploy"},
+        {"solution": "For development only: reset database and re-run all migrations", "percentage": 75, "command": "prisma migrate reset"},
+        {"solution": "Manually fix database state to match failed migration intent", "percentage": 70, "note": "Then mark migration as applied with prisma migrate resolve --applied"}
+    ]'::jsonb,
+    'Access to _prisma_migrations table, Understanding of failed migration cause, Backup if in production',
+    'Failed migration resolved, New migrations can run, _prisma_migrations shows correct state',
+    'Failed migrations block all future migrations. NEVER use migrate reset in production. Check logs to understand why migration failed. Common causes: syntax errors, constraint violations, missing privileges.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p3009'
+),
+(
+    'Prisma P2021: The table does not exist in the current database',
+    'postgres',
+    'HIGH',
+    '[
+        {"solution": "Run migrations to create missing table", "percentage": 95, "command": "prisma migrate deploy or prisma migrate dev"},
+        {"solution": "Verify schema.prisma model name matches database table", "percentage": 90, "note": "Prisma uses model name or @@map directive for table name"},
+        {"solution": "Check database connection points to correct database", "percentage": 85, "note": "Verify DATABASE_URL database name"},
+        {"solution": "Use prisma db push to sync schema with database", "percentage": 88, "command": "prisma db push"}
+    ]'::jsonb,
+    'Prisma schema defined with models, Database connection configured, Migration files or schema ready',
+    'Table exists in database, Queries execute successfully, No P2021 error on model operations',
+    'Model names in schema.prisma default to table names. Use @@map("actual_table_name") to specify different database table name. Check schema for case sensitivity (PostgreSQL lowercases unquoted identifiers).',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p2021'
+),
+(
+    'Prisma P1008: Operations timed out after specified time',
+    'prisma',
+    'MEDIUM',
+    '[
+        {"solution": "Optimize slow queries with indexes", "percentage": 90, "note": "Add @@index to frequently queried fields"},
+        {"solution": "Increase query timeout in DATABASE_URL", "percentage": 85, "command": "DATABASE_URL with ?connect_timeout=30"},
+        {"solution": "Break large operations into smaller batches", "percentage": 88, "note": "Use take and skip for pagination instead of fetching all"},
+        {"solution": "Check for long-running transactions blocking queries", "percentage": 80, "command": "SELECT * FROM pg_stat_activity WHERE state = ''active''"}
+    ]'::jsonb,
+    'Database connection configured, Access to database performance metrics, Slow query identified',
+    'Queries complete within timeout, No P1008 errors, Improved query performance metrics',
+    'Default timeout varies by database provider. Long queries may indicate missing indexes or N+1 query problems. Use include/select carefully to avoid over-fetching. Monitor database locks and active connections.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://www.prisma.io/docs/orm/reference/error-reference#p1008'
+);

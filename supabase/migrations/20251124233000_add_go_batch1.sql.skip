@@ -1,0 +1,210 @@
+-- Add Go common errors batch 1
+-- Documentation mining from official Go docs and community resources
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Go error: imported and not used',
+    'go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Remove unused import statements from your code", "percentage": 95, "note": "Go compiler enforces no unused imports"},
+        {"solution": "Comment out the import temporarily with // if planning to use later", "percentage": 85, "note": "Quick fix for development"},
+        {"solution": "Use blank identifier: import _ \"package\" for side effects only", "percentage": 80, "note": "Only for packages needed for init() side effects"}
+    ]'::jsonb,
+    'Go compiler, Valid Go source file',
+    'Program compiles successfully, go build returns no errors',
+    'Programs containing unused imports will fail to compile. This is a strict compile-time check in Go.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://yourbasic.org/golang/compiler-error-messages/'
+),
+(
+    'Go error: declared and not used',
+    'go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Delete the unused variable declaration", "percentage": 90, "note": "Cleanest solution"},
+        {"solution": "Use the variable in your code logic", "percentage": 85, "note": "Implement the intended functionality"},
+        {"solution": "Assign to blank identifier: _ = variableName to suppress error temporarily", "percentage": 75, "note": "Use during debugging only"}
+    ]'::jsonb,
+    'Go compiler, Valid Go source file',
+    'Program compiles successfully, All declared variables are utilized',
+    'All local variables must be utilized. This is enforced at compile-time to prevent dead code.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://yourbasic.org/golang/compiler-error-messages/'
+),
+(
+    'Go panic: runtime error: index out of range',
+    'go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check slice/array length before accessing: if len(arr) > index { arr[index] }", "percentage": 95, "note": "Prevents panic by validating bounds"},
+        {"solution": "Use range loop instead of index-based iteration", "percentage": 90, "note": "Automatically handles bounds", "command": "for i, v := range slice { }"},
+        {"solution": "Initialize slice with proper length: make([]T, length) instead of make([]T, 0, capacity)", "percentage": 85, "note": "Allocates accessible elements"}
+    ]'::jsonb,
+    'Valid Go runtime environment, Slice or array to access',
+    'No panic occurs, Program executes successfully, Correct elements accessed',
+    'Arrays, slices and strings are indexed starting from zero. In loops, len(a) is out of bounds. Empty slices have no accessible indices, even index 0.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://yourbasic.org/golang/gotcha-index-out-of-range/'
+),
+(
+    'Go panic: runtime error: invalid memory address or nil pointer dereference',
+    'go',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check for nil before dereferencing: if ptr != nil { ptr.Method() }", "percentage": 95, "note": "Standard nil check pattern"},
+        {"solution": "Initialize pointer before use: ptr = &Type{} or ptr = new(Type)", "percentage": 90, "note": "Ensures valid memory address"},
+        {"solution": "Use safe navigation with two-value assertion: val, ok := interfaceVar.(Type); if ok { val.Method() }", "percentage": 85, "note": "For interface type assertions"}
+    ]'::jsonb,
+    'Go runtime environment, Pointer or interface variable',
+    'No panic occurs, Dereferencing succeeds, Methods execute correctly',
+    'Objects like pointers (including uintptr and unsafe.Pointer), functions and interfaces can cause this panic when dereferenced while nil. Always check before dereferencing.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/nilness'
+),
+(
+    'Go error: syntax error: unexpected newline, expecting comma or }',
+    'go',
+    'HIGH',
+    '[
+        {"solution": "Add trailing comma at end of each line in multi-line literals: field: value,", "percentage": 95, "note": "Required by Go syntax"},
+        {"solution": "Put closing brace on same line as last element (no trailing comma needed)", "percentage": 85, "note": "Alternative formatting style"},
+        {"solution": "Format code with gofmt or goimports to auto-fix", "percentage": 90, "command": "gofmt -w filename.go"}
+    ]'::jsonb,
+    'Go compiler, Multi-line slice/array/map literal',
+    'Code compiles successfully, Proper formatting applied',
+    'Multi-line slice, array, or map literals require commas at the end of each line. This is a strict syntax requirement.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://yourbasic.org/golang/compiler-error-messages/'
+),
+(
+    'Go panic: interface conversion: type assertion failed',
+    'go',
+    'HIGH',
+    '[
+        {"solution": "Use two-value form of type assertion: value, ok := interfaceVar.(Type); if ok { }", "percentage": 95, "note": "Safe type assertion that never panics"},
+        {"solution": "Use type switch for multiple possible types: switch v := i.(type) { case Type1: ... }", "percentage": 90, "note": "Handles multiple types cleanly"},
+        {"solution": "Verify interface contains expected type before single-value assertion", "percentage": 80, "note": "Check with two-value form first"}
+    ]'::jsonb,
+    'Go runtime environment, Interface variable to assert',
+    'Type assertion succeeds without panic, Correct value extracted, Boolean ok returns true',
+    'Single-value form x.(T) panics if type does not match. Type must match exactly - int32 and int are not interchangeable. Always use two-value form for safety.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://yourbasic.org/golang/type-assertion-switch/'
+),
+(
+    'Go error: cannot use X (type Y) as type Z in assignment',
+    'go',
+    'HIGH',
+    '[
+        {"solution": "Explicitly convert type: Z(variableOfTypeY)", "percentage": 90, "note": "Go requires explicit type conversion"},
+        {"solution": "Use pointer if function expects pointer: &structValue or return pointer from function", "percentage": 85, "note": "Match pointer vs value types"},
+        {"solution": "For custom type aliases, convert explicitly even if underlying type matches", "percentage": 80, "note": "Type aliases are distinct types"}
+    ]'::jsonb,
+    'Go compiler, Variables with type mismatch',
+    'Code compiles successfully, Type conversion valid, Assignment works',
+    'Go is strongly typed with no implicit type conversion. Pointer vs value types must match exactly. Custom type aliases are distinct types.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.slingacademy.com/article/fixing-go-error-cannot-use-x-type-y-as-type-z-in-assignment/'
+),
+(
+    'Go error: loop variable captured by func literal in goroutine',
+    'go',
+    'HIGH',
+    '[
+        {"solution": "Pass loop variable as parameter to goroutine: go func(v Type) { }(val)", "percentage": 95, "note": "Official recommended pattern"},
+        {"solution": "Create new variable inside loop: newVal := val; go func() { use newVal }()", "percentage": 90, "note": "Captures value per iteration"},
+        {"solution": "Upgrade to Go 1.22+ which has iteration-scoped variables by default", "percentage": 85, "note": "Fixes issue automatically in Go 1.22+"}
+    ]'::jsonb,
+    'Go compiler (with vet enabled), Loop launching goroutines',
+    'Each goroutine receives correct iteration value, No shared variable issues',
+    'Loop iterator variable is a single variable that takes different values in each iteration. Closures bind to this variable, reading its final value when executed. Go < 1.22 affected.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://go.dev/wiki/CommonMistakes'
+),
+(
+    'Go panic: all goroutines are asleep - deadlock',
+    'go',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure goroutines send/receive match on channels: same number of sends and receives", "percentage": 90, "note": "Balance channel operations"},
+        {"solution": "Use buffered channels: make(chan T, bufferSize) to decouple senders and receivers", "percentage": 85, "note": "Prevents blocking on first send"},
+        {"solution": "Add timeout or select with default case to prevent indefinite blocking", "percentage": 80, "command": "select { case <-ch: ... ; default: ... }"}
+    ]'::jsonb,
+    'Go runtime, Goroutines communicating via channels or locks',
+    'Program completes without deadlock, All goroutines finish or stay alive intentionally',
+    'Deadlock occurs when all goroutines are blocked waiting. Common causes: inconsistent lock ordering, unmatched channel operations, waiting on unbuffered channel with no sender/receiver.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://pkg.go.dev/github.com/sasha-s/go-deadlock'
+),
+(
+    'Go panic: send on closed channel',
+    'go',
+    'MEDIUM',
+    '[
+        {"solution": "Only close channels from sender side, never from receiver", "percentage": 95, "note": "Standard channel closing pattern"},
+        {"solution": "Use sync.Once to ensure channel closed only once: var once sync.Once; once.Do(func() { close(ch) })", "percentage": 90, "note": "Prevents double-close"},
+        {"solution": "Use context for cancellation instead of closing channels for signaling", "percentage": 85, "note": "More robust pattern"}
+    ]'::jsonb,
+    'Go runtime, Channels being used by multiple goroutines',
+    'No panic occurs, Channel operations complete successfully, Clean shutdown',
+    'Sending on closed channel causes panic. Receiving from closed channel returns zero value. Never close from multiple goroutines. Never close from receiver side.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://go.dev/wiki/PanicAndRecover'
+),
+(
+    'Go error: syntax error: non-declaration statement outside function body',
+    'go',
+    'MEDIUM',
+    '[
+        {"solution": "Move short variable declaration := inside a function body", "percentage": 95, "note": "Short declarations only work in functions"},
+        {"solution": "Use var declaration at package level: var name Type = value", "percentage": 90, "note": "Proper package-level declaration"},
+        {"solution": "Wrap code in init() function if initialization logic needed", "percentage": 80, "note": "For package initialization"}
+    ]'::jsonb,
+    'Go compiler, Package-level code',
+    'Code compiles successfully, Variables properly declared at package scope',
+    'Short variable declarations := only work inside functions. Use var for package-level variables. Cannot execute statements at package level.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://yourbasic.org/golang/compiler-error-messages/'
+),
+(
+    'Go panic cannot recover from panic in different goroutine',
+    'go',
+    'MEDIUM',
+    '[
+        {"solution": "Place defer/recover in same goroutine as panic: go func() { defer func() { recover() }(); ... }()", "percentage": 95, "note": "Recovery must be in same goroutine"},
+        {"solution": "Wrap each goroutine with its own panic handler at the top", "percentage": 90, "note": "Isolates panics per goroutine"},
+        {"solution": "Use error returns instead of panics for cross-goroutine error handling", "percentage": 85, "note": "More Go-idiomatic approach"}
+    ]'::jsonb,
+    'Go runtime, Multiple goroutines, Panic handling code',
+    'Panic is recovered successfully, Program continues execution, No crash',
+    'A panic cannot be recovered by a different goroutine. Each goroutine must have its own defer/recover. No explicit panic should cross package boundaries - return errors instead.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://go.dev/wiki/PanicAndRecover'
+);

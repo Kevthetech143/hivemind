@@ -1,0 +1,212 @@
+-- GitHub Actions common errors and troubleshooting solutions batch 1
+-- Extracted from: https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES
+(
+    'GitHub Actions workflow fails to trigger on scheduled events',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Schedule workflows at non-peak times, avoiding the top of each hour (e.g., use 5, 15, 25, 35, 45, 55 minute marks)", "percentage": 90, "note": "GitHub experiences high load at the start of every hour"},
+        {"solution": "Review the on: field in workflow YAML to verify event configuration is correct", "percentage": 85, "note": "Common mistake: scheduling syntax errors"},
+        {"solution": "Monitor GitHub Status page for platform-wide issues affecting scheduled jobs", "percentage": 80, "note": "During outages, some queued jobs may be dropped"}
+    ]'::jsonb,
+    'Workflow file exists in .github/workflows directory on default branch',
+    'Workflow executes at scheduled time without delays, no dropped jobs in queue',
+    'Avoid scheduling at :00 minutes (e.g., 3:00 PM) as this is peak load time. Jobs may be dropped during high load.',
+    0.85,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#scheduled-workflows-run-late-or-not-at-all'
+),
+(
+    'GitHub Actions workflow does not run when expected',
+    'github-actions',
+    'VERY_HIGH',
+    '[
+        {"solution": "Review the on: field in workflow configuration and verify event names match official syntax", "percentage": 95, "note": "Most common cause"},
+        {"solution": "Verify workflow file exists on the default branch (main/master), not feature branches", "percentage": 92, "note": "Triggering events only execute from default branch"},
+        {"solution": "Check for merge conflicts in pull requests - workflows skip if conflicts exist", "percentage": 88, "note": "PR-triggered workflows require clean merge state"},
+        {"solution": "Inspect commit messages for skip annotations that prevent execution", "percentage": 85, "note": "Keywords like [skip ci] prevent workflow runs"},
+        {"solution": "Validate branch/tag/path filtering patterns in workflow conditions", "percentage": 82, "note": "Note: path diffs evaluate only first 300 files changed"}
+    ]'::jsonb,
+    'Workflow file placed in .github/workflows directory with .yml or .yaml extension',
+    'Workflow runs after addressing trigger conditions, commits show workflow execution in logs',
+    'Do not place workflow files in subdirectories. Default branch must contain the file. Commit messages with [skip ci] will prevent execution. Path filtering only checks first 300 files.',
+    0.92,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#workflow-fails-to-trigger'
+),
+(
+    'GitHub Actions workflow cannot be cancelled via UI or API',
+    'github-actions',
+    'MEDIUM',
+    '[
+        {"solution": "Replace always() conditional with its inverse: use if: ${{ !cancelled() }} instead of if: always()", "percentage": 95, "note": "always() returns true during cancellation, preventing proper termination"},
+        {"solution": "Review status check functions in workflow conditions - ensure they do not override cancellation", "percentage": 88, "note": "Other conditions may prevent cancellation too"},
+        {"solution": "Use GitHub REST API force-cancel endpoint if standard UI cancellation fails", "percentage": 85, "command": "POST /repos/{owner}/{repo}/actions/runs/{run_id}/cancel"}
+    ]'::jsonb,
+    'GitHub account with repository access, ability to modify workflow files',
+    'Workflow cancels successfully via UI, jobs terminate within expected timeframe',
+    'The always() function will prevent cancellation because it returns true even when workflow is cancelled. Use !cancelled() instead for proper cleanup logic.',
+    0.90,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#workflow-cancellation-fails'
+),
+(
+    'GitHub Actions logs do not contain enough detail to debug workflow failure',
+    'github-actions',
+    'VERY_HIGH',
+    '[
+        {"solution": "Enable debug logging by setting ACTIONS_STEP_DEBUG=true secret in repository settings", "percentage": 95, "note": "Creates detailed step execution logs"},
+        {"solution": "Enable tool-specific verbose logging: npm install --verbose for npm, GIT_TRACE=1 GIT_CURL_VERBOSE=1 for git commands", "percentage": 90, "note": "Different tools have different verbose flags"},
+        {"solution": "Use GitHub Copilot''s Explain error feature for guided solutions on error details", "percentage": 85, "note": "Available in GitHub UI for supported accounts"},
+        {"solution": "Download complete workflow run logs and search for specific error patterns", "percentage": 88, "note": "View and search logs through GitHub Actions UI"}
+    ]'::jsonb,
+    'Repository access, ability to set secrets in repository settings',
+    'Detailed logs display root cause in ACTIONS_STEP_DEBUG output, workflow failure becomes actionable',
+    'Debug logging must be enabled before workflow runs - cannot enable retroactively. Different tools require different debug flags. Be specific about what tool is failing.',
+    0.93,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#insufficient-workflow-logs-for-debugging'
+),
+(
+    'GitHub Actions workflow fails due to exceeded runner minutes or storage quota',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Set an Actions budget in billing settings to immediately unblock workflows and allow further usage", "percentage": 95, "note": "Most direct solution"},
+        {"solution": "Configure spending limits in Actions billing to prevent automatic blocks", "percentage": 90, "note": "Allows control over cost threshold"},
+        {"solution": "Review GitHub Actions billing documentation to understand cost structure and optimize usage", "percentage": 85, "note": "Different runners have different minute costs"}
+    ]'::jsonb,
+    'Billing access in GitHub organization/account settings, valid payment method on file',
+    'Workflows execute after budget adjustment, spending remains within planned limits',
+    'Budget settings take effect immediately but do not retroactively unlock past failed runs. Free tier has monthly limits that reset automatically.',
+    0.92,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#billing-or-storage-errors-block-workflows'
+),
+(
+    'GitHub Actions job runs unpredictably on different runners',
+    'github-actions',
+    'MEDIUM',
+    '[
+        {"solution": "Use unique, descriptive label names for self-hosted runners that do not match GitHub preset labels", "percentage": 95, "note": "Custom labels must be distinct from preset labels"},
+        {"solution": "Verify runner labels in job configuration and check runner assignment in settings", "percentage": 90, "note": "Review runs_on: label matching"},
+        {"solution": "Avoid duplicating preset labels from actions/runner-images repository", "percentage": 88, "note": "Duplication causes ambiguous runner selection"},
+        {"solution": "Reference runner labels documentation to understand preset label values", "percentage": 85, "note": "Different runner types have different preset labels"}
+    ]'::jsonb,
+    'Self-hosted runner configured and registered, custom labels assigned',
+    'Jobs consistently run on intended runner, runner selection is deterministic and unambiguous',
+    'Custom labels must be unique - do not reuse GitHub preset labels like ubuntu-latest, windows-latest, macos-latest with self-hosted runners. This causes unpredictable runner selection.',
+    0.88,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#runner-assignment-issues'
+),
+(
+    'Self-hosted GitHub Actions runner offline or fails to execute jobs',
+    'github-actions',
+    'MEDIUM',
+    '[
+        {"solution": "Check runner status and online/offline indicator in repository settings, monitor runner activity logs", "percentage": 92, "note": "First diagnostic step"},
+        {"solution": "Review diagnostic logs on the runner machine using config.sh --check --url [repo] --pat [token]", "percentage": 90, "command": "./config.sh --check --url https://github.com/owner/repo --pat YOUR_TOKEN", "note": "Validates network connectivity"},
+        {"solution": "Verify runner application is running: use journalctl on Linux, svc.sh status on macOS, or Get-EventLog on Windows", "percentage": 88, "command": "journalctl -u actions.runner@[hostname]-[repo] -f"},
+        {"solution": "Consult self-hosted runners troubleshooting guide and check machine logs for errors", "percentage": 85, "note": "Detailed guide available in documentation"}
+    ]'::jsonb,
+    'Self-hosted runner machine configured, network access to GitHub, runner service configured',
+    'Runner appears online in repository settings, jobs execute successfully on runner',
+    'Runner status shows as Offline when machine is unreachable, application not running, or network connection to GitHub fails. Check both runner logs and system logs.',
+    0.86,
+    NOW(),
+    'https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/monitoring-and-troubleshooting-self-hosted-runners'
+),
+(
+    'Docker permission denied error in self-hosted GitHub Actions runner',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Verify runner service account has permission to access Docker socket: systemctl show -p User [service-name] to identify account", "percentage": 95, "note": "Root cause is service account permissions"},
+        {"solution": "Add runner service account to docker group: usermod -aG docker [service-account]", "percentage": 92, "command": "usermod -aG docker actions-runner", "note": "Grants socket access without sudo"},
+        {"solution": "Restart runner service after adding permissions for changes to take effect", "percentage": 90, "command": "sudo systemctl restart actions.runner@[hostname]-[repo]"},
+        {"solution": "Verify Docker binary is installed correctly and not using snap wrapper which may not pass environment variables", "percentage": 85, "note": "Snap installations can cause permission issues"}
+    ]'::jsonb,
+    'Docker installed on runner machine, runner service account created, systemctl available',
+    'Docker commands execute without permission errors, containers launch successfully',
+    'Error message: dial unix /var/run/docker.sock: connect: permission denied. Root cause is runner service account lacks Docker socket access. Do not run Docker commands with sudo in workflows.',
+    0.91,
+    NOW(),
+    'https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/monitoring-and-troubleshooting-self-hosted-runners#reviewing-runner-logs'
+),
+(
+    'Docker not found error in self-hosted GitHub Actions runner',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Verify Docker is installed on the runner machine and is accessible in PATH: which docker", "percentage": 95, "command": "which docker", "note": "Confirms binary exists and location"},
+        {"solution": "Ensure Docker is installed as binary executable, not snap wrapper: check output of which docker command", "percentage": 92, "note": "Snap installations may not pass environment variables properly"},
+        {"solution": "Add Docker installation directory to PATH if installed in non-standard location", "percentage": 88, "command": "export PATH=$PATH:/path/to/docker/bin"},
+        {"solution": "Restart runner service after installing Docker so it picks up the new PATH", "percentage": 85, "command": "sudo systemctl restart actions.runner@[hostname]-[repo]"}
+    ]'::jsonb,
+    'Runner machine with bash shell, ability to install Docker or modify PATH',
+    'which docker returns path, docker version runs successfully, Docker containers launch in workflows',
+    'Error: FileNotFoundException from DockerCommandManager indicates Docker binary not found. Snap installations may cause issues. Verify binary location with which docker before using in workflows.',
+    0.89,
+    NOW(),
+    'https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/monitoring-and-troubleshooting-self-hosted-runners#reviewing-runner-logs'
+),
+(
+    'GitHub Actions workflow network connectivity issues blocking execution',
+    'github-actions',
+    'MEDIUM',
+    '[
+        {"solution": "Check GitHub Status page for platform-wide outages affecting external service connectivity", "percentage": 90, "note": "GitHub may be experiencing issues"},
+        {"solution": "Review organization network settings, firewall rules, and proxy configuration blocking external access", "percentage": 88, "note": "Contact network admin for configuration changes"},
+        {"solution": "Verify third-party service status and API availability that workflow depends on", "percentage": 85, "note": "Service may be down or blocking GitHub"},
+        {"solution": "For DNS issues: review DNS configuration, resolution, and resolver settings with network team", "percentage": 82, "note": "DNS failures prevent external service access"},
+        {"solution": "For proxy issues: configure runner application with proxy settings and test connectivity", "percentage": 80, "note": "Runner may need explicit proxy configuration"},
+        {"solution": "For certificate issues: validate TLS certificate expiration and trust status on external services", "percentage": 78, "note": "Certificate validation failures block requests"}
+    ]'::jsonb,
+    'Network access to GitHub and external services, ability to check network settings',
+    'External services become reachable from runner, workflow completes without connectivity errors',
+    'GitHub has limited support for network issues. Verify platform status first. Common issues: DNS resolution, firewall blocks, proxy misconfiguration, certificate expiration, IP allowlist/blocklist conflicts.',
+    0.82,
+    NOW(),
+    'https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows#network-connectivity-issues'
+),
+(
+    'Java version input required error in GitHub Actions workflow with setup-java',
+    'github-actions',
+    'MEDIUM',
+    '[
+        {"solution": "Add required java-version input to setup-java action: - uses: actions/setup-java@v3 with: java-version: ''17''", "percentage": 96, "note": "Most common fix for setup-java"},
+        {"solution": "Verify java-version value is valid: ''8'', ''11'', ''17'', ''21'', or other supported versions", "percentage": 93, "note": "Must use quoted string in YAML"},
+        {"solution": "Check distribution parameter if specified - must match supported distributions like temurin, zulu, adopt, etc.", "percentage": 88, "note": "Distribution affects available versions"},
+        {"solution": "Consult setup-java action documentation for correct syntax and supported Java versions", "percentage": 85, "note": "Version support changes between action versions"}
+    ]'::jsonb,
+    'GitHub Actions workflow with setup-java action included',
+    'Java version specified in output, javac --version runs successfully in subsequent steps',
+    'Error message: Input required and not supplied: java-version. This is a required parameter. Always quote the version value (e.g., java-version: ''17'') in YAML to avoid parsing issues.',
+    0.94,
+    NOW(),
+    'https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/monitoring-and-troubleshooting-self-hosted-runners'
+),
+(
+    'GitHub Actions workflow YAML file not found or syntax validation errors',
+    'github-actions',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify workflow file is in .github/workflows directory with .yml or .yaml extension", "percentage": 96, "note": "Must be exact path and extension"},
+        {"solution": "Validate YAML syntax: check for proper indentation (2 or 4 spaces, consistent), missing colons, incorrect nesting", "percentage": 94, "note": "YAML is whitespace-sensitive"},
+        {"solution": "Run workflow file through YAML linter or use editor YAML extension to catch syntax errors before commit", "percentage": 92, "command": "yamllint .github/workflows/workflow.yml"},
+        {"solution": "Verify all job and step names are valid identifiers without special characters except hyphens/underscores", "percentage": 88, "note": "Names must follow identifier rules"},
+        {"solution": "Ensure workflow file exists on default branch (main/master), not just on feature branches", "percentage": 85, "note": "Workflows only trigger from default branch"}
+    ]'::jsonb,
+    'Text editor with YAML syntax support, workflow file created in .github/workflows',
+    'Workflow file appears in GitHub Actions tab, workflow.name displays correctly, no parse errors shown',
+    'Common mistakes: wrong directory (.github/workflow instead of .github/workflows), missing colons after keys, incorrect indentation levels, using tabs instead of spaces, invalid job names with special characters.',
+    0.95,
+    NOW(),
+    'https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions'
+);

@@ -1,0 +1,219 @@
+-- Stack Overflow: Top 12 highest-voted MySQL Q&A
+-- Source: https://stackoverflow.com/questions/tagged/mysql?tab=votes
+-- Category: stackoverflow-mysql
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Should I use DATETIME or TIMESTAMP data type in MySQL?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "Use DATETIME for arbitrary dates you control (birthdays, appointments, etc.)", "percentage": 90, "note": "Stores constant values unaffected by session timezone"},
+        {"solution": "Use TIMESTAMP for automatic tracking and record timestamps. Converts to/from UTC automatically.", "percentage": 85, "note": "Caution: automatic timezone conversion can confuse multi-timezone databases"},
+        {"solution": "Consider storing milliseconds since epoch as BIGINT to avoid timezone complications", "percentage": 75, "note": "Most portable approach, maintains consistency across timezones"}
+    ]'::jsonb,
+    'MySQL database created and accessible',
+    'Table created with correct data type, dates store and retrieve as expected',
+    'TIMESTAMP automatic timezone conversion can cause same moment to display differently by timezone. TIMESTAMP has hard limit of 2038-01-09 for future dates. DATETIME supports 1000-9999 range.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/409286/should-i-use-the-datetime-or-timestamp-data-type-in-mysql'
+),
+(
+    'How can I import an SQL file using the command line in MySQL?',
+    'stackoverflow-mysql',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use mysql command: mysql -u username -p database_name < file.sql", "percentage": 95, "command": "mysql -u username -p database_name < /path/to/file.sql", "note": "Universal method works on Windows, macOS, Linux"},
+        {"solution": "Alternatively use source command after logging in: mysql> source /path/to/file.sql;", "percentage": 90, "command": "source /path/to/file.sql;", "note": "Execute from within MySQL interactive shell"},
+        {"solution": "For large files, disable autocommit for 200x speedup: SET autocommit=0; before import", "percentage": 88, "note": "Significantly improves import performance for 5MB+ files"}
+    ]'::jsonb,
+    'MySQL server running, file.sql exists, database user has appropriate privileges',
+    'SQL file imports without errors, all tables and data present in database',
+    'Ensure database exists or SQL file contains CREATE DATABASE statement. Use full path to SQL file for reliability. Large files perform much slower without autocommit disabled.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/17666249/how-can-i-import-an-sql-file-using-the-command-line-in-mysql'
+),
+(
+    'How can I prevent SQL injection in PHP?',
+    'stackoverflow-mysql',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use prepared statements with PDO: $stmt = $pdo->prepare(''SELECT * FROM users WHERE name = :name''); $stmt->execute([''name'' => $name]);", "percentage": 95, "command": "Disable emulated prepares: $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);", "note": "Gold standard for SQL injection prevention"},
+        {"solution": "Use MySQLi prepared statements for PHP 8.2+: $result = $db->execute_query(''SELECT * FROM users WHERE name = ?'', [$name]);", "percentage": 93, "note": "Modern built-in method, separates data from SQL"},
+        {"solution": "Use whitelisting for dynamic query elements (table/column names): $validFields = array(''id'', ''name''); if (in_array($sort, $validFields)) { ... }", "percentage": 85, "note": "For elements that cannot be parameterized"}
+    ]'::jsonb,
+    'PHP with PDO or MySQLi extension, database connection',
+    'Application accepts user input without errors, SQL injection attempts fail, queries return correct results',
+    'Never use mysql_real_escape_string() - removed in PHP 7. Do not concatenate user input into queries. Do not rely on manual escaping alone. Always separate data from SQL structure.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/60174/how-can-i-prevent-sql-injection-in-php'
+),
+(
+    'Why shouldnt I use mysql_* functions in PHP?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "mysql_* extension is deprecated as of PHP 5.5 and removed entirely in PHP 7.0 - code will not run on modern PHP", "percentage": 95, "note": "Use PDO or MySQLi instead"},
+        {"solution": "Lack of prepared statement support in mysql_* makes SQL injection vulnerabilities likely", "percentage": 93, "note": "Built for MySQL 3.23, no security features for modern threats"},
+        {"solution": "Switch to PDO or MySQLi which provide object-oriented interface, prepared statements, better error handling, and support for modern MySQL features", "percentage": 90, "command": "Use $pdo->prepare() or $db->execute_query() instead", "note": "Transition is straightforward and well-documented"}
+    ]'::jsonb,
+    'PHP 5.5+ environment, database driver compatibility',
+    'Application runs without deprecation warnings, SQL statements use prepared statements, no connection errors',
+    'Code using mysql_* functions will fail completely on PHP 7+. Prepared statements are mandatory, not optional. Modern alternatives have minimal learning curve.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/12859942/why-shouldnt-i-use-mysql-functions-in-php'
+),
+(
+    'Whats the difference between INNER JOIN, LEFT JOIN, RIGHT JOIN and FULL JOIN in SQL?',
+    'stackoverflow-mysql',
+    'VERY_HIGH',
+    '[
+        {"solution": "INNER JOIN returns only rows where match exists in both tables - excludes unmatched records entirely", "percentage": 95, "note": "Most restrictive join type"},
+        {"solution": "LEFT JOIN returns all rows from left table plus matching rows from right table, unmatched right columns show NULL", "percentage": 94, "note": "Preserves all left table records"},
+        {"solution": "RIGHT JOIN returns all rows from right table plus matching rows from left table, unmatched left columns show NULL", "percentage": 93, "note": "Opposite of LEFT JOIN - preserves all right table records"},
+        {"solution": "FULL JOIN combines LEFT and RIGHT results - returns all records from both tables with NULL for unmatched values", "percentage": 88, "note": "Not directly supported in MySQL, use UNION of LEFT and RIGHT"}
+    ]'::jsonb,
+    'Two tables with relationship defined, SQL knowledge',
+    'Query returns expected result set, correct number of rows, NULL values appear where appropriate',
+    'MySQL does not natively support FULL JOIN - use UNION of LEFT and RIGHT joins instead. The key distinction is which table''s unmatched rows are preserved.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/5706437/whats-the-difference-between-inner-join-left-join-right-join-and-full-join'
+),
+(
+    'SQL: How to select only rows with max value on a column?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "Use GROUP BY with JOIN to subquery: SELECT a.* FROM table a INNER JOIN (SELECT id, MAX(rev) FROM table GROUP BY id) b ON a.id = b.id AND a.rev = b.rev", "percentage": 92, "note": "Classic approach, good performance"},
+        {"solution": "Use LEFT OUTER SELF-JOIN: SELECT a.* FROM table a LEFT OUTER JOIN table b ON a.id = b.id AND a.rev < b.rev WHERE b.id IS NULL", "percentage": 89, "note": "Often faster for large datasets"},
+        {"solution": "Use window functions (ROW_NUMBER): SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY rev DESC) rn FROM table) WHERE rn = 1", "percentage": 85, "note": "Modern approach, supported in MySQL 8+"},
+        {"solution": "Use IN with subquery: SELECT * FROM table WHERE (id, rev) IN (SELECT id, MAX(rev) FROM table GROUP BY id)", "percentage": 80, "note": "Simple syntax, may be slower on large tables"}
+    ]'::jsonb,
+    'MySQL table with grouping column and value column, SQL knowledge',
+    'Query returns one row per group showing the record with maximum value, no duplicates',
+    'Multiple rows per group indicate incorrect join condition. Simple GROUP BY without JOIN returns wrong record. Window function approach requires MySQL 8.0+. Performance varies by method and data size.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column'
+),
+(
+    'How to reset AUTO_INCREMENT in MySQL?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "Use ALTER TABLE command: ALTER TABLE tablename AUTO_INCREMENT = 1;", "percentage": 95, "command": "ALTER TABLE your_table AUTO_INCREMENT = 1;", "note": "Direct method to reset counter"},
+        {"solution": "For InnoDB tables, counter resets only to a value higher than current maximum. Cannot reset to value already used.", "percentage": 90, "note": "Important InnoDB limitation"},
+        {"solution": "To reset while preserving data, reassign IDs first: SET @num := 0; UPDATE table SET id = @num := (@num+1); ALTER TABLE table AUTO_INCREMENT = 1;", "percentage": 85, "command": "SET @num := 0; UPDATE your_table SET id = @num := (@num+1);", "note": "Preserves existing data while resetting counter"},
+        {"solution": "TRUNCATE TABLE resets AUTO_INCREMENT to 1 immediately but deletes all data", "percentage": 88, "command": "TRUNCATE TABLE table_name;", "note": "Use cautiously - removes all rows"}
+    ]'::jsonb,
+    'MySQL table with AUTO_INCREMENT column, appropriate privileges',
+    'ALTER TABLE succeeds without errors, next inserted row has expected ID value',
+    'InnoDB cannot reset to value equal to or less than current max ID - use SET @num approach instead. TRUNCATE deletes all data. Cannot reset mid-transaction on some systems.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/8923114/how-to-reset-auto-increment-in-mysql'
+),
+(
+    'Can I concatenate multiple MySQL rows into one field?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "Use GROUP_CONCAT function: SELECT person_id, GROUP_CONCAT(hobbies SEPARATOR '','') FROM peoples_hobbies GROUP BY person_id;", "percentage": 95, "command": "GROUP_CONCAT(column_name SEPARATOR '', '')", "note": "Standard method for row concatenation"},
+        {"solution": "Use DISTINCT to remove duplicates: GROUP_CONCAT(DISTINCT hobbies SEPARATOR '', '')", "percentage": 90, "note": "Eliminates duplicate values in concatenated result"},
+        {"solution": "Order concatenated values: GROUP_CONCAT(hobbies ORDER BY hobbies ASC SEPARATOR '', '')", "percentage": 88, "command": "GROUP_CONCAT(hobbies ORDER BY hobbies SEPARATOR '', '')", "note": "Controls sort order of concatenated items"},
+        {"solution": "Increase default 1024-byte limit: SET group_concat_max_len = 2048; for larger results", "percentage": 85, "command": "SET group_concat_max_len = 4096;", "note": "Adjust based on data size"}
+    ]'::jsonb,
+    'MySQL table with columns to concatenate, GROUP BY understanding',
+    'Query returns single row per group with concatenated values, correct separator format',
+    'Default 1024-byte limit truncates results silently - increase group_concat_max_len. CONCAT works on individual values, not result sets. Cannot wrap GROUP_CONCAT around entire query.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/276927/can-i-concatenate-multiple-mysql-rows-into-one-field'
+),
+(
+    'How can I output MySQL query results in CSV format?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "Use SELECT INTO OUTFILE with CSV formatting: specify FIELDS TERMINATED BY comma, ENCLOSED BY quote, LINES TERMINATED BY newline", "percentage": 92, "note": "Creates CSV file on server, requires FILE privilege"},
+        {"solution": "Check secure_file_priv setting to determine allowed output directory: SHOW VARIABLES LIKE ''secure_file_priv'';", "percentage": 90, "command": "SHOW VARIABLES LIKE ''secure_file_priv'';", "note": "Modern MySQL restricts output to specific directories"},
+        {"solution": "For users without FILE privilege, use shell piping with tr command to convert tabs to commas", "percentage": 80, "note": "Does not handle embedded commas or special characters"}
+    ]'::jsonb,
+    'MySQL user with FILE privilege or shell access, database and table accessible',
+    'CSV file created successfully with correct delimiter and formatting, data appears correctly in spreadsheet application',
+    'INTO OUTFILE creates file on server, not local machine. Requires FILE privilege on most installations. secure_file_priv restricts output directory. Does not properly escape embedded commas or quotes.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/356578/how-can-i-output-mysql-query-results-in-csv-format'
+),
+(
+    'How can I get a list of user accounts using the command line in MySQL?',
+    'stackoverflow-mysql',
+    'MEDIUM',
+    '[
+        {"solution": "Query mysql.user system table: SELECT User FROM mysql.user;", "percentage": 95, "command": "SELECT User FROM mysql.user;", "note": "Returns list of all usernames"},
+        {"solution": "Include host information: SELECT User, Host FROM mysql.user; to see which hosts each user can connect from", "percentage": 93, "command": "SELECT User, Host FROM mysql.user;", "note": "Important: user@localhost differs from user@192.168.1.1"},
+        {"solution": "Get unique usernames only: SELECT DISTINCT User FROM mysql.user;", "percentage": 90, "command": "SELECT DISTINCT User FROM mysql.user;", "note": "Removes duplicate entries for multiple hosts"},
+        {"solution": "Run from shell without entering MySQL: mysql -u root -p -e ''SELECT user, host FROM mysql.user;''", "percentage": 88, "command": "mysql -u root -p -e ''SELECT user, host FROM mysql.user;''", "note": "Direct execution from command line"}
+    ]'::jsonb,
+    'MySQL server running, administrative access to mysql.user table, command-line access',
+    'Query returns list of user accounts, includes host information where applicable, output is readable',
+    'Requires administrative privileges to access mysql.user system table. Host matters - same username at different hosts are separate accounts with different permissions. SELECT queries alone show account info, not actual database privileges.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1135245/how-can-i-get-a-list-of-user-accounts-using-the-command-line-in-mysql'
+),
+(
+    'Which MySQL data type should I use for storing boolean values?',
+    'stackoverflow-mysql',
+    'MEDIUM',
+    '[
+        {"solution": "Use BOOL or BOOLEAN - both are synonyms for TINYINT(1) with zero = false, non-zero = true", "percentage": 95, "note": "Recommended standard approach"},
+        {"solution": "Use TINYINT(1) explicitly if BOOL is not clear - occupies 1 byte, stores 0 or 1", "percentage": 92, "command": "CREATE TABLE example (is_active TINYINT(1));", "note": "Explicit form of BOOL, better for older systems"},
+        {"solution": "Use BIT(1) for MySQL 5.0.3+ if you need strict 0/1 constraints", "percentage": 75, "note": "Some client libraries return BIT as buffer rather than boolean, causing compatibility issues"},
+        {"solution": "Avoid ENUM(''true'',''false'') - easy to accidentally insert empty strings, less reliable", "percentage": 70, "note": "Anti-pattern, not recommended"}
+    ]'::jsonb,
+    'MySQL table, understanding of boolean logic in application layer',
+    'Column stores and retrieves boolean values correctly, comparison operations work (WHERE is_active = 1)',
+    'BIT datatype has compatibility issues with some frameworks - TINYINT(1) more reliable. Storage difference between alternatives is negligible. ENUM approach causes data integrity issues with empty strings.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/289727/which-mysql-data-type-to-use-for-storing-boolean-values'
+),
+(
+    'How do I properly configure UTF-8 encoding in MySQL?',
+    'stackoverflow-mysql',
+    'HIGH',
+    '[
+        {"solution": "Use utf8mb4 character set instead of utf8: ALTER TABLE test CONVERT TO charset utf8mb4; (note CONVERT, not just charset)", "percentage": 95, "command": "ALTER TABLE your_table CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;", "note": "MySQL utf8 supports only 3-byte chars, utf8mb4 supports full UTF-8 including emojis"},
+        {"solution": "Set connection charset in application: PDO: new PDO(''mysql:charset=utf8mb4''); or mysqli: $conn->set_charset(''utf8mb4'');", "percentage": 93, "command": "new PDO(''mysql:charset=utf8mb4'');", "note": "Ensures correct encoding for all queries"},
+        {"solution": "For PHP < 5.3.6 without charset parameter, use: SET NAMES ''utf8mb4''; after connection", "percentage": 88, "command": "SET NAMES ''utf8mb4'';", "note": "Fallback for older PHP versions"},
+        {"solution": "Verify encoding: SHOW VARIABLES LIKE ''character_set%''; - check client, connection, database, table, and column settings", "percentage": 85, "command": "SHOW VARIABLES LIKE ''character_set%'';", "note": "Debugging step to confirm proper UTF-8 setup"}
+    ]'::jsonb,
+    'MySQL 5.1+, database with existing tables, application using PDO or mysqli',
+    'Emojis and special Unicode characters store and retrieve correctly, no garbled text, SHOW VARIABLES confirms utf8mb4 setting',
+    'ALTER TABLE with just CHARSET does not update existing column encodings - must use CONVERT TO. MySQL utf8 is not true UTF-8, only supports 3 bytes max. Connection-level SET NAMES required if not set in connection string.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/279170/utf-8-all-the-way-through'
+);

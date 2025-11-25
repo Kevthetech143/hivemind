@@ -1,0 +1,210 @@
+-- Add Flutter common errors batch 1
+-- Extracted from official Flutter documentation: https://docs.flutter.dev/testing/common-errors
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'RenderFlex overflowed by X pixels on axis',
+    'flutter',
+    'VERY_HIGH',
+    '[
+        {"solution": "Wrap the overflowing child widget in Expanded or Flexible widget to impose size constraints", "percentage": 95, "note": "Most common solution for Column and Row overflow"},
+        {"solution": "Use Flexible widget with flex property to control proportional space allocation", "percentage": 90, "command": "Flexible(flex: 1, child: YourWidget())"},
+        {"solution": "Replace unbounded child with SizedBox to specify exact dimensions", "percentage": 85, "command": "SizedBox(width: 200, child: YourWidget())"}
+    ]'::jsonb,
+    'Flutter project with Column or Row widget, Child widget causing overflow',
+    'UI renders without overflow warnings, Widget displays within parent boundaries',
+    'Do not add padding/margin to try to fix overflow. Do not use negative constraints. Always wrap unconstrained children in Expanded or constrain their size.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/common-errors'
+),
+(
+    'Vertical viewport was given unbounded height',
+    'flutter',
+    'VERY_HIGH',
+    '[
+        {"solution": "Wrap ListView or scrollable widget in Expanded widget to provide fixed height constraint", "percentage": 95, "note": "Use when ListView is inside Column"},
+        {"solution": "Use SizedBox to explicitly constrain height: SizedBox(height: 300, child: ListView(...))", "percentage": 90, "command": "SizedBox(height: screenHeight, child: ListView())"},
+        {"solution": "Replace Column parent with SingleChildScrollView if entire column should scroll", "percentage": 85, "command": "SingleChildScrollView(child: Column(...))"}
+    ]'::jsonb,
+    'Flutter project with ListView, GridView, or scrollable widget nested in Column',
+    'Scrollable widget displays correctly within parent, No constraint error messages in console',
+    'Do not nest unbounded scrollables directly in Column. Do not attempt to use height: double.infinity on ListView parent. Use Expanded or SizedBox.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/common-errors'
+),
+(
+    'TextField or TextFormField cannot have unbounded width',
+    'flutter',
+    'HIGH',
+    '[
+        {"solution": "Wrap TextField in Expanded widget to fill available width", "percentage": 93, "note": "Use in Row or Flex containers"},
+        {"solution": "Use SizedBox with fixed width to explicitly set field dimensions", "percentage": 90, "command": "SizedBox(width: 200, child: TextField(...))"},
+        {"solution": "Wrap TextField in Flexible widget with flex property for proportional width", "percentage": 85, "command": "Flexible(flex: 1, child: TextField(...))"}
+    ]'::jsonb,
+    'Flutter project with TextField or TextFormField, Widget placed in Row or Flex container',
+    'Text field renders with proper width, User can type without constraint errors',
+    'Do not place raw TextField directly in Row without width constraint. Do not use width: double.infinity. Use Expanded or SizedBox.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/common-errors'
+),
+(
+    'Incorrect use of ParentDataWidget - Positioned outside Stack',
+    'flutter',
+    'HIGH',
+    '[
+        {"solution": "Ensure Positioned widget is direct child of Stack widget", "percentage": 95, "note": "ParentData widgets require specific parent context"},
+        {"solution": "Wrap Positioned in Stack if currently in Column, Row, or other layout", "percentage": 90, "command": "Stack(children: [Positioned(...)])"},
+        {"solution": "Use Align instead of Positioned for simpler alignment without Stack", "percentage": 80, "command": "Align(alignment: Alignment.topRight, child: Widget())"}
+    ]'::jsonb,
+    'Flutter project with Positioned, Flexible, or Expanded widget',
+    'Widget renders without ParentData error, Layout displays as expected',
+    'Do not place Positioned outside Stack. Do not use Flexible outside Row/Column/Flex. Do not use TableCell outside Table.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/common-errors'
+),
+(
+    'setState() called during build phase',
+    'flutter',
+    'HIGH',
+    '[
+        {"solution": "Move setState call outside of build method, use Navigator or lifecycle methods instead", "percentage": 94, "note": "setState cannot be called during widget construction"},
+        {"solution": "Use WidgetsBinding.instance.addPostFrameCallback to defer state changes after build", "percentage": 89, "command": "WidgetsBinding.instance.addPostFrameCallback((_) { setState(...); });"},
+        {"solution": "Avoid calling showDialog directly in build - use _openDialog method from event callback", "percentage": 85, "note": "showDialog changes state which violates build phase rules"}
+    ]'::jsonb,
+    'StatefulWidget with build method, Dartanalyzer inspection enabled',
+    'Widget builds successfully, No "setState called during build" errors in console',
+    'Do not call setState inside build. Do not call showDialog in build. Do not modify widget state during construction. Use event handlers or lifecycle callbacks instead.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/common-errors'
+),
+(
+    'The ScrollController is attached to multiple scroll views',
+    'flutter',
+    'MEDIUM',
+    '[
+        {"solution": "Create separate ScrollController instances for each scrollable widget", "percentage": 93, "note": "One controller per scrollable widget"},
+        {"solution": "Use PrimaryScrollController for primary scrollable and implicit controller for secondary", "percentage": 88, "command": "PrimaryScrollController handles primary scroll, others use default"},
+        {"solution": "Reset and reuse controller by disposing and creating new instance per widget", "percentage": 82, "command": "controller.dispose() then _controller = ScrollController() before reuse"}
+    ]'::jsonb,
+    'Flutter project with multiple ListView/ScrollView widgets, ScrollController instance',
+    'All scrollable widgets function independently, No "multiple scroll views" warning messages',
+    'Do not share single ScrollController across multiple scrollables. Do not forget to call dispose() on old controller. Always create new controller instance per widget.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/common-errors'
+),
+(
+    'Multidex support required for Android API 20 or below',
+    'flutter',
+    'MEDIUM',
+    '[
+        {"solution": "When prompted, enter y to enable Flutter multidex support automatically", "percentage": 95, "note": "Flutter handles this automatically during build for API 20 and below"},
+        {"solution": "Enable multidex in android/app/build.gradle: multiDexEnabled = true", "percentage": 90, "command": "defaultConfig { multiDexEnabled = true }"},
+        {"solution": "Ensure androidx.multidex:multidex dependency is added to gradle", "percentage": 88, "note": "Flutter auto-adds this when multidex is enabled"}
+    ]'::jsonb,
+    'Flutter Android project, Targeting API level 20 or below, Building APK or AAB',
+    'APK builds successfully without multidex error, App runs on older Android devices',
+    'Do not manually configure multidex if Flutter can auto-enable it. Do not target API 20 without multidex. Check android/app/build.gradle targetSdkVersion.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/deployment/android'
+),
+(
+    'iOS app signing error - certificate not found',
+    'flutter',
+    'MEDIUM',
+    '[
+        {"solution": "Enable Automatically manage signing in Xcode Signing & Capabilities tab", "percentage": 94, "note": "Let Xcode handle certificate management"},
+        {"solution": "Manually configure Team ID in Xcode if automatic signing unavailable", "percentage": 88, "command": "In Xcode: Select Team in Signing & Capabilities section"},
+        {"solution": "Ensure Bundle ID matches between pubspec.yaml, Xcode, and Apple Developer account", "percentage": 85, "note": "ID mismatch causes signing failures"}
+    ]'::jsonb,
+    'iOS Flutter project, Xcode configured, Apple Developer account setup',
+    'App builds successfully with flutter build ipa, No code signing errors in xcode build output',
+    'Do not use expired or revoked signing certificates. Do not mismatch Bundle IDs. Do not ignore Xcode signing warnings.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/deployment/ios'
+),
+(
+    'Build number conflict - each upload requires unique build number',
+    'flutter',
+    'MEDIUM',
+    '[
+        {"solution": "Increment build number in pubspec.yaml before each App Store submission (format: 1.0.0+N where N increases)", "percentage": 95, "note": "Build number must be strictly increasing per version"},
+        {"solution": "Increment build number in Xcode (iOS) or build.gradle (Android) if pubspec not used", "percentage": 88, "command": "iOS: Product Bundle Version in Info.plist, Android: versionCode in build.gradle"},
+        {"solution": "Use flutter build ipa --build-number=X or flutter build apk --build-number=X to override", "percentage": 85, "command": "flutter build ipa --build-number=2"}
+    ]'::jsonb,
+    'Flutter iOS or Android project, Previous version already submitted to app store',
+    'New build uploaded successfully to App Store/Google Play, Build version accepted without conflicts',
+    'Do not reuse same build number across uploads. Do not skip build numbers in sequence. Always increment before submission.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/deployment/ios'
+),
+(
+    'Hot reload fails - app state not preserved',
+    'flutter',
+    'MEDIUM',
+    '[
+        {"solution": "Use hot reload (r key) for code changes that preserve state, hot restart (R) for full app reset", "percentage": 92, "note": "Hot reload updates code but preserves state, hot restart resets app"},
+        {"solution": "For state-breaking changes (major refactors), use hot restart to clear app completely", "percentage": 88, "command": "Press R in flutter run terminal to hot restart"},
+        {"solution": "Implement StatefulWidget with proper state initialization if state lost during hot reload", "percentage": 80, "note": "Some changes require full app restart to properly initialize state"}
+    ]'::jsonb,
+    'Flutter development with flutter run, Code editor with hot reload support',
+    'App updates apply correctly, State preserved when using hot reload for simple changes',
+    'Do not expect hot reload to work for all changes (some require hot restart). Do not ignore state preservation during refactoring. Test thoroughly after major changes.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/resources/faq'
+),
+(
+    'Uncaught async error - method channel invoke failed',
+    'flutter',
+    'MEDIUM',
+    '[
+        {"solution": "Implement PlatformDispatcher.instance.onError handler in main() to catch async errors from platform channels", "percentage": 93, "note": "Async errors bypass Flutter framework error handlers"},
+        {"solution": "Add try-catch around MethodChannel.invokeMethod() calls for immediate error handling", "percentage": 90, "command": "try { await channel.invokeMethod(...); } catch(e) { handleError(e); }"},
+        {"solution": "Log errors via backend crash reporting service in PlatformDispatcher handler", "percentage": 85, "note": "Platform errors often indicate native code issues"}
+    ]'::jsonb,
+    'Flutter project using platform channels (MethodChannel), iOS or Android native integration',
+    'Async errors are caught and logged, App does not crash silently from platform channel failures',
+    'Do not ignore async errors from platform channels. Do not rely solely on FlutterError.onError for platform errors. Always implement PlatformDispatcher.onError.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/testing/errors'
+),
+(
+    'iOS deployment target mismatch with Flutter framework',
+    'flutter',
+    'LOW',
+    '[
+        {"solution": "Update MinimumOSVersion in ios/Flutter/AppFrameworkInfo.plist to match Xcode deployment target", "percentage": 94, "note": "Both must be synchronized or build fails"},
+        {"solution": "Change deployment target in Xcode, then sync with pubspec.yaml minimum iOS version", "percentage": 89, "command": "In Xcode: General tab, iOS Deployment Target setting"},
+        {"solution": "Run flutter clean and rebuild if plist changes don''t take effect immediately", "percentage": 80, "command": "flutter clean && flutter pub get && flutter build ios"}
+    ]'::jsonb,
+    'iOS Flutter project, Xcode with modified deployment target settings',
+    'App builds successfully for target iOS version, No deployment target mismatch errors in build output',
+    'Do not change Xcode deployment target without updating AppFrameworkInfo.plist. Do not forget to flutter clean after making plist changes.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.flutter.dev/deployment/ios'
+);

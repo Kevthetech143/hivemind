@@ -1,0 +1,148 @@
+-- Add 12 verified solutions from Stack Overflow for Svelte
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up, source_url)
+VALUES
+(
+  'How can I pass parameters to on:click in Svelte?',
+  'stackoverflow-svelte',
+  '[{"solution": "Wrap handler in inline arrow function: <button on:click={() => handleClick(param)}>Click</button>", "percentage": 95, "command": "<button on:click={() => handleClick(projectId)}>Delete</button>", "note": "Official Svelte approach endorsed by Rich Harris. Prevents premature function execution."}]'::jsonb,
+  'Forgetting arrow function wrapper causes function to execute immediately during page load instead of on click event. Using bind() alternative requires .bind(this, param) syntax.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  123,
+  'https://stackoverflow.com/questions/58262380/how-can-i-pass-parameters-to-onclick-in-svelte'
+),
+(
+  'Svelte 3 - How to loop each block X amount of times',
+  'stackoverflow-svelte',
+  '[{"solution": "Use object with length property: {#each {length: 3} as _, i}<li>{i + 1}</li>{/each}", "percentage": 95, "command": "{#each {length: count} as _, index}..{/each}", "note": "Preferred over Array(n) as it avoids unnecessary array allocation overhead."}, {"solution": "Alternative: {#each Array(3) as _, i}<li>{i + 1}</li>{/each}", "percentage": 90, "note": "Creates actual array instead of sparse object. Works but less memory efficient for large counts."}]'::jsonb,
+  'Index starts at 0, remember to add 1 for human-readable output. For dynamic counts, use reactive variable. Missing key tracking (i) can cause DOM issues in dynamic lists.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  92,
+  'https://stackoverflow.com/questions/58213585/svelte-3-how-to-loop-each-block-x-amount-of-times'
+),
+(
+  'How to persist svelte store data across page refresh',
+  'stackoverflow-svelte',
+  '[{"solution": "Initialize store from localStorage and subscribe to persist: const store = writable(localStorage.getItem(\"key\") || \"\"); store.subscribe(val => localStorage.setItem(\"key\", val));", "percentage": 90, "command": "import { writable } from \"svelte/store\"; const store = writable(localStorage.getItem(\"store\") || \"\"); store.subscribe(val => localStorage.setItem(\"store\", val));", "note": "Works reliably for client-side apps. Official SvelteKit recommendation is using Snapshots instead."}, {"solution": "For SSR contexts like Sapper/SvelteKit, wrap in typeof window !== undefined check", "percentage": 85, "note": "Prevents localStorage errors on server-side rendering. Use onMount() lifecycle hook."}]'::jsonb,
+  'localStorage unavailable server-side causes SSR errors. Manual subscriptions leak memory - use reactive statements instead. String values only - must JSON.parse/stringify objects.',
+  0.88,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  66,
+  'https://stackoverflow.com/questions/56488202/how-to-persist-svelte-store'
+),
+(
+  'How to route programmatically in SvelteKit?',
+  'stackoverflow-svelte',
+  '[{"solution": "Import goto from $app/navigation and call it: import { goto } from \"$app/navigation\"; goto(\"/path\", { replaceState: true })", "percentage": 95, "command": "import { goto } from \"$app/navigation\"; function navigate(route) { goto(route); }", "note": "Official SvelteKit navigation method. replaceState: true prevents back button from returning to previous route."}, {"solution": "Check browser environment first: import { browser } from \"$app/environment\"; if (browser) { goto(\"/path\"); }", "percentage": 90, "note": "Critical: Cannot call goto() on the server. Wrap in browser check or onMount() hook."}]'::jsonb,
+  'Cannot call goto() on server-side - will throw error. Must check browser flag or use onMount() lifecycle. Server endpoints require redirect() instead of goto().',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  61,
+  'https://stackoverflow.com/questions/68187584/how-to-route-programmatically-in-sveltekit'
+),
+(
+  'Best way to import SVG icons into a Svelte app',
+  'stackoverflow-svelte',
+  '[{"solution": "Rename SVG file to .svelte extension and import as component: import Home from \"./icons/Home.svelte\"; then use <Home />", "percentage": 95, "command": "# Rename home.svg to Home.svelte, then import Home from \"./icons/Home.svelte\"; <Home />", "note": "Simplest and most elegant solution. No plugins required. Full component features available."}]'::jsonb,
+  'Large SVG files (50-100kB) are excessive for icons - optimize with SVGOMG. Using {@html} with user-generated SVG creates XSS vulnerability. All icons bundle with app code instead of lazy-loading.',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  58,
+  'https://stackoverflow.com/questions/66069647/best-way-to-import-svg-icons-into-a-svelte-app'
+),
+(
+  'Is it possible to access Svelte store from external js files?',
+  'stackoverflow-svelte',
+  '[{"solution": "Use get() function for current value: import { get } from \"svelte/store\"; const value = get(myStore);", "percentage": 90, "command": "import { get } from \"svelte/store\"; import myStore from \"./stores\"; const value = get(myStore);", "note": "Simplest approach for reading current store value from plain JS."}, {"solution": "Subscribe for reactive updates: myStore.subscribe(value => { /* handle new value */ })", "percentage": 88, "note": "Reactive approach - called whenever store changes."}, {"solution": "Use update() instead of get()+set(): counter.update(n => n + 1)", "percentage": 92, "command": "import { counter } from \"./stores\"; export function add() { counter.update(n => n + 1); }", "note": "Rich Harris recommended approach. More elegant than retrieving, modifying, and resetting separately."}]'::jsonb,
+  'Cannot use $ reactive syntax in plain .js files - only works in .svelte components. Must use get() or subscribe() instead. Module exports must follow ES6 syntax.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  57,
+  'https://stackoverflow.com/questions/59126405/is-it-possible-to-access-svelte-store-from-external-js-files'
+),
+(
+  'Error: type attribute cannot be dynamic if input uses two-way binding',
+  'stackoverflow-svelte',
+  '[{"solution": "Manually handle input event instead of bind:value: const handleInput = e => { value = type.match(/^(number|range)$/) ? +e.target.value : e.target.value; }; <input {type} {value} on:input={handleInput} />", "percentage": 88, "command": "const handleInput = e => { value = type.match(/^(number|range)$/) ? +e.target.value : e.target.value; }; <input bind:value {...{ type }} />", "note": "Svelte generates different code for different input types. number/range require value coercion."}, {"solution": "Use spread operator workaround: <input bind:value {...{ type }} />", "percentage": 82, "note": "Bypasses dynamic type restriction but loses automatic type coercion for numbers."}]'::jsonb,
+  'Spread operator approach loses automatic number/range coercion - must implement type-specific logic manually. Some solutions don''t apply type during server-side rendering.',
+  0.85,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  50,
+  'https://stackoverflow.com/questions/57392773/error-type-attribute-cannot-be-dynamic-if-input-uses-two-way-binding'
+),
+(
+  'Cannot access variable_name before initialization in Svelte',
+  'stackoverflow-svelte',
+  '[{"solution": "Use reactive declaration for dependent variables: $: bandmembers = [...ledzep, ...redhotchilis]; $: namesWithA = bandmembers.filter(d => d.indexOf(\"a\") > 0);", "percentage": 95, "command": "$: dependent = someReactiveVar.filter(x => condition);", "note": "Variables depending on reactive declarations must also use $: syntax to avoid temporal dead zone."}]'::jsonb,
+  'Attempting to reference reactive variables ($:) in standard let/const/var declarations creates temporal dead zone. All dependent variables must consistently use reactive declarations throughout component.',
+  0.95,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  49,
+  'https://stackoverflow.com/questions/56318460/cannot-access-variable-name-before-initialization'
+),
+(
+  'Bundle JS and CSS into single file with Vite',
+  'stackoverflow-svelte',
+  '[{"solution": "Use vite-plugin-css-injected-by-js with Rollup config: npm install vite-plugin-css-injected-by-js; then import and use in vite.config.js plugins array, set manualChunks: undefined", "percentage": 88, "command": "npm install vite-plugin-css-injected-by-js; import cssInjectedByJs from \"vite-plugin-css-injected-by-js\"; plugins: [cssInjectedByJs()]; build: { rollupOptions: { output: { manualChunks: undefined } } }", "note": "Plugin injects CSS as JavaScript style injection code. Prevents separate .css file output."}]'::jsonb,
+  'Newer Vite versions may require manualChunks as function returning consistent values, not undefined. Some frameworks need emitCss: false config. Forgetting npm install causes import errors.',
+  0.82,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  48,
+  'https://stackoverflow.com/questions/67781170/bundle-js-and-css-into-single-file-with-vite'
+),
+(
+  'How to change the default port 5000 in Svelte',
+  'stackoverflow-svelte',
+  '[{"solution": "Modify package.json script with --port flag: \"start:dev\": \"sirv public --single --dev --port 5555\"", "percentage": 92, "command": "npm run start:dev -- --port 5555", "note": "For older Svelte with sirv-cli. Replace 5555 with desired port."}, {"solution": "Use environment variables: HOST=0.0.0.0 PORT=6000 npm run dev", "percentage": 90, "command": "PORT=3000 npm run dev", "note": "HOST and PORT env vars override flag values per sirv-cli documentation."}, {"solution": "For Vite-based Svelte add to vite.config.js: server: { port: 4000 }", "percentage": 90, "command": "export default { server: { port: 4000 } }", "note": "Modern Svelte projects use Vite. Alternatively: npm run dev -- --port=3333"}]'::jsonb,
+  'Ensure chosen port is not already in use. Different Svelte versions use different tools (older: sirv-cli, newer: Vite). Port changes persist in config files but not with CLI flags.',
+  0.91,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  47,
+  'https://stackoverflow.com/questions/57578775/how-to-change-the-default-port-5000-in-svelte'
+),
+(
+  'How to use local static images in Svelte',
+  'stackoverflow-svelte',
+  '[{"solution": "Place images in public folder and reference directly: let src = \"images/background.jpg\"; <img {src} alt=\"background image\" />", "percentage": 93, "command": "<img src=\"images/background.jpg\" alt=\"background image\" />", "note": "Paths are relative to index.html in public folder. Build process serves public as root."}]'::jsonb,
+  'Common mistake: using relative paths like ./images/background.jpg expects import behavior but paths evaluate at runtime against served HTML location, not component file location. SvelteKit requires different approach using $lib/ aliases.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  46,
+  'https://stackoverflow.com/questions/56895865/how-to-use-local-static-images-in-svelte'
+),
+(
+  'SyntaxError: ambiguous indirect export: default Error when importing class',
+  'stackoverflow-svelte',
+  '[{"solution": "Use curly braces for named imports when exporting as named export: export class FormValidator { }; then import { FormValidator } from \"../classes/formValidatorClass\";", "percentage": 92, "command": "import { FormValidator } from \"../classes/formValidatorClass\"; // or import { FormValidator as FormValidation } from \"../classes/formValidatorClass\";", "note": "Named exports require curly braces. Default exports do not. Matching import/export syntax is critical."}, {"solution": "Understand export syntax: export class Name {} is NAMED. export default class Name {} is DEFAULT only.", "percentage": 90, "note": "Named exports: import { Name }. Default exports: import Name (no braces)."}]'::jsonb,
+  'Mixing CommonJS module.exports with ES6 syntax causes conflicts. TypeScript import type conflicts with values. Importing from compiled .js instead of source .ts files causes ambiguity errors.',
+  0.88,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  45,
+  'https://stackoverflow.com/questions/73813721/syntaxerror-ambiguous-indirect-export-default-error-when-importing-my-own-clas'
+);

@@ -1,0 +1,226 @@
+-- Add Svelte 3→4 and Svelte 4→5 migration guide solutions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Svelte 3→4: Minimum Node.js version requirement blocks installation',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade Node.js to v16 or higher", "percentage": 98, "command": "node --version && nvm install 16 && nvm use 16"},
+        {"solution": "Update package-lock.json after Node upgrade: delete lock file and reinstall", "percentage": 95, "note": "Ensures compatible package versions"},
+        {"solution": "Check SvelteKit version - must be 1.20.4 or newer", "percentage": 92, "command": "npm list sveltekit && npm install -D sveltekit@latest"}
+    ]'::jsonb,
+    'Svelte 3 app, npm/yarn installed, planning Svelte 4 upgrade',
+    'Node.js v16+ confirmed, npm install succeeds, app builds without version errors',
+    'Svelte 4 dropped Node 14 support entirely. Check ALL dependencies: vite-plugin-svelte 2.4.1+, rollup-plugin-svelte 7.1.5+, webpack 5.0+. Lock file version mismatches block builds.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v4-migration-guide#require-node-16'
+),
+(
+    'Svelte 3→4: CommonJS module format no longer supported',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace require() with import statements - convert to ESM", "percentage": 95, "command": "// Before: const svelte = require(''svelte''); // After: import svelte from ''svelte'';"},
+        {"solution": "Use a bundler like Vite/Rollup to handle ESM-to-CJS conversion", "percentage": 92, "note": "Bundler outputs CJS for Node.js consumption"},
+        {"solution": "Remove svelte/register - migrate to bundled build process", "percentage": 88, "note": "Not available in v4, use Vite or build tool instead"}
+    ]'::jsonb,
+    'Svelte 3 project using CommonJS require(), planning upgrade to Svelte 4',
+    'All imports use ESM syntax, build completes without CommonJS errors, app runs',
+    'Svelte 4 compiler output is ESM only. Remove all require(''svelte'') calls. svelte/register for server-side rendering is gone - use a bundler. CJS projects must add build step.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v4-migration-guide#drop-cjs-support'
+),
+(
+    'Svelte 3→4: Transitions play during page navigation causing flashing',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Add |global modifier to preserve transition behavior: transition:fade|global", "percentage": 98, "command": "<div transition:fade|global>Content</div>"},
+        {"solution": "Transitions are now local by default to prevent animation confusion", "percentage": 95, "note": "Local transitions: no animation when parent rerenders"},
+        {"solution": "Refactor to use onDestroy hook if you need custom exit animation", "percentage": 85, "note": "Manual animation control as alternative"}
+    ]'::jsonb,
+    'Svelte 3 app with page transitions, upgrading to Svelte 4',
+    'Global transitions play as expected, no spurious animations on re-renders, navigation smooth',
+    'Svelte 4 made transitions local by default. This fixes confusion where parent updates triggered child exit animations. Add |global ONLY if you need page-level transitions. Most apps prefer local behavior.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v4-migration-guide#transitions-are-now-local-by-default'
+),
+(
+    'Svelte 3→4: TypeScript errors on createEventDispatcher strict typing',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Add explicit type parameter to createEventDispatcher<T>", "percentage": 96, "command": "type Events = { increment: CustomEvent<number> }; const dispatch = createEventDispatcher<Events>();"},
+        {"solution": "Import CustomEvent for proper type checking", "percentage": 92, "note": "Required for strict typing in Svelte 4"},
+        {"solution": "Dispatch events with proper payload typing: dispatch(''increment'', value)", "percentage": 90, "note": "Compiler validates payload matches type definition"}
+    ]'::jsonb,
+    'Svelte 3 app with createEventDispatcher, TypeScript enabled, upgrading to 4',
+    'TypeScript compiles without event-related errors, events dispatch correctly, types match',
+    'Svelte 4 has stricter createEventDispatcher typing. Define event types explicitly. dispatch() calls are type-checked. Missing types causes compilation errors.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v4-migration-guide#more-type-safe-event-dispatcher'
+),
+(
+    'Svelte 3→4: Custom elements tag option deprecated',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace tag: ''my-element'' with customElement: true in svelte config", "percentage": 98, "command": "export default { compilerOptions: { customElement: true } };"},
+        {"solution": "Use hyphenated tag names automatically - no need to specify", "percentage": 95, "note": "Tag name derived from filename: MyElement.svelte → my-element"},
+        {"solution": "Keep tag option if you need non-standard naming", "percentage": 70, "note": "Legacy approach - only if customElement config insufficient"}
+    ]'::jsonb,
+    'Svelte 3 custom elements with tag option, upgrading to Svelte 4',
+    'Custom elements register without tag option, elements available in HTML, naming works',
+    'The tag option is deprecated in favor of customElement config. Svelte derives tag names from filename. Web Components must use hyphenated names (my-element).',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v4-migration-guide#the-tag-option-is-deprecated'
+),
+(
+    'Svelte 4→5: $state() runes break implicit reactivity migration',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Replace top-level let declarations with $state(): let count = 0 → let count = $state(0)", "percentage": 98, "command": "let count = $state(0); const increment = () => count++;"},
+        {"solution": "Use $state for reactive variables anywhere in component scope", "percentage": 96, "note": "Explicit declaration makes reactivity clear"},
+        {"solution": "For objects/arrays use $state.shallow() to only track top-level changes", "percentage": 88, "note": "Avoids deep reactivity overhead for large structures"}
+    ]'::jsonb,
+    'Svelte 4 app with implicit reactivity, planning Svelte 5 upgrade',
+    'All state declarations use $state(), variables update reactively, no console warnings',
+    'Svelte 5 requires explicit $state() for reactivity. Plain let is NOT reactive. $state() works anywhere, not just module scope. Components without $state won''t update on changes.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#runes-api'
+),
+(
+    'Svelte 4→5: Named slots replaced by snippet props syntax',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace <slot name=\"header\"> with {#snippet header()}...{/snippet}", "percentage": 96, "command": "// Child component\n{#snippet header()}\n  <h1>Title</h1>\n{/snippet}\n// Parent uses: <Child {header} />"},
+        {"solution": "Convert slot let-bindings to snippet parameters", "percentage": 95, "note": "let:item becomes (item) => in snippet"},
+        {"solution": "Define snippets as const in script section for reusability", "percentage": 90, "command": "const header = <h1>Static header</h1>; // Parent: <Child {header} />"}
+    ]'::jsonb,
+    'Svelte 4 app with named slots, let:directives, planning Svelte 5 upgrade',
+    'Snippets render correctly, props pass to parent snippets, no slot-related errors',
+    'Svelte 5 removes slots entirely in favor of snippets. let: syntax replaced by snippet parameters. Default slot becomes children snippet. Snippets are more flexible than slots.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#snippets-replace-slots'
+),
+(
+    'Svelte 4→5: Event handlers move from on:click to onclick property',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Replace on:click={handler} with onclick={handler} property binding", "percentage": 97, "command": "<button onclick={incrementCounter}>Click me</button>"},
+        {"solution": "Remove event modifiers - implement logic in handler instead", "percentage": 96, "note": "on:click|preventDefault → onclick with e.preventDefault() in handler"},
+        {"solution": "Pass events as regular props: <Child onclick={handleClick} />", "percentage": 94, "note": "Events are just functions, not special directives"}
+    ]'::jsonb,
+    'Svelte 4 app with on:* directives throughout, event modifiers, planning Svelte 5',
+    'All onclick/onchange properties work, handlers fire correctly, no directive warnings',
+    'Svelte 5 removed on: directive syntax entirely. Event handlers are just properties. You lose on:* modifier conveniences (preventDefault, stopPropagation) - add logic to handlers instead. Events passed as props.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#event-handler-syntax-changes'
+),
+(
+    'Svelte 4→5: createEventDispatcher deprecated for callback props',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace createEventDispatcher with function props", "percentage": 98, "command": "// Instead: dispatch(''increment'', value)  // Use: onIncrement(value)"},
+        {"solution": "Define event callbacks as component props", "percentage": 96, "command": "type Props = { onIncrement?: (value: number) => void; }; const { onIncrement } = $props();"},
+        {"solution": "Use optional chaining when calling props: onIncrement?.(value)", "percentage": 94, "note": "Handles undefined callback gracefully"}
+    ]'::jsonb,
+    'Svelte 4 app using createEventDispatcher extensively, component communication patterns',
+    'Event callbacks work via props, parent components receive events, no deprecated API warnings',
+    'Svelte 5 deprecates createEventDispatcher. Callbacks are simpler - just function props. No CustomEvent wrapping. More flexible for parent-child communication. on:* event binding no longer exists.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#component-events-deprecation'
+),
+(
+    'Svelte 4→5: $derived for computed values replaces $: statements',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace $: derived = expression with $derived(expression)", "percentage": 96, "command": "let count = $state(0);\nlet doubled = $derived(count * 2);"},
+        {"solution": "Use $derived.by() for complex computation blocks", "percentage": 94, "command": "let expensive = $derived.by(() => { /* multi-line logic */ return result; });"},
+        {"solution": "Remove manual memoization - $derived handles optimization", "percentage": 90, "note": "$derived only recomputes when dependencies change"}
+    ]'::jsonb,
+    'Svelte 4 app with computed values using $: reactive statements, planning Svelte 5',
+    'Derived values compute correctly, updates trigger on dependency change, no memory leaks',
+    '$: statements are gone in Svelte 5. Use $derived() for reactive computations. $derived.by() for complex logic. Reactivity is explicit. No more hidden dependency tracking.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#runes-api-derived'
+),
+(
+    'Svelte 4→5: Component instantiation with mount() instead of new Component()',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace new Component(options) with mount(Component, options)", "percentage": 97, "command": "import { mount } from ''svelte'';\nconst app = mount(App, { target: document.body, props: { name: ''World'' } });"},
+        {"solution": "Use hydrate() for SSR content: hydrate(App, {target, props})", "percentage": 95, "note": "Hydrate merges server-rendered HTML with client app"},
+        {"solution": "Store returned instance for future unmount() calls", "percentage": 92, "command": "const app = mount(App, {...}); // Later: app.unmount();"}
+    ]'::jsonb,
+    'Svelte 4 custom component instantiation code, imperative initialization',
+    'Components mount correctly with props, lifecycle runs properly, unmount destroys cleanly',
+    'Svelte 5 removed class-based components. new Component() no longer works. Use mount()/hydrate() for programmatic instantiation. Returns simple object with unmount() method, not full component API.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#component-api-changes'
+),
+(
+    'Svelte 4→5: Two-way binding syntax change for component props',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Use bind: prefix on props for two-way binding: <Child bind:value={myVar} />", "percentage": 96, "command": "// Parent: <Child bind:count />\n// Child: let { count = $bindable() } = $props();"},
+        {"solution": "Mark child props with $bindable() to allow parent binding", "percentage": 94, "command": "let { value = $bindable(0) } = $props();"},
+        {"solution": "Without $bindable(), props are read-only in child component", "percentage": 90, "note": "Prevents accidental parent-child prop mutations"}
+    ]'::jsonb,
+    'Svelte 4 app with two-way bound component props, planning Svelte 5 upgrade',
+    'Parent-child binding works bidirectionally, updates flow correctly, no prop mutation warnings',
+    'Svelte 5 requires explicit $bindable() for two-way binding. Forgetting $bindable() makes props read-only. Not all props should be bindable - only mark those intentionally two-way.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#component-prop-binding'
+),
+(
+    'Svelte 4→5: $effect() replaces onMount/onDestroy lifecycle hooks',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace onMount/onDestroy with $effect() side effect tracking", "percentage": 96, "command": "import { onMount, onDestroy } from ''svelte'';\n// Replace with:\nlet cleanup = $effect.pre(() => {\n  // setup code\n  return () => { /* cleanup */ };\n});"},
+        {"solution": "Use $effect.pre() to run before DOM updates, $effect() after", "percentage": 94, "note": "$effect.pre runs in render phase, $effect runs after"},
+        {"solution": "Return cleanup function from $effect instead of separate onDestroy", "percentage": 92, "note": "Cleaner pattern - setup and cleanup in one place"}
+    ]'::jsonb,
+    'Svelte 4 app with onMount/onDestroy hooks, lifecycle-dependent code',
+    '$effect runs correctly, cleanup executes on component destroy, side effects work properly',
+    '$effect() is more powerful than onMount/onDestroy. Auto-tracks dependencies. Return cleanup function. $effect.pre() for pre-render, $effect() for post-render. Remove onMount/onDestroy entirely.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://svelte.dev/docs/svelte/v5-migration-guide#runes-api-effect'
+);

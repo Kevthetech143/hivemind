@@ -1,0 +1,44 @@
+-- Fix start_troubleshooting_ticket to use correct table name
+
+DROP FUNCTION IF EXISTS start_troubleshooting_ticket(text, text);
+
+CREATE OR REPLACE FUNCTION start_troubleshooting_ticket(
+    p_problem TEXT,
+    p_category TEXT
+)
+RETURNS TABLE (
+    ticket_id TEXT,
+    category TEXT,
+    checklist JSONB
+) AS $$
+DECLARE
+    v_ticket_id TEXT;
+    v_checklist JSONB;
+BEGIN
+    -- Generate ticket ID
+    v_ticket_id := 'TICKET_' || TO_CHAR(NOW(), 'YYYYMMDD') || '_' || LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0');
+
+    -- Generate category-specific checklist
+    v_checklist := CASE p_category
+        WHEN 'mcp-troubleshooting' THEN
+            '[{"step": "Verify MCP server is installed", "status": "pending"},
+              {"step": "Check MCP config file syntax", "status": "pending"},
+              {"step": "Test with minimal config", "status": "pending"}]'::jsonb
+        WHEN 'web-automation' THEN
+            '[{"step": "Check selector exists on page", "status": "pending"},
+              {"step": "Wait for element to be visible", "status": "pending"},
+              {"step": "Verify no JavaScript errors", "status": "pending"}]'::jsonb
+        ELSE
+            '[{"step": "Reproduce the issue", "status": "pending"},
+              {"step": "Check recent changes", "status": "pending"},
+              {"step": "Review logs/errors", "status": "pending"}]'::jsonb
+    END;
+
+    -- Insert ticket (correct table name: troubleshooting_sessions)
+    INSERT INTO troubleshooting_sessions (ticket_id, problem, category, status, steps_tried)
+    VALUES (v_ticket_id, p_problem, p_category, 'open', v_checklist);
+
+    RETURN QUERY
+    SELECT v_ticket_id, p_category, v_checklist;
+END;
+$$ LANGUAGE plpgsql;

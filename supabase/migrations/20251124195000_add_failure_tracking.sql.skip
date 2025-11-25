@@ -1,0 +1,73 @@
+-- Add failure tracking: store all failed attempts alongside solutions
+
+-- Add column to store failed attempts
+ALTER TABLE knowledge_entries
+ADD COLUMN IF NOT EXISTS failed_attempts JSONB DEFAULT '[]'::jsonb;
+
+-- Update resolve_ticket to include full debugging history
+CREATE OR REPLACE FUNCTION resolve_ticket(
+    p_ticket_id TEXT,
+    p_solution_data JSONB
+) RETURNS JSONB AS $$
+DECLARE
+    v_ticket RECORD;
+    v_knowledge_id INTEGER;
+    v_result JSONB;
+BEGIN
+    -- Get ticket info including all steps tried
+    SELECT * INTO v_ticket
+    FROM troubleshooting_sessions
+    WHERE ticket_id = p_ticket_id AND status != 'resolved';
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('error', 'Ticket not found or already resolved');
+    END IF;
+
+    -- Update ticket status
+    UPDATE troubleshooting_sessions
+    SET
+        status = 'resolved',
+        solution = p_solution_data->>'solution',
+        solution_data = p_solution_data,
+        resolved_at = NOW()
+    WHERE ticket_id = p_ticket_id;
+
+    -- Auto-contribute to knowledge base with full debugging history
+    INSERT INTO knowledge_entries (
+        query,
+        category,
+        hit_frequency,
+        solutions,
+        failed_attempts,
+        common_pitfalls,
+        success_rate,
+        claude_version,
+        last_verified,
+        source_ticket_id
+    ) VALUES (
+        v_ticket.problem,
+        v_ticket.category,
+        'MEDIUM (from ticket)',
+        p_solution_data->'solutions',
+        COALESCE(v_ticket.steps_tried, '[]'::jsonb), -- Include all debugging steps
+        COALESCE(p_solution_data->>'common_pitfalls', ''),
+        COALESCE((p_solution_data->>'success_rate')::NUMERIC, 0.90),
+        'sonnet-4',
+        NOW(),
+        p_ticket_id
+    )
+    RETURNING id INTO v_knowledge_id;
+
+    -- Mark as auto-contributed
+    UPDATE troubleshooting_sessions
+    SET auto_contributed = TRUE
+    WHERE ticket_id = p_ticket_id;
+
+    RETURN jsonb_build_object(
+        'success', TRUE,
+        'ticket_id', p_ticket_id,
+        'knowledge_id', v_knowledge_id,
+        'message', 'Solution and debugging history added to knowledge base'
+    );
+END;
+$$ LANGUAGE plpgsql;

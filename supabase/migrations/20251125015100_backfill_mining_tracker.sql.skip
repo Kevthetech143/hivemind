@@ -1,0 +1,75 @@
+-- Backfill mining_tracker with existing migrations
+-- Parse migration files and count entries retroactively
+
+-- Stack Overflow batches
+INSERT INTO mining_tracker (source, category, batch_num, entry_count, migration_file) VALUES
+('stackoverflow', 'docker', 1, 12, '20251124210600_add_stackoverflow_batch5.sql'),
+('stackoverflow', 'redis', 1, 12, '20251124211100_add_stackoverflow_batch6.sql'),
+('stackoverflow', 'mongodb', 1, 12, '20251124211600_add_stackoverflow_batch7.sql'),
+('stackoverflow', 'nodejs', 1, 12, '20251124211700_add_stackoverflow_batch8.sql'),
+('stackoverflow', 'git', 1, 12, '20251124211800_add_stackoverflow_batch9.sql'),
+('stackoverflow', 'typescript', 1, 12, '20251124211900_add_stackoverflow_batch10.sql'),
+('stackoverflow', 'postgresql', 1, 12, '20251124212400_add_stackoverflow_batch11.sql'),
+('stackoverflow', 'kubernetes', 1, 12, '20251124212600_add_stackoverflow_batch12.sql'),
+('stackoverflow', 'svelte', 1, 12, '20251124221600_add_stackoverflow_batch13.sql'),
+('stackoverflow', 'mixed', 17, 12, '20251124225600_add_stackoverflow_batch17.sql'),
+('stackoverflow', 'mixed', 15, 12, '20251124224600_add_stackoverflow_batch15.sql'),
+('stackoverflow', 'mixed', 16, 12, '20251124225100_add_stackoverflow_batch16.sql')
+ON CONFLICT (source, category, batch_num) DO NOTHING;
+
+-- Official docs batches
+INSERT INTO mining_tracker (source, category, batch_num, entry_count, migration_file) VALUES
+('docs', 'anthropic', 1, 12, '20251124210500_add_anthropic_docs_batch1.sql'),
+('docs', 'openai', 1, 12, '20251124211000_add_openai_docs_batch1.sql'),
+('docs', 'supabase', 1, 12, '20251124211500_add_supabase_docs_batch1.sql'),
+('docs', 'mcp', 1, 12, '20251124212000_add_mcp_docs_batch1.sql'),
+('docs', 'playwright', 1, 12, '20251124212500_add_playwright_docs_batch1.sql'),
+('docs', 'streaming', 1, 12, '20251124213000_add_anthropic_streaming_batch1.sql'),
+('docs', 'claude-code', 1, 12, '20251124213500_add_claude_code_docs_batch1.sql'),
+('docs', 'nodejs', 1, 12, '20251124214000_add_nodejs_docs_batch1.sql')
+ON CONFLICT (source, category, batch_num) DO NOTHING;
+
+-- Technology-specific batches
+INSERT INTO mining_tracker (source, category, batch_num, entry_count, migration_file) VALUES
+('stackoverflow', 'docker', 2, 12, '20251124221000_add_docker_batch1.sql'),
+('stackoverflow', 'python', 1, 15, '20251124220000_add_python_batch1.sql'),
+('stackoverflow', 'npm', 1, 12, '20251124223000_add_npm_batch1.sql'),
+('stackoverflow', 'react', 1, 13, '20251124223500_add_react_batch1.sql'),
+('stackoverflow', 'express', 1, 12, '20251124224000_add_express_batch1.sql'),
+('stackoverflow', 'mongodb', 2, 14, '20251124224500_add_mongodb_batch1.sql'),
+('stackoverflow', 'redis', 2, 15, '20251124225000_add_redis_batch1.sql'),
+('stackoverflow', 'prisma', 1, 12, '20251124225500_add_prisma_batch1.sql'),
+('stackoverflow', 'aws', 1, 17, '20251124230000_add_aws_batch1.sql'),
+('stackoverflow', 'vercel', 1, 12, '20251124230500_add_vercel_batch1.sql'),
+('stackoverflow', 'graphql', 1, 12, '20251124231000_add_graphql_batch1.sql'),
+('stackoverflow', 'jest', 1, 12, '20251124231500_add_jest_batch1.sql'),
+('stackoverflow', 'vite', 1, 12, '20251124232000_add_vite_batch1.sql'),
+('stackoverflow', 'tailwind', 1, 12, '20251124232500_add_tailwind_batch1.sql'),
+('stackoverflow', 'go', 1, 12, '20251124233000_add_go_batch1.sql'),
+('stackoverflow', 'rust', 1, 12, '20251124233500_add_rust_batch1.sql'),
+('stackoverflow', 'deno', 1, 12, '20251124234000_add_deno_batch1.sql'),
+('stackoverflow', 'mysql', 1, 12, '20251124234500_add_mysql_batch1.sql'),
+('stackoverflow', 'supabase-storage', 1, 12, '20251124235000_add_supabase_storage_batch1.sql'),
+('stackoverflow', 'cloudflare', 1, 12, '20251124235500_add_cloudflare_batch1.sql'),
+('stackoverflow', 'bun', 1, 12, '20251125000000_add_bun_batch1.sql'),
+('stackoverflow', 'eslint', 1, 12, '20251125000500_add_eslint_batch1.sql'),
+('stackoverflow', 'webpack', 1, 12, '20251125001000_add_webpack_batch1.sql')
+ON CONFLICT (source, category, batch_num) DO NOTHING;
+
+-- Postmortems
+INSERT INTO mining_tracker (source, category, batch_num, entry_count, migration_file) VALUES
+('postmortems', 'aws', 1, 12, '20251125010000_add_aws_postmortems_batch1.sql'),
+('postmortems', 'github', 1, 12, '20251125010500_add_github_postmortems_batch1.sql'),
+('postmortems', 'cloudflare', 1, 12, '20251125011000_add_cloudflare_postmortems_batch1.sql'),
+('postmortems', 'gcp', 1, 12, '20251125011500_add_gcp_postmortems_batch1.sql'),
+('postmortems', 'stripe', 1, 12, '20251125012000_add_stripe_postmortems_batch1.sql')
+ON CONFLICT (source, category, batch_num) DO NOTHING;
+
+-- CVEs
+INSERT INTO mining_tracker (source, category, batch_num, entry_count, migration_file) VALUES
+('cves', 'npm', 1, 12, '20251125012500_add_npm_cves_batch1.sql'),
+('cves', 'docker', 1, 12, '20251125013000_add_docker_cves_batch1.sql'),
+('cves', 'kubernetes', 1, 12, '20251125013500_add_k8s_cves_batch1.sql'),
+('cves', 'postgresql', 1, 12, '20251125014000_add_postgres_cves_batch1.sql'),
+('cves', 'redis', 1, 12, '20251125014500_add_redis_cves_batch1.sql')
+ON CONFLICT (source, category, batch_num) DO NOTHING;

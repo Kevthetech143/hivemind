@@ -1,7 +1,7 @@
 # clauderepo
 
-> **Instant troubleshooting solutions for Claude Code**
-> Community-driven knowledge base with 50+ verified solutions and trigger-based feedback
+> **Instant troubleshooting solutions for AI coding assistants**
+> Community-driven knowledge base with 2,400+ solutions - works with Claude Code, Codex CLI, Gemini CLI, Grok CLI
 
 [![npm version](https://img.shields.io/npm/v/clauderepo-mcp.svg)](https://www.npmjs.com/package/clauderepo-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,9 +10,9 @@
 
 ## 🎯 What is clauderepo?
 
-clauderepo is a **Model Context Protocol (MCP) server** that gives Claude Code instant access to a searchable knowledge base of troubleshooting solutions. When you hit an error, just ask Claude to search clauderepo - get ranked solutions from the community in seconds.
+clauderepo is a **Model Context Protocol (MCP) server** that gives AI coding assistants instant access to a searchable knowledge base of troubleshooting solutions. Works with any MCP-compatible CLI: Claude Code, OpenAI Codex, Google Gemini CLI, Grok CLI, and more.
 
-**Beta Status**: Currently accepting 10-50 early adopters for testing.
+When you hit an error, search clauderepo - get ranked solutions from the community in seconds.
 
 ---
 
@@ -108,7 +108,7 @@ Claude automatically tracks your feedback to improve rankings!
 | Auth problems | "user signed in but gets must sign in error" |
 | Supabase issues | "supabase migration failed" |
 
-**Current knowledge base**: 50+ solutions covering MCP, Playwright, Supabase, Claude Code, and more.
+**Current knowledge base**: 2,400+ solutions covering MCP, Playwright, Supabase, web development, databases, security, and more.
 
 ---
 
@@ -150,24 +150,17 @@ Natural language ("that worked") is ambiguous. Trigger phrases ensure Claude ALW
 
 ---
 
-## 🛡️ Beta Launch Details
-
-**Current Status**: Private beta (10-50 users)
+## 🛡️ Infrastructure
 
 **Rate Limits**:
 - Search: 100 requests/hour per IP
 - Voting: 20 votes/hour per IP
 - Contributions: 5/hour per IP
 
-**Infrastructure**:
-- Backend: Supabase (Postgres + Edge Functions)
-- Database: 53 solutions, growing
-- Hosting: Free tier (500K requests/month)
-
-**Known Issues**:
-- MCP fetch calls may not trigger tracking in some cases (tracking endpoint works, debugging in progress)
-- Small knowledge base (actively growing)
-- Contribution moderation is manual (24-48 hour review)
+**Stack**:
+- Backend: Supabase (Postgres 17 + Edge Functions)
+- Database: 2,400+ solutions
+- Security: IP banning, input sanitization, moderated contributions
 
 ---
 
@@ -187,23 +180,19 @@ See [MONITORING.md](MONITORING.md) for admin dashboard access.
 
 ## 🗺️ Roadmap
 
-**Phase 1: Beta (Current)**
+**Completed**:
 - ✅ Core search and feedback
 - ✅ Trigger word system
 - ✅ Rate limiting
-- ⏳ Testing with 10-50 users
+- ✅ Security (IP bans, sanitization, moderation queue)
+- ✅ 2,400+ solutions
+- ✅ Version update notifications
 
-**Phase 2: Early Growth (10-50 users)**
-- Improve search ranking with thumbs data
-- Display community ratings in results
-- Wilson Score confidence intervals
-- Grow knowledge base to 100+ solutions
-
-**Phase 3: Public Launch (50-250 users)**
-- Automated moderation
+**Coming Soon**:
+- Semantic search (AI embeddings)
 - Contributor leaderboard
-- Advanced abuse detection
-- A/B testing for solutions
+- Browser extension
+- Dangerous command blocklist
 
 See [ROADMAP.md](ROADMAP.md) for full details.
 
@@ -266,13 +255,11 @@ Known issue - tracking endpoint works but MCP may not call it consistently. We'r
 
 ## 🐛 Reporting Issues
 
-Beta testers, please report issues:
-
 1. Check [existing issues](https://github.com/Kevthetech143/clauderepo/issues)
 2. Create new issue with:
    - What you tried
    - What happened
-   - Claude Code version
+   - Your AI CLI (Claude Code, Codex, Gemini, etc.)
    - Operating system
 
 ---
@@ -283,18 +270,10 @@ MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Beta Testers
-
-Thank you to our early adopters! Your feedback shapes the future of clauderepo.
-
-**Join the beta**: DM [@Kevthetech143](https://twitter.com/Kevthetech143) or email [your-email]
-
----
-
 ## 🌟 Star History
 
-Just launched! Be one of the first to star ⭐
+If clauderepo helped you, give it a star ⭐
 
 ---
 
-**Built with ❤️ for the Claude Code community**
+**Built with ❤️ for the AI coding community**

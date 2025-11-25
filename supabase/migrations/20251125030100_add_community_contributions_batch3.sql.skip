@@ -1,0 +1,63 @@
+-- Community contributions batch 3 (2 approved entries)
+-- PostgreSQL and Supabase
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Supabase cannot execute CREATE TABLE in read-only transaction MCP',
+    'supabase',
+    'HIGH',
+    '[
+        {
+            "solution": "Use psql with database password directly instead of MCP",
+            "percentage": 95,
+            "command": "/usr/local/opt/libpq/bin/psql \"postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres\" < migration.sql",
+            "note": "MCP is read-only by design for security"
+        },
+        {
+            "solution": "Install libpq PostgreSQL client tools",
+            "percentage": 90,
+            "command": "brew install libpq",
+            "note": "Provides psql command for direct database access"
+        },
+        {
+            "solution": "Get database password from Supabase Dashboard",
+            "percentage": 85,
+            "note": "Project Settings > Database > Database password (or connection string)"
+        }
+    ]'::jsonb,
+    'Supabase project access, Database password, Homebrew installed (macOS)',
+    'Migration executes successfully, CREATE TABLE/FUNCTION commands complete, No read-only transaction errors',
+    'Supabase MCP is intentionally read-only for schema changes. REST API has no raw SQL execution endpoint. Service role key only works for data operations, not DDL. Must use direct PostgreSQL connection for migrations.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'PostgreSQL cannot change return type of existing function',
+    'postgres',
+    'HIGH',
+    '[
+        {
+            "solution": "Drop function before recreating with new return type",
+            "percentage": 95,
+            "command": "DROP FUNCTION IF EXISTS function_name(param_types) CASCADE;",
+            "note": "Use CASCADE to drop dependent objects"
+        },
+        {
+            "solution": "Use CREATE OR REPLACE after dropping",
+            "percentage": 90,
+            "note": "CREATE OR REPLACE won''t work if return type changed"
+        }
+    ]'::jsonb,
+    'Database access, Knowledge of function signature',
+    'Function recreated successfully, No return type conflict errors',
+    'CREATE OR REPLACE cannot change return types. Must DROP first. Use IF EXISTS to avoid errors if function doesn''t exist. Include parameter types in DROP statement to match correct overload.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+);

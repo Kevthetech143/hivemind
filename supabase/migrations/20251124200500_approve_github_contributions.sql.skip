@@ -1,0 +1,21 @@
+-- Approve 5 GitHub-sourced contributions
+
+-- Insert into knowledge_entries
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up)
+SELECT
+  query,
+  category,
+  solutions,
+  common_pitfalls,
+  success_rate,
+  hit_frequency,
+  'sonnet-4',
+  NOW(),
+  0 -- Start with 0 since these are community contributions, not resolved tickets
+FROM pending_contributions
+WHERE id IN (6, 7, 8, 9, 10);
+
+-- Update pending_contributions status
+UPDATE pending_contributions
+SET status = 'approved', reviewed_at = NOW()
+WHERE id IN (6, 7, 8, 9, 10);

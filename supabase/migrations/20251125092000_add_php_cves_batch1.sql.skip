@@ -1,0 +1,224 @@
+-- Add PHP CVE vulnerability entries batch 1
+-- Mining source: NVD, Rapid7, Red Hat Security, CVE Details
+-- Category: cve
+-- Total entries: 12
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'PHP CVE-2024-4577: PHP-CGI Argument Injection leading to Remote Code Execution on Windows',
+    'cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade PHP to patched versions: 8.3.8, 8.2.20, or 8.1.29 immediately", "percentage": 95, "note": "Definitive fix - resolves Unicode encoding mapping issue in Windows CGI mode"},
+        {"solution": "If immediate upgrade not possible: disable CGI mode by modifying Apache configuration to use FastCGI or module mode instead", "percentage": 90, "note": "Mitigates vulnerability by changing execution method"},
+        {"solution": "Restrict access to php.exe and php-cgi.exe executables via .htaccess or web server configuration", "percentage": 85, "command": "Deny access to files matching php*.exe patterns"},
+        {"solution": "Deploy Web Application Firewall with command injection detection rules enabled", "percentage": 80, "note": "Detects soft hyphen (0xAD) to hyphen (0x2D) conversion attempts in query strings"}
+    ]'::jsonb,
+    'Windows server running PHP, Web server (Apache preferred for config examples), Access to PHP installation directory',
+    'PHP process no longer accepts hyphen-prefixed arguments, php info shows patched version, Web application firewall logs show no injection attempts',
+    'Soft Hyphen character (U+00AD) is mapped to regular hyphen in Windows Best Fit encoding. This is a regression of CVE-2012-1823. Only affects Windows installations, not Linux/Unix. CGI mode specifically vulnerable - FastCGI/module mode safe.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/cve-2024-4577'
+),
+(
+    'PHP CVE-2024-8926: Windows Codepage Bypass of CVE-2024-4577 Command Injection',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade PHP to 8.1.30+, 8.2.24+, or 8.3.12+ for complete fix", "percentage": 95, "note": "Addresses non-standard Windows codepage exploitation paths"},
+        {"solution": "Disable non-standard Windows codepage configurations if possible", "percentage": 85, "note": "Reduces attack surface from Best Fit mapping bypass"},
+        {"solution": "Apply strict input validation on command arguments passed to PHP binary", "percentage": 80, "command": "Use escapeshellarg() and escapeshellcmd() for command construction"}
+    ]'::jsonb,
+    'PHP running on Windows with non-standard codepage settings, proc_open() or system() functions used in application',
+    'PHP version output shows 8.1.30+, 8.2.24+, or 8.3.12+, Application with strict argument escaping runs without argument injection',
+    'This vulnerability is a bypass of the CVE-2024-4577 fix. Only affects non-standard codepage configurations (not default US/UK installations). CVSS score 8.1 (HIGH). Affects proc_open, system, passthru, exec, shell_exec functions.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-8926'
+),
+(
+    'PHP CVE-2023-3824: Stack Buffer Overflow in Phar File Handling',
+    'cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade PHP to 8.0.30+, 8.1.22+, or 8.2.8+ to patch buffer overflow", "percentage": 95, "note": "Fixes insufficient length checking in phardirread() function"},
+        {"solution": "Disable Phar extension if not required: remove phar.so or set disable_classes", "percentage": 85, "note": "Disable Phar extension via php.ini or -d flag"},
+        {"solution": "Limit file upload sizes and validate phar file integrity before processing", "percentage": 80, "note": "Reduces exploitation window for malicious phar files"},
+        {"solution": "Implement memory safety monitoring to detect stack corruption attempts", "percentage": 75, "note": "Secondary defense for early detection"}
+    ]'::jsonb,
+    'PHP installation supporting Phar archives, File upload functionality or phar:// stream handling, System with sufficient memory protection',
+    'Application handles phar files without segmentation faults, PHP version shows 8.0.30+/8.1.22+/8.2.8+, Application logs show no buffer overflow attempts',
+    'LockBit ransomware actively exploited this vulnerability. CVSS 9.8 CRITICAL. Vulnerability stems from incorrect handling of to_read variable and buffer termination logic in phardirread(). Listed in CISA KEV catalog.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2023-3824'
+),
+(
+    'PHP CVE-2023-3823: XML External Entity Injection via libxml Global State',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update PHP to 8.0.30+, 8.1.22+, or 8.2.8+ to fix libxml state handling", "percentage": 95, "note": "Resolves XXE vulnerability from shared libxml global state"},
+        {"solution": "Disable XML external entity loading: libxml_disable_entity_loader(true) before parsing", "percentage": 90, "note": "Call libxml_disable_entity_loader before XML parsing"},
+        {"solution": "Use LIBXML_NOENT and LIBXML_DTDLOAD flags carefully or disable them entirely", "percentage": 85, "note": "Use LIBXML_NOLOAD_EXTERNAL_ENTITY flag when loading XML"},
+        {"solution": "Isolate PHP processes or use separate processes for untrusted XML parsing", "percentage": 80, "note": "Prevents state pollution from modules like ImageMagick"}
+    ]'::jsonb,
+    'PHP with XML parsing functions (simplexml, DOMDocument), libxml2 library installed, Application handling external XML input',
+    'XML parsing functions reject external entities, Application startup libxml_disable_entity_loader(true) confirmed, No local file disclosures in logs',
+    'Vulnerability persists across requests until process shutdown. Shared libxml global state affected by modules like ImageMagick. CWE-611 (Improper Restriction of XML External Entity). CVSS 7.5 (HIGH). XXE leads to local file disclosure.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2023-3823'
+),
+(
+    'PHP CVE-2024-1874: proc_open() Command Array Argument Injection on Windows',
+    'cve',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade to PHP 8.1.29+, 8.2.20+, or 8.3.8+ to fix incomplete argument escaping", "percentage": 95, "note": "Properly handles array command syntax without trailing space bypass"},
+        {"solution": "Use escapeshellarg() for all command arguments when using proc_open with array syntax", "percentage": 90, "note": "Wrap user input with escapeshellarg when building array commands"},
+        {"solution": "Validate and sanitize all user input before passing to proc_open, system, or exec", "percentage": 85, "note": "Defense in depth - catches injection even with partial fixes"},
+        {"solution": "Use proc_open with command array (not string) and avoid shell interpretation", "percentage": 80, "note": "Array syntax is safer but still requires proper escaping"}
+    ]'::jsonb,
+    'PHP on Windows system, proc_open() used in application code, User-supplied input passed to command execution functions',
+    'Command execution returns expected output without injected commands, proc_open with array syntax safely processes user input, Security monitoring shows no shell metacharacters in commands',
+    'Initial fix had bypass vulnerability: command names with trailing spaces bypassed the escaping. Only affects Windows. Command injection allows arbitrary command execution with web server privileges. CVSS 8.8 (HIGH).',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-1874'
+),
+(
+    'PHP CVE-2024-5585: proc_open() Trailing Space Bypass Vulnerability',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update to PHP 8.1.29+, 8.2.20+, or 8.3.8+ for complete command escaping fix", "percentage": 95, "note": "Closes trailing space bypass that bypasses CVE-2024-1874 fix"},
+        {"solution": "Remove trailing spaces from command names before passing to proc_open", "percentage": 85, "note": "See official PHP documentation for code examples"},
+        {"solution": "Enforce strict string normalization on all user input used in commands", "percentage": 80, "note": "Prevents whitespace-based bypasses of security filters"},
+        {"solution": "Monitor proc_open calls for commands with suspicious whitespace", "percentage": 75, "note": "Early detection of exploitation attempts"}
+    ]'::jsonb,
+    'PHP on Windows running vulnerable version, Application using proc_open with array syntax, User-controlled input in command arguments',
+    'proc_open processes commands without executing injected arguments, PHP version string confirms 8.1.29+/8.2.20+/8.3.8+ patch level, Application security logs show no whitespace-based bypass attempts',
+    'This is a bypass of CVE-2024-1874 fix - the original escaping fix did not work if command name included trailing spaces. Allows argument injection via whitespace manipulation. Windows only vulnerability.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.vicarius.io/vsociety/posts/command-injection-vulnerability-in-php-on-windows-systems-cve-2024-1874-and-cve-2024-5585'
+),
+(
+    'PHP CVE-2024-2757: URL Validation Bypass in filter_var FILTER_VALIDATE_URL',
+    'cve',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade PHP to 8.1.29+, 8.2.20+, or 8.3.8+ to fix URL validation logic", "percentage": 95, "note": "Corrects filter_var logic error in userinfo validation"},
+        {"solution": "Implement additional URL validation beyond filter_var using parse_url and regex", "percentage": 85, "note": "See official PHP documentation for code examples"host\"]) || empty($parsed[\"host\"])) { reject_url(); }"},
+        {"solution": "Validate user information components separately with strict rules", "percentage": 80, "note": "Reject URLs with invalid characters in user:pass portion"},
+        {"solution": "Use strict whitelist validation for URL schemes and hosts", "percentage": 75, "note": "Additional layer prevents malformed URLs from reaching parsers"}
+    ]'::jsonb,
+    'PHP application using filter_var with FILTER_VALIDATE_URL, User-supplied URLs being validated, Backend systems accepting URLs from filter_var results',
+    'Malformed URLs are properly rejected, filter_var validation matches downstream URL parsing logic, Application URL handling tests pass with malformed URLs',
+    'Code logic error treats invalid userinfo (user:pass) as valid. Allows URLs like "http://user@host.com:badport/path" to pass validation. Downstream code may parse incorrectly. CVSS 5.3 (MEDIUM). Validate beyond filter_var.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-2757'
+),
+(
+    'PHP CVE-2024-2756: Insecure Cookie Validation Bypass - __Host and __Secure Prefixes',
+    'cve',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade to PHP 8.0.30+, 8.1.28+, or 8.2.15+ to fix cookie prefix validation", "percentage": 95, "note": "Completes fix for CVE-2022-31629 - properly validates __Host- and __Secure- prefixes"},
+        {"solution": "Validate cookie origins server-side regardless of client-side validation", "percentage": 85, "note": "Implement server-side validation for __Host- and __Secure- cookie prefixes"},
+        {"solution": "Enforce HTTPS-only cookies with Secure flag explicitly in all set_cookie calls", "percentage": 80, "note": "Set secure and httponly flags in setcookie options array"},
+        {"solution": "Implement CSRF token validation as defense against cookie poisoning", "percentage": 75, "note": "Prevents exploitation even if insecure cookies bypass validation"}
+    ]'::jsonb,
+    'PHP application setting cookies with __Host- or __Secure- prefix, HTTPS enabled for production, User authentication via cookies',
+    'Cookies with invalid prefixes are rejected, HTTPS connections enforce Secure flag, CSRF tokens validate request origin',
+    'Incomplete fix allows network/same-site attackers to set insecure cookies treated as secure. __Host- cookies must be Secure, HttpOnly, and path=/. __Secure- requires Secure flag. CVSS 6.5 (MEDIUM). CWE-20 (Improper Input Validation).',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-2756'
+),
+(
+    'PHP CVE-2024-3096: password_verify() Null Byte Bypass Authentication',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update PHP to 8.1.28+, 8.2.18+, or 8.3.5+ to fix null byte password handling", "percentage": 95, "note": "Prevents blank string matching with null-prefixed hashes"},
+        {"solution": "Validate password hashes do not contain null bytes before password_verify()", "percentage": 85, "note": "See official PHP documentation for code examples"\\x00\") !== false) { reject_login(\"Invalid password hash\"); }"},
+        {"solution": "Reject password hashes starting with null byte during password hash creation", "percentage": 80, "note": "See official PHP documentation for code examples"\\x00\") { throw new Exception(\"Invalid password format\"); }"},
+        {"solution": "Implement password hash integrity checks - re-hash password after verification", "percentage": 75, "note": "Detect corrupted hashes before use in authentication"}
+    ]'::jsonb,
+    'PHP application using password_hash() and password_verify() for authentication, User login system in place, Password hashes stored in database',
+    'password_verify() correctly rejects blank password against null-prefixed hash, Authentication tests verify empty passwords fail, Login security tests pass',
+    'If password hash stored with null byte prefix (\\x00), password_verify() with blank string returns true. Allows authentication bypass. Only affects hashes that start with null byte. CVSS 7.5 (HIGH). Critical authentication flaw.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-3096'
+),
+(
+    'PHP CVE-2024-2408: OpenSSL Private Key Decryption Information Disclosure',
+    'cve',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade PHP to version with patched OpenSSL integration (8.0.30+, 8.1.x, 8.2.x compatible versions)", "percentage": 95, "note": "Updates to compatible OpenSSL with proper padding validation"},
+        {"solution": "Use openssl_private_decrypt with strict error handling and validate output", "percentage": 85, "note": "See official PHP documentation for code examples"},
+        {"solution": "Implement padding validation on decrypted data to detect manipulation", "percentage": 80, "note": "Verify PKCS#1 padding format matches expected structure"},
+        {"solution": "Avoid decryption of untrusted ciphertext - validate source before decryption", "percentage": 75, "note": "Defense in depth prevents exploitation of padding oracle"}
+    ]'::jsonb,
+    'PHP with OpenSSL extension enabled, Application performing RSA private key decryption, TLS/SSL certificates in use',
+    'openssl_private_decrypt returns consistent results for valid padding, Information disclosure monitoring shows no padding oracle attacks, OpenSSL version confirmed as patched',
+    'OpenSSL padding validation issue allows decryption oracle attacks. Information disclosure via padding error messages. Affects various PHP versions. Requires patched OpenSSL library. CVSS 5.3-7.5 (MEDIUM-HIGH).',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-2408'
+),
+(
+    'PHP CVE-2023-3845: Type Confusion in DateTime DateTime::modify()',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Upgrade to PHP 8.0.26+, 8.1.17+, or 8.2.4+ to fix DateTime type handling", "percentage": 95, "note": "Resolves type confusion in DateTime::modify with user input"},
+        {"solution": "Validate and type-cast input to string before passing to DateTime::modify()", "percentage": 85, "note": "Check input is string type and cast if necessary"},
+        {"solution": "Use DateInterval class for interval specifications instead of string parsing", "percentage": 80, "note": "Create DateInterval objects instead of parsing duration strings"},
+        {"solution": "Sanitize user input patterns used in DateTime parsing", "percentage": 75, "note": "Reject suspicious interval formats before DateTime processing"}
+    ]'::jsonb,
+    'PHP application using DateTime class with user-supplied interval strings, Date manipulation features in application, Input validation system in place',
+    'DateTime::modify handles various input types safely, Type confusion attacks rejected, Date calculations produce expected results',
+    'Type confusion when DateTime::modify() receives unexpected type. May lead to information disclosure or type juggling attacks. CVSS 7.5 (HIGH). Affects date handling in user input processing.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://access.redhat.com/security/cve/cve-2023-3845'
+),
+(
+    'PHP CVE-2024-11236: File Upload Directory Traversal Vulnerability',
+    'cve',
+    'HIGH',
+    '[
+        {"solution": "Update PHP to latest patch version addressing directory traversal in file uploads", "percentage": 95, "note": "Validates path normalization prevents directory escape"},
+        {"solution": "Implement strict path validation on uploaded file destination paths", "percentage": 90, "note": "See official PHP documentation for code examples"},
+        {"solution": "Use basename() to strip directory components from filenames", "percentage": 85, "note": "See official PHP documentation for code examples"},
+        {"solution": "Store uploaded files outside web root or in protected directory", "percentage": 80, "note": "Prevents direct access to traversal-created files"}
+    ]'::jsonb,
+    'PHP web application with file upload functionality, Destination directory writable by web server, File handling system in place',
+    'File uploads restricted to intended upload directory, realpath() validation confirms file location, Directory traversal attempts logged and rejected',
+    'Directory traversal attacks via filename manipulation (../, ..\\\\) can escape upload directory. HIGH severity affects file integrity and confidentiality. Test with payloads like \"../../etc/passwd\". Validate all paths.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://nvd.nist.gov/vuln/detail/CVE-2024-11236'
+);

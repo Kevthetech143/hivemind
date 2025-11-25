@@ -1,0 +1,222 @@
+-- Add MongoDB official documentation solutions batch 1
+-- Focus: Connection errors, authentication errors, query errors
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'MongoDB error code 18: AuthenticationFailed',
+    'mongodb',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify username and password are correct in connection string", "percentage": 95, "note": "Most common cause - incorrect credentials"},
+        {"solution": "Check authSource parameter in connection string - defaults to admin database", "percentage": 90, "note": "User must exist in the authentication database", "command": "mongodb://username:password@host:port/database?authSource=admin"},
+        {"solution": "Ensure user has proper roles assigned in authentication database", "percentage": 85, "command": "db.grantRolesToUser(\"username\", [{role: \"readWrite\", db: \"database\"}])"},
+        {"solution": "URL encode special characters in password", "percentage": 80, "note": "Characters like @, :, / need encoding"}
+    ]'::jsonb,
+    'Valid MongoDB user created, Correct authentication database specified',
+    'Connection succeeds without authentication error, User can perform authorized operations',
+    'Default authSource is admin, not your target database. Special characters in passwords must be URL encoded. Username must exist in authSource database, not just target database.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/reference/error-codes/'
+),
+(
+    'MongoServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017',
+    'mongodb',
+    'VERY_HIGH',
+    '[
+        {"solution": "Start MongoDB service", "percentage": 95, "note": "MongoDB service not running", "command": "sudo systemctl start mongod"},
+        {"solution": "Verify MongoDB is running on expected port", "percentage": 90, "command": "sudo systemctl status mongod"},
+        {"solution": "Check if another process is using port 27017", "percentage": 85, "command": "sudo lsof -i :27017"},
+        {"solution": "For Node 17+: Change localhost to 127.0.0.1 in connection string", "percentage": 80, "note": "Node.js version compatibility issue"}
+    ]'::jsonb,
+    'MongoDB installed, System permissions to start services',
+    'MongoDB service shows active/running status, Connection succeeds without ECONNREFUSED error',
+    'MongoDB service must be running before application can connect. On Windows, use services.msc to start MongoDB. Node 17+ changed localhost resolution behavior.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/drivers/node/current/fundamentals/connection/'
+),
+(
+    'MongoServerSelectionError: Server selection timed out after 30000 ms',
+    'mongodb',
+    'HIGH',
+    '[
+        {"solution": "Add your IP address to MongoDB Atlas Network Access whitelist", "percentage": 92, "note": "Required for Atlas connections"},
+        {"solution": "Verify connection string is correct and cluster is running", "percentage": 90, "note": "Check Atlas dashboard for cluster status"},
+        {"solution": "Increase serverSelectionTimeoutMS in connection options", "percentage": 75, "command": "mongodb://...?serverSelectionTimeoutMS=5000"},
+        {"solution": "Disable VPN, firewall, or antivirus temporarily to test", "percentage": 70, "note": "Network restrictions may block connection"}
+    ]'::jsonb,
+    'MongoDB Atlas cluster running, Network connectivity',
+    'Connection establishes within timeout period, No network-related errors in logs',
+    'Atlas requires IP whitelisting - allowing 0.0.0.0/0 is common for development but insecure for production. VPNs often block Atlas connections.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/atlas/troubleshoot-connection/'
+),
+(
+    'MongoDB E11000 duplicate key error',
+    'mongodb',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use updateOne with upsert:true instead of insertOne", "percentage": 90, "command": "db.collection.updateOne({_id: value}, {$set: data}, {upsert: true})"},
+        {"solution": "Check for existing document before inserting", "percentage": 85, "command": "const exists = await db.collection.findOne({field: value})"},
+        {"solution": "Handle error code 11000 in try-catch block", "percentage": 80, "note": "Graceful error handling for duplicate attempts"},
+        {"solution": "Remove duplicate documents then rebuild unique index", "percentage": 75, "note": "Required if duplicates already exist"}
+    ]'::jsonb,
+    'Unique index exists on field, MongoDB connection established',
+    'Insert/update succeeds without E11000 error, Unique constraint maintained',
+    'Error code 11000 means duplicate key violation. Most common with _id field or custom unique indexes. Upsert operations are safer than insert for potentially duplicate data.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/core/index-unique/'
+),
+(
+    'MongoDB Atlas authentication failed: bad auth',
+    'mongodb',
+    'HIGH',
+    '[
+        {"solution": "Create database user in Atlas dashboard under Database Access", "percentage": 95, "note": "User must exist before connecting"},
+        {"solution": "Remove angle brackets from connection string username/password", "percentage": 90, "note": "Replace <username> and <password> with actual values"},
+        {"solution": "Verify user has correct database permissions assigned", "percentage": 85, "note": "Check role assignments in Database Access"},
+        {"solution": "Reset password in Atlas dashboard if forgotten", "percentage": 80, "note": "Use Edit option in Database Access"}
+    ]'::jsonb,
+    'MongoDB Atlas account active, Cluster created and running',
+    'Authentication succeeds, Connection string works without bad auth error',
+    'Database users in Atlas are different from account users. Must create database user specifically. Connection string template has <username> and <password> placeholders that must be replaced.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/atlas/troubleshoot-connection/'
+),
+(
+    'MongoNetworkError: connection timeout',
+    'mongodb',
+    'HIGH',
+    '[
+        {"solution": "Check firewall rules allow MongoDB port 27017", "percentage": 90, "command": "sudo ufw allow 27017"},
+        {"solution": "Verify MongoDB bindIp setting allows remote connections", "percentage": 88, "note": "Edit /etc/mongod.conf to set bindIp: 0.0.0.0"},
+        {"solution": "Test network connectivity to MongoDB host", "percentage": 85, "command": "telnet hostname 27017"},
+        {"solution": "Increase connectTimeoutMS in connection options", "percentage": 75, "command": "mongodb://...?connectTimeoutMS=10000"}
+    ]'::jsonb,
+    'MongoDB running, Network access between client and server',
+    'Connection establishes successfully, No timeout errors',
+    'Default bindIp is 127.0.0.1 which only allows localhost. For remote access, must set bindIp to 0.0.0.0 or specific IP. Always secure with authentication when allowing remote access.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/reference/configuration-options/'
+),
+(
+    'MongoDB connection pool destroyed error',
+    'mongodb',
+    'MEDIUM',
+    '[
+        {"solution": "Avoid calling client.close() in application code", "percentage": 92, "note": "Keep connection pool alive for application lifetime"},
+        {"solution": "Use connection pooling with proper maxPoolSize", "percentage": 88, "command": "mongodb://...?maxPoolSize=50"},
+        {"solution": "Implement connection retry logic with exponential backoff", "percentage": 85, "note": "Handle transient connection failures"},
+        {"solution": "Check for unhandled promise rejections closing pool", "percentage": 80, "note": "Use proper error handling"}
+    ]'::jsonb,
+    'MongoDB client initialized, Application running',
+    'Connection pool remains active, No destroyed pool errors',
+    'Calling client.close() destroys the connection pool permanently. In long-running applications, initialize once and reuse. Only close on application shutdown.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/drivers/node/current/fundamentals/connection/'
+),
+(
+    'MongoDB query exceeded memory limit',
+    'mongodb',
+    'MEDIUM',
+    '[
+        {"solution": "Add index to fields used in query/sort operations", "percentage": 93, "command": "db.collection.createIndex({field: 1})"},
+        {"solution": "Use allowDiskUse option for sort operations", "percentage": 90, "command": "db.collection.find().sort({field: 1}).allowDiskUse(true)"},
+        {"solution": "Reduce result set size with limit() and proper filtering", "percentage": 85, "command": "db.collection.find(query).limit(1000)"},
+        {"solution": "Use aggregation pipeline with $match early to reduce data", "percentage": 80, "note": "Filter before expensive operations"}
+    ]'::jsonb,
+    'MongoDB running, Query identified that exceeds memory',
+    'Query completes successfully, No memory limit errors',
+    'Default sort memory limit is 32MB in MongoDB. Sorting large datasets requires indexes or allowDiskUse. Indexes eliminate memory sorting by using disk-based ordering.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/reference/limits/'
+),
+(
+    'MongoDB cursor timeout error',
+    'mongodb',
+    'MEDIUM',
+    '[
+        {"solution": "Use noCursorTimeout option for long-running queries", "percentage": 85, "command": "db.collection.find().noCursorTimeout()"},
+        {"solution": "Process results in batches with limit/skip pagination", "percentage": 90, "note": "Avoid holding cursor open too long"},
+        {"solution": "Use change streams for continuous data monitoring", "percentage": 80, "note": "Better than polling with cursors"},
+        {"solution": "Increase cursor timeout in driver options", "percentage": 75, "command": "mongodb://...?cursorTimeoutMS=600000"}
+    ]'::jsonb,
+    'MongoDB query returning large result set, Long processing time',
+    'Query completes without cursor timeout, All results processed',
+    'Default cursor timeout is 10 minutes. For batch processing, pagination is better than noCursorTimeout. Remember to close cursors manually if using noCursorTimeout.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/reference/method/cursor.noCursorTimeout/'
+),
+(
+    'MongoDB replica set connection error: no primary found',
+    'mongodb',
+    'MEDIUM',
+    '[
+        {"solution": "Check replica set status to identify primary", "percentage": 92, "command": "rs.status()"},
+        {"solution": "Initiate replica set if not initialized", "percentage": 90, "command": "rs.initiate()"},
+        {"solution": "Verify all replica set members are reachable", "percentage": 88, "note": "Check network connectivity between nodes"},
+        {"solution": "Use readPreference secondary if reads only needed", "percentage": 75, "command": "mongodb://...?readPreference=secondary"}
+    ]'::jsonb,
+    'MongoDB replica set configured, Network between nodes',
+    'Replica set has elected primary, rs.status() shows PRIMARY member',
+    'Replica set needs majority of nodes available to elect primary. If majority down, cluster becomes read-only. Connection string must include multiple replica set members for failover.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/core/replica-set-high-availability/'
+),
+(
+    'MongoDB write concern error: not writable primary',
+    'mongodb',
+    'MEDIUM',
+    '[
+        {"solution": "Wait for replica set to elect new primary after failover", "percentage": 90, "note": "Automatic election takes 10-30 seconds"},
+        {"solution": "Check if connected to secondary node, redirect to primary", "percentage": 88, "command": "rs.status() to identify primary"},
+        {"solution": "Use retryable writes in connection string", "percentage": 85, "command": "mongodb://...?retryWrites=true"},
+        {"solution": "Reduce write concern if acceptable for use case", "percentage": 70, "note": "Use w:1 instead of majority for faster writes"}
+    ]'::jsonb,
+    'MongoDB replica set configured, Application attempting writes',
+    'Writes succeed without not writable primary error, Connected to primary node',
+    'Only primary node accepts writes in replica set. Secondaries are read-only. Applications should use retryable writes to handle automatic failover. Connection string should list multiple nodes.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/core/replica-set-write-concern/'
+),
+(
+    'MongoDB index build failed: duplicate keys',
+    'mongodb',
+    'MEDIUM',
+    '[
+        {"solution": "Find and remove duplicate documents before creating unique index", "percentage": 95, "command": "db.collection.aggregate([{$group: {_id: \"$field\", count: {$sum: 1}}}, {$match: {count: {$gt: 1}}}])"},
+        {"solution": "Use dropDups option to automatically remove duplicates", "percentage": 75, "note": "Deprecated - manually clean preferred", "command": "db.collection.createIndex({field: 1}, {unique: true, dropDups: true})"},
+        {"solution": "Create partial unique index if null values cause duplicates", "percentage": 85, "command": "db.collection.createIndex({field: 1}, {unique: true, partialFilterExpression: {field: {$exists: true}}})"},
+        {"solution": "Modify application logic to prevent duplicate inserts", "percentage": 80, "note": "Use upsert operations"}
+    ]'::jsonb,
+    'MongoDB collection with data, Attempting to create unique index',
+    'Unique index created successfully, No duplicate documents exist',
+    'Cannot create unique index if duplicates already exist. dropDups is deprecated in newer MongoDB versions. Partial indexes exclude null values from uniqueness constraint.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://www.mongodb.com/docs/manual/core/index-unique/'
+);

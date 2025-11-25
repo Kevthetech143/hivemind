@@ -16,6 +16,36 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase client first
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Get client IP
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] ||
+                     req.headers.get('x-real-ip') ||
+                     'unknown'
+
+    // CHECK 1: IP BAN CHECK (before anything else)
+    const { data: isBanned } = await supabaseClient.rpc('is_ip_banned', {
+      p_ip_address: clientIP
+    })
+
+    if (isBanned) {
+      // Log failed attempt
+      await supabaseClient.rpc('log_contribution_attempt', {
+        p_ip_address: clientIP,
+        p_endpoint: 'contribute',
+        p_success: false
+      })
+
+      return new Response(
+        JSON.stringify({ error: 'Access denied. Your IP has been banned.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Parse contribution
     const contribution = await req.json()
 
@@ -30,33 +60,41 @@ serve(async (req) => {
       }
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    // CHECK 2: INPUT SANITIZATION
+    const sanitize = async (text: string): Promise<string> => {
+      const { data } = await supabaseClient.rpc('sanitize_text', { p_text: text })
+      return data || text
+    }
 
-    // Rate limiting for contributions (prevent spam)
-    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] ||
-                     req.headers.get('x-real-ip') ||
-                     'unknown'
+    contribution.query = await sanitize(contribution.query)
+    contribution.prerequisites = await sanitize(contribution.prerequisites)
+    contribution.success_indicators = await sanitize(contribution.success_indicators)
+    contribution.common_pitfalls = contribution.common_pitfalls ? await sanitize(contribution.common_pitfalls) : ''
 
+    // Get or create contributor
+    const contributor_email = contribution.contributor_email || 'anonymous'
+
+    // CHECK 3: RATE LIMITING
     const { data: rateLimitOk } = await supabaseClient.rpc('check_rate_limit', {
       p_ip_address: clientIP,
       p_endpoint: 'contribute',
-      p_limit: 5, // 5 contributions per hour
+      p_limit: 5,  // 5 contributions per hour
       p_window_minutes: 60
     })
 
     if (!rateLimitOk) {
+      // Log failed attempt
+      await supabaseClient.rpc('log_contribution_attempt', {
+        p_ip_address: clientIP,
+        p_endpoint: 'contribute',
+        p_success: false
+      })
+
       return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+        JSON.stringify({ error: 'Rate limit exceeded. Limit: 5 contributions/hour.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
-
-    // Get contributor email (optional, for contact)
-    const contributor_email = contribution.contributor_email || 'anonymous'
 
     // Compute success_rate from solutions
     const solutions = contribution.solutions
@@ -77,18 +115,33 @@ serve(async (req) => {
         success_indicators: contribution.success_indicators,
         common_pitfalls: contribution.common_pitfalls || '',
         success_rate: success_rate,
-        status: 'pending'
+        status: 'pending_review'
       })
       .select('id')
       .single()
 
     if (error) {
       console.error('Insert error:', error)
+
+      // Log failed attempt
+      await supabaseClient.rpc('log_contribution_attempt', {
+        p_ip_address: clientIP,
+        p_endpoint: 'contribute',
+        p_success: false
+      })
+
       return new Response(
         JSON.stringify({ error: 'Submission failed' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Log successful attempt
+    await supabaseClient.rpc('log_contribution_attempt', {
+      p_ip_address: clientIP,
+      p_endpoint: 'contribute',
+      p_success: true
+    })
 
     const contribution_id = `CONTRIB_${String(data.id).padStart(8, '0')}`
 
@@ -96,7 +149,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         contribution_id,
-        status: 'pending',
+        status: 'pending_review',
         estimated_review_time: '24-48 hours',
         message: 'Thank you for contributing! Your solution will be reviewed by our team.'
       }),

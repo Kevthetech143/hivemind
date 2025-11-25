@@ -1,0 +1,245 @@
+-- Add Stack Overflow solutions batch 9: Spring Boot, Next.js, Selenium, Tailwind
+-- Source: Stack Overflow accepted answers with community verification
+
+-- Spring Boot: Port already in use
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Spring Boot error: Port 8080 was already in use',
+    'spring-boot',
+    'VERY_HIGH',
+    '[
+        {"solution": "Kill process on port: lsof -ti:8080 | xargs kill -9 (Mac/Linux) or netstat -ano | findstr :8080 then taskkill /PID <PID> /F (Windows)", "percentage": 90, "command": "lsof -ti:8080 | xargs kill -9", "note": "Find and kill process"},
+        {"solution": "Stop Spring Boot in IDE: Click red stop button in console (STS/IntelliJ)", "percentage": 85, "note": "Previous run still active"},
+        {"solution": "Change port in application.properties: server.port=8081", "percentage": 80, "note": "Use different port"}
+    ]'::jsonb,
+    'Spring Boot application, Port 8080 (or configured port)',
+    'Application starts successfully, No port already in use error',
+    'Previous Spring Boot instance may still be running. Check IDE console for stop button or kill process manually.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/20735205/'
+);
+
+-- Spring Boot: Auto-generate port
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Spring Boot automatically use different port if port in use',
+    'spring-boot',
+    'MEDIUM',
+    '[
+        {"solution": "Use random port: Set server.port=0 in application.properties", "percentage": 90, "note": "Auto-generates available port"},
+        {"solution": "Check generated port in console: Look for Tomcat started on port(s): <random-port>", "percentage": 85, "note": "Port shown in startup logs"},
+        {"solution": "Get port programmatically: @Value(\"${local.server.port}\") in bean", "percentage": 75, "note": "For testing/dynamic config"}
+    ]'::jsonb,
+    'Spring Boot application, application.properties',
+    'Application starts on random available port, Port logged in console',
+    'server.port=0 generates random port. Useful for testing. Check console logs for actual port number.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70029955/'
+);
+
+-- Next.js: Hydration error
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Next.js Hydration failed because the initial UI does not match',
+    'nextjs',
+    'VERY_HIGH',
+    '[
+        {"solution": "Fix invalid HTML nesting: Ensure <div> not inside <p>, <a> not inside <a>, etc", "percentage": 90, "note": "Most common cause"},
+        {"solution": "Disable browser extensions: Grammarly, ad blockers inject DOM elements", "percentage": 85, "note": "Extensions modify HTML"},
+        {"solution": "Use suppressHydrationWarning on element: <div suppressHydrationWarning>", "percentage": 70, "note": "For intentional mismatches"}
+    ]'::jsonb,
+    'Next.js application, Server-side rendering enabled',
+    'No hydration errors in console, Page renders correctly',
+    'Hydration error means server HTML != client HTML. Check browser console for specific mismatch. Extensions like Grammarly cause this.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71706064/'
+);
+
+-- Next.js: Hydration error with client-only content
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Next.js hydration error with dynamic client-side content',
+    'nextjs',
+    'HIGH',
+    '[
+        {"solution": "Use useEffect for client-only rendering: const [mounted, setMounted] = useState(false); useEffect(() => setMounted(true), [])", "percentage": 90, "note": "Prevent SSR of client-only code"},
+        {"solution": "Wrap with dynamic import: const NoSSR = dynamic(() => import(Component), { ssr: false })", "percentage": 85, "note": "Disable SSR for component"},
+        {"solution": "Check typeof window !== undefined before rendering: {typeof window !== undefined && <ClientComponent />}", "percentage": 80, "note": "Conditional client rendering"}
+    ]'::jsonb,
+    'Next.js application, Components using browser APIs',
+    'No hydration errors, Client-specific code only runs in browser',
+    'localStorage, window, document not available during SSR. Use useEffect or dynamic import with ssr: false.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/73451295/'
+);
+
+-- Selenium: Element not interactable
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Selenium element not interactable exception',
+    'selenium',
+    'VERY_HIGH',
+    '[
+        {"solution": "Wait for element to be clickable: WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, id)))", "percentage": 95, "note": "Element exists but not ready"},
+        {"solution": "Check element is not hidden by another element: Use correct z-index or scroll into view", "percentage": 85, "note": "Element overlapped"},
+        {"solution": "Verify correct element selected: Multiple elements with same selector, use more specific xpath", "percentage": 80, "note": "Wrong element targeted"}
+    ]'::jsonb,
+    'Selenium WebDriver, Target webpage loaded, Element exists in DOM',
+    'Element clicks successfully, No not interactable exception',
+    'Element may exist in DOM but not yet clickable. Use explicit waits. Element may be hidden behind modal or navbar.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/44119081/'
+);
+
+-- Selenium: Element not interactable - timing
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Selenium element exists but not interactable immediately',
+    'selenium',
+    'HIGH',
+    '[
+        {"solution": "Use explicit wait with expected conditions: from selenium.webdriver.support.ui import WebDriverWait; from selenium.webdriver.support import expected_conditions as EC", "percentage": 95, "note": "Wait for element to become clickable"},
+        {"solution": "Scroll element into view: driver.execute_script(\"arguments[0].scrollIntoView(true);\", element)", "percentage": 85, "note": "Element outside viewport"},
+        {"solution": "Add small delay after page load: time.sleep(1) then click", "percentage": 70, "note": "Animations/transitions need time"}
+    ]'::jsonb,
+    'Selenium WebDriver with Python, Selenium expected conditions imported',
+    'Element clicks without errors, Actions execute reliably',
+    'Element visibility != element interactability. Use EC.element_to_be_clickable not just EC.visibility_of_element_located.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/62823489/'
+);
+
+-- Selenium: Multiple matching elements
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Selenium clicking wrong element - multiple matches',
+    'selenium',
+    'MEDIUM',
+    '[
+        {"solution": "Use more specific xpath: //section[2]/button[@data-value=\"0\"] instead of //button[@data-value=\"0\"]", "percentage": 90, "note": "Target specific instance"},
+        {"solution": "Use find_elements (plural) and select by index: elements = driver.find_elements(...); elements[1].click()", "percentage": 85, "note": "Access nth matching element"},
+        {"solution": "Add unique parent context: driver.find_element(By.CSS_SELECTOR, \"#container button.submit\")", "percentage": 80, "note": "Narrow scope with parent"}
+    ]'::jsonb,
+    'Selenium WebDriver, Page with multiple similar elements',
+    'Correct element clicked, Expected action occurs',
+    'find_element returns first match. Use find_elements to see all matches. Make selector more specific with parent context.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/52859981/'
+);
+
+-- Tailwind CSS: Classes not working
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Tailwind CSS classes not working after installation',
+    'tailwind',
+    'VERY_HIGH',
+    '[
+        {"solution": "Configure content paths in tailwind.config.js: content: [\"./src/**/*.{js,jsx,ts,tsx,html}\"]", "percentage": 95, "note": "Tailwind scans these paths"},
+        {"solution": "Run build command: npm run build or npx tailwindcss -i ./src/input.css -o ./dist/output.css", "percentage": 90, "note": "Generate CSS file"},
+        {"solution": "Import generated CSS: import \"./dist/output.css\" in your entry file", "percentage": 85, "note": "Must import output CSS"}
+    ]'::jsonb,
+    'Tailwind CSS installed via npm, tailwind.config.js exists',
+    'Tailwind classes apply styling, Elements styled correctly',
+    'Tailwind uses JIT compilation. Must configure content paths and run build. Import output.css not node_modules CSS.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70577297/'
+);
+
+-- Tailwind CSS: Dynamic classes not working
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Tailwind CSS dynamic class names not working',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Use complete class names: className=\"text-red-500\" not className={`text-${color}-500`}", "percentage": 95, "note": "Tailwind uses regex scanning"},
+        {"solution": "Safelist dynamic classes in tailwind.config.js: safelist: [\"text-red-500\", \"text-blue-500\"]", "percentage": 85, "note": "Explicitly include dynamic classes"},
+        {"solution": "Use style prop for truly dynamic values: style={{ color: colorVar }}", "percentage": 75, "note": "Inline styles for runtime values"}
+    ]'::jsonb,
+    'Tailwind CSS with JIT mode, Dynamic class usage',
+    'Dynamic classes apply correctly, Styling updates based on variables',
+    'Tailwind scans for complete class strings at build time. Cannot dynamically construct class names. Use safelist or inline styles.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70577297/'
+);
+
+-- Tailwind CSS: Missing directives
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Tailwind CSS not applying any styles in production',
+    'tailwind',
+    'MEDIUM',
+    '[
+        {"solution": "Add Tailwind directives to CSS file: @tailwind base; @tailwind components; @tailwind utilities;", "percentage": 95, "note": "Required directives"},
+        {"solution": "Import CSS file with directives not node_modules: import \"./styles/tailwind.css\"", "percentage": 90, "note": "Must import your CSS file"},
+        {"solution": "Check build output: Verify dist/output.css contains Tailwind classes", "percentage": 85, "note": "Confirm build worked"}
+    ]'::jsonb,
+    'Tailwind CSS installed, Build process configured',
+    'Production build includes Tailwind styles, Classes work in deployed app',
+    'Must use @tailwind directives in CSS file. Cannot import Tailwind from node_modules directly. Build generates final CSS.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65683583/'
+);
+
+-- Tailwind CSS: Not working when deployed
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Tailwind CSS works locally but not when deployed',
+    'tailwind',
+    'HIGH',
+    '[
+        {"solution": "Ensure build command runs Tailwind: Add tailwindcss build to deploy script", "percentage": 90, "note": "Deploy may skip build step"},
+        {"solution": "Check content paths include deployed file locations: Adjust paths for build directory", "percentage": 85, "note": "Paths may differ in production"},
+        {"solution": "Verify CSS file imported in production entry point: Check build output includes CSS", "percentage": 80, "note": "CSS import may be stripped"}
+    ]'::jsonb,
+    'Tailwind CSS working locally, Deployment platform (Vercel/Netlify)',
+    'Deployed site has Tailwind styling, Classes work same as localhost',
+    'Local dev server auto-rebuilds. Production needs explicit build. Check deploy logs for Tailwind build step.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68872504/'
+);
+

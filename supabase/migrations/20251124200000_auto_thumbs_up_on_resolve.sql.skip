@@ -1,0 +1,93 @@
+-- Auto-add thumbs up when ticket resolved (proven solution)
+
+CREATE OR REPLACE FUNCTION resolve_ticket(
+    p_ticket_id TEXT,
+    p_solution_data JSONB
+) RETURNS JSONB AS $$
+DECLARE
+    v_ticket RECORD;
+    v_knowledge_id INTEGER;
+    v_enhanced_pitfalls TEXT;
+    v_result JSONB;
+BEGIN
+    -- Get ticket info including all steps tried
+    SELECT * INTO v_ticket
+    FROM troubleshooting_sessions
+    WHERE ticket_id = p_ticket_id AND status != 'resolved';
+
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('error', 'Ticket not found or already resolved');
+    END IF;
+
+    -- Auto-enhance common_pitfalls from failed attempts
+    v_enhanced_pitfalls := COALESCE(p_solution_data->>'common_pitfalls', '');
+
+    IF (v_enhanced_pitfalls = '' OR v_enhanced_pitfalls IS NULL) AND v_ticket.steps_tried IS NOT NULL THEN
+        SELECT string_agg(
+            CASE
+                WHEN lower(step->>'result') LIKE '%failed%' OR
+                     lower(step->>'result') LIKE '%error%' OR
+                     lower(step->>'result') LIKE '%doesn''t%' OR
+                     lower(step->>'result') LIKE '%not%'
+                THEN 'Avoid: ' || (step->>'step') || ' (' || (step->>'result') || ')'
+                ELSE NULL
+            END,
+            '; '
+        ) INTO v_enhanced_pitfalls
+        FROM jsonb_array_elements(v_ticket.steps_tried) AS step
+        WHERE lower(step->>'result') LIKE '%failed%' OR
+              lower(step->>'result') LIKE '%error%' OR
+              lower(step->>'result') LIKE '%doesn''t%' OR
+              lower(step->>'result') LIKE '%not%';
+    END IF;
+
+    -- Update ticket status
+    UPDATE troubleshooting_sessions
+    SET
+        status = 'resolved',
+        solution = p_solution_data->>'solution',
+        solution_data = p_solution_data,
+        resolved_at = NOW()
+    WHERE ticket_id = p_ticket_id;
+
+    -- Auto-contribute to knowledge base
+    INSERT INTO knowledge_entries (
+        query,
+        category,
+        hit_frequency,
+        solutions,
+        failed_attempts,
+        common_pitfalls,
+        success_rate,
+        claude_version,
+        last_verified,
+        source_ticket_id,
+        thumbs_up -- Start with 1 thumbs up (proven solution)
+    ) VALUES (
+        v_ticket.problem,
+        v_ticket.category,
+        'MEDIUM (from ticket)',
+        p_solution_data->'solutions',
+        COALESCE(v_ticket.steps_tried, '[]'::jsonb),
+        COALESCE(v_enhanced_pitfalls, ''),
+        COALESCE((p_solution_data->>'success_rate')::NUMERIC, 0.90),
+        'sonnet-4',
+        NOW(),
+        p_ticket_id,
+        1 -- Auto thumbs up
+    )
+    RETURNING id INTO v_knowledge_id;
+
+    -- Mark as auto-contributed
+    UPDATE troubleshooting_sessions
+    SET auto_contributed = TRUE
+    WHERE ticket_id = p_ticket_id;
+
+    RETURN jsonb_build_object(
+        'success', TRUE,
+        'ticket_id', p_ticket_id,
+        'knowledge_id', v_knowledge_id,
+        'message', 'Solution verified and added to knowledge base with thumbs up'
+    );
+END;
+$$ LANGUAGE plpgsql;

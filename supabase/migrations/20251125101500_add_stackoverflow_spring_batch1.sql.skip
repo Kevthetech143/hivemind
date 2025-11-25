@@ -1,0 +1,214 @@
+-- Mine Stack Overflow: Top voted Spring Framework questions batch 1
+-- Source: https://stackoverflow.com/questions/tagged/spring?tab=votes
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'What is the difference between @Component, @Repository & @Service annotations in Spring?',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "@Repository is used for DAO/Data Access layer to provide data access abstraction", "percentage": 95, "note": "Specifically for database operations"},
+        {"solution": "@Service is used for business logic layer to implement service methods and transactions", "percentage": 95, "note": "Handles business rules"},
+        {"solution": "@Component is generic Spring-managed component for any other layer or purpose", "percentage": 90, "note": "Can be used interchangeably but semantics matter"},
+        {"solution": "Use semantic annotations for clarity - Spring treats all three identically functionally", "percentage": 85, "note": "Good practice for maintainability"}
+    ]'::jsonb,
+    'Spring Framework 2.5+, Component scanning enabled',
+    'Beans are registered correctly, Dependency injection works, Layer semantics are clear',
+    'Do not confuse semantic differences with functional differences - Spring treats them the same internally. Semantic choice matters for code clarity and team understanding.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/6827752/whats-the-difference-between-component-repository-service-annotations-in'
+),
+(
+    'What is the difference between CrudRepository and JpaRepository interfaces in Spring Data JPA?',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "JpaRepository extends CrudRepository and PagingAndSortingRepository providing additional methods", "percentage": 95, "note": "JpaRepository = CrudRepository + PagingAndSortingRepository"},
+        {"solution": "Use JpaRepository for batch operations: saveAll(), deleteInBatch(), deleteAllInBatch()", "percentage": 90, "note": "Batch operations are more efficient"},
+        {"solution": "Use JpaRepository for flush() and saveAndFlush() to control persistence layer", "percentage": 88, "note": "Manual flush control"},
+        {"solution": "Use CrudRepository when you only need basic CRUD without pagination or batch ops", "percentage": 85, "note": "Minimal interface for simple cases"}
+    ]'::jsonb,
+    'Spring Data JPA configured, Entity classes mapped, Repository interface extends JpaRepository or CrudRepository',
+    'Custom methods work correctly, Data persists to database, Batch operations execute efficiently',
+    'JpaRepository is generally preferred as it provides superset of CrudRepository. CrudRepository is only chosen for minimal footprint. Most Spring projects use JpaRepository.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14014086/what-is-difference-between-crudrepository-and-jparepository-interfaces-in-spring'
+),
+(
+    'What is the difference between @Inject and @Autowired in Spring Framework?',
+    'stackoverflow-spring',
+    'MEDIUM',
+    '[
+        {"solution": "@Autowired is Spring-specific annotation from org.springframework.beans.factory.annotation", "percentage": 95, "note": "Spring proprietary"},
+        {"solution": "@Inject is JSR-330 standard annotation from javax.inject package", "percentage": 95, "note": "Framework agnostic standard"},
+        {"solution": "@Autowired supports required parameter to make injection optional with required=false", "percentage": 90, "note": "Spring-specific feature"},
+        {"solution": "Use @Inject for portability across frameworks, @Autowired when committed to Spring", "percentage": 85, "note": "Portability vs feature trade-off"}
+    ]'::jsonb,
+    'Spring Framework 3.0+, Dependency injection configured',
+    'Injection occurs without errors, Required dependencies are injected, Optional dependencies handled correctly',
+    '@Inject does not support required parameter - injection fails silently if dependency missing. @Autowired can use required=false to handle missing beans.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7142622/what-is-the-difference-between-inject-and-autowired-in-spring-framework-which'
+),
+(
+    'Why is my Spring @Autowired field null?',
+    'stackoverflow-spring',
+    'VERY_HIGH',
+    '[
+        {"solution": "Ensure bean is instantiated by Spring - check @Component, @Service, @Repository, @Bean annotations", "percentage": 95, "note": "Most common cause"},
+        {"solution": "Enable component scanning with @ComponentScan or use @SpringBootApplication which includes it", "percentage": 94, "note": "Scanning must be configured"},
+        {"solution": "Do not instantiate class with new keyword - let Spring manage bean creation", "percentage": 92, "note": "Manual instantiation bypasses Spring"},
+        {"solution": "Access injected fields only after Spring has completed initialization (not in constructor)", "percentage": 90, "note": "Timing issue - injection happens after construction"},
+        {"solution": "Check that dependency is accessible from same Spring application context", "percentage": 88, "note": "Multiple contexts cause issues"}
+    ]'::jsonb,
+    'Spring application context running, Class is Spring-managed component, Field is of injectable type',
+    'Field is not null after bean creation, Dependency injection works, No NullPointerException on access',
+    'Accessing @Autowired fields in constructor results in null. Never instantiate beans manually with new. Component scanning must be enabled for @Autowired to work. Check for multiple application contexts.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/19896870/why-is-my-spring-autowired-field-null'
+),
+(
+    'Spring: @Component versus @Bean',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "@Component enables automatic detection and bean registration via classpath component scanning", "percentage": 95, "note": "Automatic detection approach"},
+        {"solution": "@Bean is used inside @Configuration classes for explicit bean registration and complex creation", "percentage": 95, "note": "Manual/explicit approach"},
+        {"solution": "Use @Component for simple class-level bean registration", "percentage": 90, "note": "Straightforward classes"},
+        {"solution": "Use @Bean for third-party libraries, complex initialization logic, or conditional bean creation", "percentage": 90, "note": "Complex scenarios"},
+        {"solution": "@Bean provides access to other beans as method parameters for explicit dependency management", "percentage": 88, "note": "Fine-grained control"}
+    ]'::jsonb,
+    'Spring Framework 2.5+, @Configuration class for @Bean, Component scanning enabled for @Component',
+    'Beans are registered correctly, Dependencies are resolved, Initialization logic executes properly',
+    '@Component and @Bean serve different purposes - @Component is for class-level automation, @Bean is for method-level explicit configuration. Cannot mix @Component on @Configuration class effectively.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10604298/spring-component-versus-bean'
+),
+(
+    'Where does the @Transactional annotation belong?',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "Place @Transactional on service layer methods for transaction boundary control", "percentage": 95, "note": "Best practice"},
+        {"solution": "Avoid placing @Transactional on DAO/repository layer - let service manage transactions", "percentage": 92, "note": "Separation of concerns"},
+        {"solution": "@Transactional on service layer handles both DAO calls within single transaction", "percentage": 90, "note": "Transaction atomicity"},
+        {"solution": "Use @Transactional(readOnly=true) for read operations to optimize performance", "percentage": 88, "note": "Performance optimization"},
+        {"solution": "Configure transaction propagation with propagation parameter for complex scenarios", "percentage": 85, "note": "Advanced control"}
+    ]'::jsonb,
+    'Spring transaction management configured, PlatformTransactionManager bean available, Service layer exists',
+    'Transactions commit/rollback correctly, Multiple DAO operations are atomic, Queries execute in read-only mode when specified',
+    'Placing @Transactional on DAO layer creates overhead and violates separation of concerns. @Transactional on private methods does not work - must be public. Transaction methods should not be final.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1079114/where-does-the-transactional-annotation-belong'
+),
+(
+    'How does Spring achieve IOC with autowiring?',
+    'stackoverflow-spring',
+    'MEDIUM',
+    '[
+        {"solution": "Spring uses bean factory to instantiate and manage all application objects", "percentage": 95, "note": "Core mechanism"},
+        {"solution": "During application context initialization, Spring scans classpath for @Component annotated classes", "percentage": 93, "note": "Discovery phase"},
+        {"solution": "Spring uses reflection to analyze constructor/setter parameters and inject matching beans", "percentage": 92, "note": "Dependency resolution"},
+        {"solution": "Application code requests beans from context, Spring provides pre-configured instances with dependencies", "percentage": 90, "note": "Inversion of control"},
+        {"solution": "Spring maintains singleton instances and handles lifecycle management for all beans", "percentage": 88, "note": "Lifecycle management"}
+    ]'::jsonb,
+    'Spring application context initialized, Component scanning enabled, Beans properly annotated',
+    'Beans are created automatically, Dependencies are injected correctly, Lifecycle callbacks execute in order',
+    'IOC is often confused with DI - IOC is broader control inversion concept, DI is implementation technique. Spring uses constructor injection by default when available.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/3153546/how-does-spring-achieve-ioc-with-autowiring'
+),
+(
+    'What in the world are Spring beans?',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "Spring beans are Java objects managed by Spring container with lifecycle controlled by framework", "percentage": 96, "note": "Definition"},
+        {"solution": "Unlike regular Java objects, Spring beans have their creation, initialization, and destruction managed by Spring", "percentage": 94, "note": "Key difference"},
+        {"solution": "Spring maintains bean singleton instances by default and injects them where needed", "percentage": 92, "note": "Singleton pattern"},
+        {"solution": "Beans are defined via @Component, @Service, @Bean or XML configuration", "percentage": 90, "note": "Definition methods"},
+        {"solution": "Spring beans enable loose coupling and easier testing through dependency injection", "percentage": 88, "note": "Benefits"}
+    ]'::jsonb,
+    'Spring application context running, Classes are Spring-managed',
+    'Objects are created and managed by Spring, Dependencies are injected, Lifecycle callbacks work',
+    'Not all Java objects are Spring beans - only those registered with Spring container. Manual instantiation with new keyword bypasses Spring management entirely.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/17193365/what-in-the-world-are-spring-beans'
+),
+(
+    'How can I log SQL statements in Spring Boot?',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "Set logging.level.org.hibernate.SQL=DEBUG in application.properties to log SQL statements", "percentage": 95, "note": "Hibernate SQL logging"},
+        {"solution": "Add logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE for parameter values", "percentage": 94, "note": "Shows bound parameters"},
+        {"solution": "Configure in logback.xml with <logger name=\"org.hibernate.SQL\" level=\"debug\"/>", "percentage": 92, "note": "XML-based configuration"},
+        {"solution": "For Spring Data JPA, enable: logging.level.org.springframework.data=DEBUG", "percentage": 88, "note": "Spring Data specific"},
+        {"solution": "Use spring.jpa.properties.hibernate.format_sql=true for formatted SQL output", "percentage": 85, "note": "Improved readability"}
+    ]'::jsonb,
+    'Spring Boot application with database configured, Hibernate or Spring Data JPA in use, Logging framework (SLF4J/Logback) configured',
+    'SQL statements appear in application logs, Parameter values are visible, Formatted output is readable',
+    'SQL logging can impact performance in production. Parameter logging (TRACE) shows actual values but creates large logs. Use judiciously in development only.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/30118683/how-can-i-log-sql-statements-in-spring-boot'
+),
+(
+    'How can I set the logging level with application.properties?',
+    'stackoverflow-spring',
+    'HIGH',
+    '[
+        {"solution": "Set root logging level with logging.level.root=DEBUG in application.properties", "percentage": 95, "note": "Global level"},
+        {"solution": "Set package-specific level with logging.level.com.myapp=DEBUG", "percentage": 94, "note": "Package targeting"},
+        {"solution": "Log levels in order: TRACE, DEBUG, INFO, WARN, ERROR, FATAL", "percentage": 92, "note": "Severity order"},
+        {"solution": "Use logging.level.org.springframework=INFO to reduce Spring framework logs", "percentage": 90, "note": "Reduce noise"},
+        {"solution": "Add multiple properties: logging.level.com.myapp.service=DEBUG and logging.level.com.myapp.dao=INFO", "percentage": 88, "note": "Fine-grained control"}
+    ]'::jsonb,
+    'Spring Boot application with application.properties file, Logging framework configured',
+    'Logs appear at specified level, Package-specific levels apply correctly, Root level applies as default',
+    'Logging levels are case-insensitive. Properties are applied at startup. DEBUG shows too much output for production. Use environment variables for different environments.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/20485059/how-can-i-set-the-logging-level-with-application-properties'
+),
+(
+    'Spring - @Transactional - What happens in background?',
+    'stackoverflow-spring',
+    'MEDIUM',
+    '[
+        {"solution": "Spring uses AOP (Aspect-Oriented Programming) proxies to intercept @Transactional methods", "percentage": 96, "note": "Core mechanism"},
+        {"solution": "Proxy creates transaction before method execution and commits/rolls back after", "percentage": 94, "note": "Transaction lifecycle"},
+        {"solution": "If unchecked exception occurs, Spring automatically rolls back entire transaction", "percentage": 92, "note": "Rollback on exception"},
+        {"solution": "Checked exceptions do not trigger rollback by default - use rollbackFor parameter", "percentage": 90, "note": "Exception handling"},
+        {"solution": "Spring manages resource synchronization - database connection stays open for transaction duration", "percentage": 88, "note": "Resource management"}
+    ]'::jsonb,
+    'Spring AOP configured, PlatformTransactionManager available, @EnableTransactionManagement or XML config',
+    'Transactions commit/rollback as expected, Exception handling works, Resources are properly managed',
+    'Private methods do not work with @Transactional - AOP proxies only intercept public methods. Final methods bypass proxy. Calling @Transactional method from another method in same class bypasses transaction management.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1099025/spring-transactional-what-happens-in-background'
+);

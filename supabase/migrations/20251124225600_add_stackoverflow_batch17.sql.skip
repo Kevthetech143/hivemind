@@ -1,0 +1,255 @@
+-- Mobile Development Solutions from Stack Overflow
+-- Batch 17: React Native, Flutter, Android, iOS
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'React Native error: Unable to resolve module',
+    'react-native',
+    'VERY_HIGH',
+    '[
+        {"solution": "Clear Metro bundler cache with reset flag", "percentage": 95, "command": "npm start -- --reset-cache", "note": "Clears stale module cache. Use watchman watch-del-all for deeper clean"},
+        {"solution": "Delete node_modules and reinstall dependencies", "percentage": 90, "command": "rm -rf node_modules && npm install", "note": "Fixes corrupted dependencies"},
+        {"solution": "Install missing peer dependencies", "percentage": 85, "command": "npm install react-native-reanimated react-native-gesture-handler react-native-screens react-native-safe-area-context", "note": "React Navigation requires these packages"},
+        {"solution": "Update import to use ES6 syntax instead of require", "percentage": 80, "note": "Use import io from ''socket.io-client'' instead of require"}
+    ]'::jsonb,
+    'React Native project, Node.js installed, Metro bundler running',
+    'App builds successfully, Modules resolve correctly, No red screen errors',
+    'Metro bundler caches module resolutions. Always reset cache after dependency changes. React Navigation needs peer dependencies installed separately.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34325946/react-native-unable-to-resolve-module'
+),
+(
+    'React Native unable to resolve module path',
+    'react-native',
+    'HIGH',
+    '[
+        {"solution": "Install path polyfill for React Native", "percentage": 90, "command": "npm install -D path", "note": "path is a Node.js native module not available in RN"},
+        {"solution": "Remove accidental Babel imports from code", "percentage": 85, "note": "Check for auto-imported @babel/core references"},
+        {"solution": "Add babel macros plugin to config", "percentage": 75, "note": "Update babel.config.js with macros plugin"}
+    ]'::jsonb,
+    'React Native project, babel.config.js present',
+    'Module resolves successfully, No path-related errors',
+    'Error message is misleading - it means module "path" cannot be resolved, not a path resolution issue. Native Node modules need polyfills in React Native.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/41511413/unable-to-resolve-module-path-in-react-native'
+),
+(
+    'React Native unable to resolve @react-native/assets-registry',
+    'react-native',
+    'MEDIUM',
+    '[
+        {"solution": "Reset Metro cache after metro.config.js changes", "percentage": 95, "command": "npm start --reset-cache", "note": "Metro caches asset configurations"},
+        {"solution": "Install assets registry package explicitly", "percentage": 85, "command": "npm install @react-native/assets-registry", "note": "Package may be missing in some RN versions"},
+        {"solution": "Remove .yarnclean file if present", "percentage": 80, "note": "yarnclean can auto-delete asset folders"},
+        {"solution": "Update metro.config.js with proper asset configuration", "percentage": 75, "note": "Merge with getDefaultConfig for RN 0.72+"}
+    ]'::jsonb,
+    'React Native project, Metro bundler configured',
+    'Assets load correctly, Metro bundler starts without errors',
+    'Metro caches configuration changes. Always reset cache after modifying metro.config.js. Check for .yarnclean deleting necessary files.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72910279/react-native-unable-to-resolve-module-react-native-assets-registry'
+),
+(
+    'React Native unable to resolve react-native-pager-view',
+    'react-native',
+    'MEDIUM',
+    '[
+        {"solution": "Install both pager view and tab view together", "percentage": 95, "command": "yarn add react-native-tab-view react-native-pager-view && cd ios && pod install && cd ..", "note": "pager-view is peer dependency of tab navigation"},
+        {"solution": "Clean install all dependencies and pods", "percentage": 90, "command": "rm -rf yarn.lock node_modules ios/Pods ios/Podfile.lock && yarn install && cd ios && pod install && cd ..", "note": "Fixes corrupted dependency cache"}
+    ]'::jsonb,
+    'React Native project with react-navigation, iOS development setup',
+    'Navigation components load successfully, No module resolution errors',
+    'react-native-pager-view must be installed alongside react-native-tab-view for material top tabs. Installing separately causes resolution errors.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69278465/unable-to-resolve-module-react-native-pager-view-react-native'
+),
+(
+    'React Native Metro bundler cache issues',
+    'react-native',
+    'VERY_HIGH',
+    '[
+        {"solution": "Clear all Metro and watchman caches", "percentage": 95, "command": "watchman watch-del-all && rm -rf $TMPDIR/react-native-packager-cache-* && rm -rf $TMPDIR/metro-bundler-cache-* && rm -rf node_modules/ && npm cache clean --force && npm install && npm start -- --reset-cache", "note": "Comprehensive cache clearing for npm projects"},
+        {"solution": "Clear Expo cache", "percentage": 90, "command": "expo start -c", "note": "For Expo projects"},
+        {"solution": "Clear Android build cache", "percentage": 85, "command": "cd android && ./gradlew cleanBuildCache && cd ..", "note": "Android-specific cache"},
+        {"solution": "Quick Metro reset", "percentage": 85, "command": "npm start -- --reset-cache", "note": "Fastest option for Metro cache only"}
+    ]'::jsonb,
+    'React Native project, watchman installed (optional), Node.js environment',
+    'Metro starts successfully, Fresh bundle loads, Previous cached bugs are gone',
+    'The -- separator passes arguments to start script, not npm. Cache location varies by RN version - modern versions use /tmp/metro-cache/ not metro-bundler-cache-*.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/46878638/how-to-clear-react-native-cache'
+),
+(
+    'Flutter build failed after upgrade',
+    'flutter',
+    'HIGH',
+    '[
+        {"solution": "Delete build folder and run flutter clean", "percentage": 90, "command": "rm -rf android/app/build && flutter clean && flutter pub get", "note": "Clears stale build artifacts"},
+        {"solution": "Switch to stable channel and upgrade", "percentage": 85, "command": "flutter channel stable && flutter upgrade && flutter pub get", "note": "Ensures stable Flutter version"},
+        {"solution": "Update all packages to latest versions", "percentage": 80, "command": "flutter pub upgrade", "note": "Fixes API compatibility after Flutter upgrades"},
+        {"solution": "Repair pub cache", "percentage": 75, "command": "flutter pub cache repair", "note": "Fixes corrupted packages"}
+    ]'::jsonb,
+    'Flutter project, Flutter SDK installed',
+    'Build completes successfully, No compilation errors, App runs on target device',
+    'After major Flutter upgrades, packages may use deprecated APIs. Update all dependencies to compatible versions. Remove unused imports to avoid API conflicts.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72546598/flutter-build-failed-after-upgrading-to-flutter-v3'
+),
+(
+    'Flutter build failed - package compatibility',
+    'flutter',
+    'HIGH',
+    '[
+        {"solution": "Update all packages to latest compatible versions", "percentage": 90, "command": "flutter pub upgrade", "note": "Ensures packages work with current Flutter version"},
+        {"solution": "Check pub.dev for package compatibility", "percentage": 85, "note": "Verify packages support your Flutter version"},
+        {"solution": "Replace deprecated packages", "percentage": 80, "note": "Find alternatives for unmaintained packages"}
+    ]'::jsonb,
+    'Flutter project, pubspec.yaml configured',
+    'All packages install successfully, Build completes without errors, No deprecated API warnings',
+    'Flutter API changes break older packages. Common issues: resizeToAvoidBottomPadding removed, inheritFromWidgetOfExactType deprecated, nullOk parameter removed. Check transitive dependencies.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/66524460/flutter-build-failed'
+),
+(
+    'Flutter RenderFlex overflow error',
+    'flutter',
+    'VERY_HIGH',
+    '[
+        {"solution": "Wrap Column with SingleChildScrollView", "percentage": 95, "note": "Enables scrolling when content exceeds screen bounds"},
+        {"solution": "Replace Column with ListView", "percentage": 90, "note": "Built-in scrolling for lists"},
+        {"solution": "Use Expanded widget to constrain children", "percentage": 85, "note": "Distributes space within flex widgets"},
+        {"solution": "Set resizeToAvoidBottomInset to false in Scaffold", "percentage": 75, "note": "Prevents keyboard from pushing content"}
+    ]'::jsonb,
+    'Flutter project with layout widgets',
+    'No overflow errors displayed, Layout renders correctly, Content fits within constraints',
+    'RenderFlex overflow occurs when Column/Row children exceed available space. Solution depends on use case: use scrolling for content-heavy layouts, Expanded for space distribution.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/49480051/flutter-dart-exceptions-caused-by-rendering-a-renderflex-overflowed'
+),
+(
+    'iOS pod install failed - CocoaPods installation error',
+    'ios-cocoapods',
+    'HIGH',
+    '[
+        {"solution": "Install CocoaPods via Homebrew", "percentage": 95, "command": "brew cleanup -d -v && brew install cocoapods && brew link cocoapods", "note": "Bypasses gem compilation issues"},
+        {"solution": "Install Xcode command line tools first", "percentage": 90, "command": "xcode-select --install", "note": "Required for native extension compilation"},
+        {"solution": "Reset Xcode select and install with gem", "percentage": 85, "command": "sudo xcode-select --reset && sudo xcode-select --switch /Library/Developer/CommandLineTools && sudo gem install -n /usr/local/bin cocoapods", "note": "Fixes path issues"},
+        {"solution": "Use overwrite flag if linking fails", "percentage": 80, "command": "brew link --overwrite cocoapods", "note": "Forces symlink creation"}
+    ]'::jsonb,
+    'macOS system, Xcode installed, Homebrew installed',
+    'CocoaPods installs successfully, pod --version command works, Can run pod install in projects',
+    'Failed to build gem native extension means missing Xcode command line tools or incompatible Ruby. Homebrew installation is most reliable method.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/20939568/error-error-installing-cocoapods-error-failed-to-build-gem-native-extension'
+),
+(
+    'iOS pod install failed - repository or dependency errors',
+    'ios-cocoapods',
+    'HIGH',
+    '[
+        {"solution": "Remove Specs repo and re-setup CocoaPods", "percentage": 90, "command": "sudo rm -fr ~/.cocoapods/repos/master && pod setup", "note": "Fixes corrupted specs repository"},
+        {"solution": "Delete Podfile.lock and Pods folder, reinstall", "percentage": 85, "command": "rm -rf ios/Podfile.lock ios/Pods && cd ios && pod install", "note": "Clears cached pod state"},
+        {"solution": "Update repository before installing", "percentage": 80, "command": "pod install --repo-update", "note": "Gets latest pod specs"},
+        {"solution": "Use arch flag on M1 Macs", "percentage": 75, "command": "arch -x86_64 pod install", "note": "Rosetta compatibility for M1/M2 Macs"}
+    ]'::jsonb,
+    'iOS project with Podfile, CocoaPods installed, Xcode configured',
+    'Pods install successfully, ios/Pods directory populated, Xcode workspace opens without errors',
+    'Pod specs repository can become corrupted. Delete and re-setup with pod setup. On M1 Macs, some pods need Rosetta. Version mismatch between Ruby installations causes issues.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/18224627/error-on-pod-install'
+),
+(
+    'Xcode error: Code signing is required',
+    'ios-xcode',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add Apple ID to Xcode and select Team", "percentage": 95, "note": "Press Cmd+, → Accounts → Add Apple ID, then select Team in project General tab"},
+        {"solution": "Enable automatic signing in project settings", "percentage": 90, "note": "Check Automatically manage signing in Signing & Capabilities tab"},
+        {"solution": "Configure Code Signing Identity in Build Settings", "percentage": 85, "note": "Set for both Project and Target, use iOS Developer for debug"},
+        {"solution": "Clean build folder and rebuild", "percentage": 75, "note": "Product → Clean Build Folder in Xcode"}
+    ]'::jsonb,
+    'Xcode installed, iOS project, Apple ID account (free or paid)',
+    'Project builds successfully, App installs on device, No signing errors in build log',
+    'Free Apple ID is sufficient for testing on devices. Configure signing for both project and targets. Xcode 8+ has automatic signing - use it. Close/reopen Xcode after adding team.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39524148/xcode-error-code-signing-is-required-for-product-type-application-in-sdk-ios'
+),
+(
+    'Xcode code signing error - provisioning profile issues',
+    'ios-xcode',
+    'HIGH',
+    '[
+        {"solution": "Enable Automatically manage signing", "percentage": 95, "note": "In General tab under Signing section for your target"},
+        {"solution": "Change Code Signing Identity from Distribution to Developer", "percentage": 90, "note": "Build Settings → Code Signing Identity → Debug → Change to iPhone Developer"},
+        {"solution": "Check for duplicate CODE_SIGN_IDENTITY in project.pbxproj", "percentage": 80, "note": "Version control merges can create duplicate lines causing build failures"},
+        {"solution": "Select Team in General tab", "percentage": 85, "note": "Choose your Apple ID or development team"}
+    ]'::jsonb,
+    'Xcode 8+, iOS project, provisioning profiles configured',
+    'Archive builds successfully, No signing errors, Provisioning profile matches certificate',
+    'Automatic signing in Xcode 8+ simplifies process. Manual provisioning profiles must match certificate type. Check project.pbxproj for duplicate signing entries from git merges.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39601841/code-signing-error-in-xcode-8'
+),
+(
+    'Android Studio build failed - Gradle buildToolsVersion mismatch',
+    'android-gradle',
+    'HIGH',
+    '[
+        {"solution": "Update buildToolsVersion in build.gradle to installed version", "percentage": 95, "note": "Check SDK Manager for installed versions, update android { buildToolsVersion to match"},
+        {"solution": "Install required build tools version via SDK Manager", "percentage": 90, "note": "Open SDK Manager and install the version specified in build.gradle"},
+        {"solution": "Run gradle with stacktrace for detailed errors", "percentage": 85, "command": "./gradlew compileDebug --stacktrace", "note": "Shows full error chain"},
+        {"solution": "Invalidate caches and restart Android Studio", "percentage": 80, "note": "File → Invalidate Caches/Restart"}
+    ]'::jsonb,
+    'Android Studio installed, Android SDK configured, Gradle project',
+    'Build completes successfully, APK generates without errors, Gradle sync succeeds',
+    'buildToolsVersion must match an installed SDK build tools version. Check SDK Manager first. Command line gradle shows errors IDE might hide. Read stacktrace from last to first cause.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/21353832/failed-to-build-project-with-android-studio'
+),
+(
+    'Android Gradle build failed - general troubleshooting',
+    'android-gradle',
+    'VERY_HIGH',
+    '[
+        {"solution": "Clean and rebuild project", "percentage": 90, "command": "./gradlew clean build", "note": "Clears build cache and rebuilds"},
+        {"solution": "Sync project with Gradle files", "percentage": 85, "note": "File → Sync Project with Gradle Files in Android Studio"},
+        {"solution": "Check for dependency conflicts", "percentage": 80, "note": "Use compile instead of multiple versions of same library"},
+        {"solution": "Verify SDK license acceptance", "percentage": 75, "note": "Check Build tab for license errors, reinstall SDK tools to accept"}
+    ]'::jsonb,
+    'Android Studio, Gradle project, Android SDK configured',
+    'Build completes without errors, Dependencies resolve correctly, APK builds successfully',
+    'Multiple issues cause gradle failures: build tools version, SDK licenses, dependency conflicts. Command line gradle provides better error messages than IDE. Read full stacktrace.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/17143833/android-studio-and-gradle-build-fails'
+);

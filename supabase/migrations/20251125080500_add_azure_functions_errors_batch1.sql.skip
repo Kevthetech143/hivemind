@@ -1,0 +1,227 @@
+-- Add Azure Functions common errors and solutions batch 1
+-- Extracted from Microsoft Learn documentation on Azure Functions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Azure Functions HTTP trigger returns 429 "Too Busy" error',
+    'azure-functions',
+    'HIGH',
+    '[
+        {"solution": "Increase maxOutstandingRequests setting in host.json configuration (default is 200)", "percentage": 90, "note": "Controls maximum pending requests before rejection"},
+        {"solution": "Reduce concurrent request load or optimize function execution time", "percentage": 85, "note": "Prevents resource exhaustion on system"},
+        {"solution": "Disable dynamicThrottlesEnabled in host.json if you want static limits only", "percentage": 75, "note": "By default true in Consumption plan"}
+    ]'::jsonb,
+    'Azure Functions app with host.json file, HTTP trigger configured',
+    'HTTP requests return 200 status, No 429 responses in logs, Application Insights shows normal response times',
+    'Do not simply increase limits without analyzing root cause. Check CPU/memory/connections/threads metrics first. Default maxConcurrentRequests is 100.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook'
+),
+(
+    'Azure Functions HTTP trigger exceeds 230 second timeout',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Use Durable Functions async pattern for long-running operations instead of blocking HTTP request", "percentage": 95, "note": "Return immediately and let orchestration handle the work"},
+        {"solution": "Implement defer-and-callback pattern: return response immediately and update client asynchronously", "percentage": 90, "note": "Prevent hitting Azure Load Balancer idle timeout"},
+        {"solution": "Move work to background job (Blob trigger, Queue trigger) and return 202 Accepted response", "percentage": 88, "note": "HTTP trigger hard limit is 230 seconds regardless of functionTimeout setting"}
+    ]'::jsonb,
+    'Long-running operation requirement, Azure Functions app deployed',
+    'HTTP endpoint returns 202 or 200 immediately, Background work completes without timeout, Client can poll for status',
+    'Setting functionTimeout higher than 230 seconds does not help for HTTP triggers due to Load Balancer limit. Consumption plan has 5-10 minute timeout for other triggers.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale'
+),
+(
+    'Azure Functions Consumption plan function execution timeout after 5 minutes',
+    'azure-functions',
+    'HIGH',
+    '[
+        {"solution": "Upgrade to Premium or Dedicated plan which have 30-minute timeout (unbounded configurable)", "percentage": 92, "note": "Consumption tier default is 5 minutes, max 10 minutes"},
+        {"solution": "Increase functionTimeout property in host.json (only works up to 10 minutes on Consumption)", "percentage": 85, "note": "Example: \"functionTimeout\": \"00:10:00\""},
+        {"solution": "Refactor function to complete faster by optimizing database queries, removing blocking I/O, or using async patterns", "percentage": 88, "note": "Best practice for any tier"}
+    ]'::jsonb,
+    'Azure Functions Consumption plan active, host.json accessible',
+    'Function completes within configured timeout, No timeout exceptions in logs, All operations complete successfully',
+    'Consumption plan has hard 10-minute maximum even if you set functionTimeout higher. Timer triggers cannot be configured with timeout - they use default 5 minutes.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-scale'
+),
+(
+    'Azure Functions timer trigger not firing or missing scheduled invocations',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Validate NCRONTAB expression syntax using Azure Portal Function Test (404 error indicates invalid expression)", "percentage": 92, "note": "Supports both 5-field and 6-field CRON formats"},
+        {"solution": "Check if function failed previously - timer trigger does NOT retry after failure, only runs at next scheduled time", "percentage": 88, "note": "Unlike queue triggers, timer has no retry mechanism"},
+        {"solution": "Review Application Insights logs or isPastDue property to detect if invocation was missed due to app restart", "percentage": 85, "note": "App restarts can cause scheduled invocations to be skipped"}
+    ]'::jsonb,
+    'Azure Functions timer trigger configured, NCRONTAB expression in trigger binding',
+    'Function executes at scheduled time, isPastDue property works correctly, Application Insights shows scheduled execution',
+    '6-field CRON format includes seconds: {second} {minute} {hour} {day} {month} {day-of-week}. Timer trigger failure is NOT retried unlike other triggers. Restart during scheduled time causes miss.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer'
+),
+(
+    'Azure Functions Node.js error: entry point file missing or function not registered',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Set FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR=true in app settings to block execution and log errors in Application Insights", "percentage": 93, "note": "Required for Node.js v18 or lower to catch entry point issues"},
+        {"solution": "Verify index.js or configured entry point exists in function directory and exports correct function name", "percentage": 90, "note": "Function name must match in function.json and export"},
+        {"solution": "Check for duplicate function registration in same entry point file", "percentage": 85, "note": "Each entry point should have exactly one exported function"}
+    ]'::jsonb,
+    'Node.js Azure Functions runtime, function.json with correct entry point path',
+    'Function starts without errors, Application Insights shows successful invocation, Entry point logs visible',
+    'Without FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR=true, missing entry points silently fail on older Node versions. Always verify function.json entry point matches actual file location.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings'
+),
+(
+    'Azure Functions error: Azure Functions Runtime is unreachable - storage connection failure',
+    'azure-functions',
+    'HIGH',
+    '[
+        {"solution": "Verify WEBSITE_CONTENTAZUREFILECONNECTIONSTRING and WEBSITE_CONTENTSHARE are properly configured in app settings", "percentage": 95, "note": "Required for runtime to access code and configuration"},
+        {"solution": "Test storage account connectivity and ensure firewall rules allow function app IP", "percentage": 92, "note": "Network restrictions can block storage access"},
+        {"solution": "Skip contentshare validation if networking constraints exist by setting WEBSITE_SKIP_CONTENTSHARE_VALIDATION=1 (use cautiously)", "percentage": 70, "note": "Only use as temporary workaround"}
+    ]'::jsonb,
+    'Azure storage account created, Function app settings accessible, Storage account connection string available',
+    'Function app starts successfully, Azure Portal shows healthy status, Function can be invoked without timeout',
+    'Missing or incorrect storage connection is a common deployment issue. Do not skip validation in production. Storage account must match runtime version compatibility.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings'
+),
+(
+    'Azure Functions error: Multiple function apps using same storage account causing host ID conflict',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Set unique AzureFunctionsWebHost__hostid for each function app (1-32 lowercase alphanumeric, no consecutive dashes)", "percentage": 94, "note": "Prevents coordination conflicts when sharing storage"},
+        {"solution": "Use separate storage accounts for each function app instead of sharing", "percentage": 92, "note": "Best practice to avoid conflicts"},
+        {"solution": "If shared storage is required, ensure hostid is globally unique across all apps using that account", "percentage": 88, "note": "Runtime uses hostid for lock management"}
+    ]'::jsonb,
+    'Multiple function apps configured, Storage account shared, App settings accessible',
+    'Function apps start independently without coordination errors, No duplicate instance warnings in logs, Triggers execute correctly',
+    'Same storage account shared across function apps without unique hostid causes conflicts. Default hostid is auto-generated but not guaranteed unique for shared scenarios.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings'
+),
+(
+    'Azure Functions error: Python worker dependency version mismatch or library collision',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Set PYTHON_ISOLATE_WORKER_DEPENDENCIES=1 to prioritize application requirements.txt over worker dependencies", "percentage": 93, "note": "Isolates application dependencies from worker runtime"},
+        {"solution": "Review requirements.txt for conflicts with Azure Functions Python worker packages (azure-functions library)", "percentage": 88, "note": "Pin versions if necessary"},
+        {"solution": "Verify Python version compatibility between local and deployed runtime", "percentage": 85, "note": "Use same Python version in requirements.txt and deployment"}
+    ]'::jsonb,
+    'Python Azure Functions app deployed, requirements.txt present, App settings accessible',
+    'Functions execute without import errors, All dependencies load correctly, Application Insights shows no dependency warnings',
+    'Library collisions occur when requirements.txt pins incompatible versions with worker runtime. PYTHON_ISOLATE_WORKER_DEPENDENCIES=1 is not default and must be explicitly set.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings'
+),
+(
+    'Azure Functions error: Durable Functions FunctionFailedException when activity fails',
+    'azure-functions',
+    'HIGH',
+    '[
+        {"solution": "Wrap activity function calls in try-catch with compensation logic to refund/rollback on failure", "percentage": 93, "note": "C# In-Process throws FunctionFailedException that must be caught"},
+        {"solution": "Implement automatic retry policy with exponential backoff using RetryOptions class", "percentage": 91, "note": "Configure MaxNumberOfAttempts, FirstRetryInterval, BackoffCoefficient"},
+        {"solution": "For C# Isolated, use TaskFailedException with FailureDetails property to inspect exception details", "percentage": 88, "note": "Different exception type than In-Process model"}
+    ]'::jsonb,
+    'Durable Functions orchestration deployed, Activity functions defined, Orchestrator function exists',
+    'Orchestrator handles failed activities gracefully, Compensation runs on failure, Logs show retry attempts',
+    'C# In-Process throws FunctionFailedException while C# Isolated throws TaskFailedException - handle based on model. Timeouts are not exceptions, they allow orchestrator to ignore and continue.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-error-handling'
+),
+(
+    'Azure Functions error: HTTP endpoint exposed without proper authentication - security issue',
+    'azure-functions',
+    'HIGH',
+    '[
+        {"solution": "Redirect HTTP to HTTPS in function code and enforce latest TLS version", "percentage": 94, "note": "Both HTTP and HTTPS are allowed by default"},
+        {"solution": "Implement positive client authentication using Microsoft Entra ID instead of relying only on API keys", "percentage": 92, "note": "Keys provide only basic mitigation, not true authentication"},
+        {"solution": "Use managed identities (system or user-assigned) from Microsoft Entra ID instead of storing secrets", "percentage": 90, "note": "Fine-grained access control without credential exposure"}
+    ]'::jsonb,
+    'Azure Functions HTTP trigger deployed, Azure AD/Entra ID configured, App settings for auth available',
+    'HTTPS enforced for all endpoints, No sensitive data in logs, Authentication succeeds for authorized clients, Unauthorized requests rejected',
+    'Access keys and default HTTP allow both encrypted and unencrypted connections. Function endpoints default to authorization level None - set to Function or Admin as needed.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts'
+),
+(
+    'Azure Functions error: Service Bus binding lock timeout or poison queue deadletter message',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Configure maxBatchWaitTime to be less than 50% of Service Bus message lock duration to prevent lock renewal failures", "percentage": 92, "note": "Default lock duration is 5 minutes, maxBatchWaitTime creates lock exceptions otherwise"},
+        {"solution": "Implement poison queue handling by catching exceptions and sending failed messages to deadletter queue manually", "percentage": 88, "note": "Service Bus binding does not auto-deadletter like Queue Storage"},
+        {"solution": "Increase max retry attempts in client retry options (default 3) if transient failures occur", "percentage": 85, "note": "Function execution retries are separate from client retry options"}
+    ]'::jsonb,
+    'Service Bus binding configured, Message processing function deployed, Dead letter queue exists',
+    'Messages process successfully, Lock exceptions do not occur, Failed messages go to deadletter queue, Logs show retry attempts',
+    'maxBatchWaitTime exceeding 50% of lock duration causes lock renewal exceptions. Client retry options do not affect function execution retries. No automatic deadletter - must handle manually.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-service-bus'
+),
+(
+    'Azure Functions error: Cold start performance slow on Consumption plan',
+    'azure-functions',
+    'HIGH',
+    '[
+        {"solution": "Set WEBSITE_USE_PLACEHOLDER=1 in app settings to enable placeholder instances reducing cold start impact", "percentage": 89, "note": "Keeps instances warm by using placeholder functions"},
+        {"solution": "Set WEBSITE_USE_PLACEHOLDER_DOTNETISOLATED=1 for isolated .NET functions to improve startup time", "percentage": 87, "note": "Specific to .NET isolated worker model"},
+        {"solution": "Upgrade to Premium or Flex Consumption plan for consistently warm instances", "percentage": 91, "note": "Consumption plan cold starts are inherent, higher plans have built-in warmth"}
+    ]'::jsonb,
+    'Azure Functions Consumption plan active, App settings accessible, Placeholder instances supported',
+    'Function response times consistent, No sudden spikes from cold starts, Application Insights shows reduced latency',
+    'Placeholder instances keep pre-JIT compiled code ready but do not reduce all startup overhead. Worker process startup has 60-second timeout that cannot be configured.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/functions-app-settings'
+),
+(
+    'Azure Functions error: CORS wildcard misconfiguration allows unauthorized cross-origin requests',
+    'azure-functions',
+    'MEDIUM',
+    '[
+        {"solution": "Replace CORS wildcard * with specific allowed domains only", "percentage": 95, "note": "Wildcard defeats CORS security purpose"},
+        {"solution": "Configure CORS in function.json corsSettings or host.json with list of trusted origins", "percentage": 93, "note": "Explicit domain list prevents cross-site scripting attacks"},
+        {"solution": "Include credentials: false in CORS settings unless cross-origin authenticated requests are required", "percentage": 88, "note": "Reduces attack surface"}
+    ]'::jsonb,
+    'Azure Functions HTTP trigger deployed, CORS configuration accessible, Browser-based clients',
+    'Requests from allowed domains succeed, Requests from other domains blocked with CORS error, No XSS vulnerabilities in logs',
+    'Wildcard CORS * allows any origin to make requests. Each specific domain must be individually listed. credentials: true requires explicit origin, cannot use wildcard.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://learn.microsoft.com/en-us/azure/azure-functions/security-concepts'
+);

@@ -1,0 +1,289 @@
+-- Add Stack Overflow solutions batch 8: AWS, Testing, APIs, Frontend frameworks
+-- Source: Stack Overflow accepted answers with community verification
+
+-- AWS Lambda: Task timed out
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS Lambda Task timed out after X seconds',
+    'aws',
+    'VERY_HIGH',
+    '[
+        {"solution": "Increase timeout in Lambda configuration: Configuration → General → Timeout (max 15 minutes)", "percentage": 90, "note": "Default is 3 seconds"},
+        {"solution": "Optimize function code to run faster: Use profiling to identify bottlenecks", "percentage": 85, "note": "Check cold start time"},
+        {"solution": "Increase memory allocation: More memory = more CPU power", "percentage": 80, "note": "Memory and CPU are linked in Lambda"}
+    ]'::jsonb,
+    'AWS Lambda function, IAM permissions, Function deployed',
+    'Function completes within timeout, CloudWatch logs show success',
+    'Default timeout is only 3 seconds. Maximum is 15 minutes. Timeout applies per invocation, not cumulative.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43577746/'
+);
+
+-- AWS Lambda: Context remaining time
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS Lambda catch timeout error before it happens',
+    'aws',
+    'MEDIUM',
+    '[
+        {"solution": "Use context.getRemainingTimeInMillis() to check time left: if (context.getRemainingTimeInMillis() < 5000) cleanup()", "percentage": 90, "note": "Graceful shutdown"},
+        {"solution": "Set timer in code: setTimeout(() => cleanup(), context.getRemainingTimeInMillis() - 5000)", "percentage": 85, "note": "5 second buffer for cleanup"},
+        {"solution": "Monitor CloudWatch metrics for duration approaching timeout", "percentage": 75, "note": "Post-mortem analysis"}
+    ]'::jsonb,
+    'AWS Lambda function with Node.js/Python, Context object',
+    'Function exits gracefully before timeout, Cleanup code runs',
+    'Lambda does not fire timeout event. Must check remaining time manually. Each language has context method for this.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/53478200/'
+);
+
+-- AWS S3: Access Denied 403
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS S3 Access Denied 403 Forbidden error',
+    'aws',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add ListBucket permission: S3 returns 403 for missing objects without ListBucket permission", "percentage": 90, "note": "403 vs 404 depends on permissions"},
+        {"solution": "Check IAM user/role has s3:GetObject and s3:ListBucket permissions", "percentage": 85, "note": "Both required for object access"},
+        {"solution": "Verify bucket policy allows your IAM principal: Check Principal matches your ARN", "percentage": 80, "note": "Bucket policy vs IAM policy"}
+    ]'::jsonb,
+    'AWS account, S3 bucket, IAM user or role',
+    'GetObject succeeds, No 403 errors in logs',
+    'Without ListBucket permission, S3 returns 403 for missing objects instead of 404. Need both GetObject and ListBucket.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31872279/'
+);
+
+-- AWS S3: CLI upload 403
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS S3 403 error when uploading via CLI',
+    'aws',
+    'HIGH',
+    '[
+        {"solution": "Set ACL on upload: aws s3 cp file.txt s3://bucket/ --acl bucket-owner-full-control", "percentage": 90, "note": "Cross-account upload issue"},
+        {"solution": "Add s3:PutObject permission to IAM user policy", "percentage": 85, "note": "CLI uses IAM credentials"},
+        {"solution": "Check aws configure credentials are correct: aws sts get-caller-identity", "percentage": 80, "command": "aws sts get-caller-identity"}
+    ]'::jsonb,
+    'AWS CLI installed and configured, Valid IAM credentials, S3 bucket exists',
+    'aws s3 cp succeeds, Files appear in S3 bucket',
+    'CLI-uploaded files may have different ACL than console-uploaded. Use --acl flag. Verify credentials with get-caller-identity.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31730317/'
+);
+
+-- Axios: Network Error
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Axios Network Error with no error details',
+    'axios',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check HTTPS/HTTP mismatch: Frontend HTTPS cannot call HTTP backend", "percentage": 90, "note": "Mixed content blocked"},
+        {"solution": "Verify CORS headers on backend: Access-Control-Allow-Origin must be set", "percentage": 85, "note": "Server-side fix required"},
+        {"solution": "Check for typos in request body keys: Axios fails silently on malformed data", "percentage": 80, "note": "email vs emeil"}
+    ]'::jsonb,
+    'Axios installed, API endpoint accessible, Network connectivity',
+    'Axios request succeeds, Response data returned, No Network Error',
+    'Network Error is generic - can be CORS, HTTPS/HTTP mismatch, or malformed request. Check browser console for details.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45980173/'
+);
+
+-- Axios: CORS proxy solution
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Axios CORS error calling external API from React',
+    'cors',
+    'HIGH',
+    '[
+        {"solution": "Setup proxy in package.json: Add proxy field pointing to API: \"proxy\": \"http://api.example.com\"", "percentage": 90, "note": "React dev server proxies requests"},
+        {"solution": "Create backend proxy endpoint: Frontend → Your server → External API", "percentage": 85, "note": "Server-to-server bypasses CORS"},
+        {"solution": "Use CORS proxy service for development only: cors-anywhere or similar", "percentage": 60, "note": "Not for production"}
+    ]'::jsonb,
+    'React app, Backend server or proxy capability',
+    'API requests succeed, CORS errors gone, Data returned',
+    'Cannot fix CORS from frontend. Need proxy or backend endpoint. package.json proxy only works in development.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45980173/'
+);
+
+-- GitHub Actions: Permission denied
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'GitHub Actions permission denied error',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Add write permissions to workflow: permissions: contents: write", "percentage": 90, "note": "Required for push/tag/release"},
+        {"solution": "Use actions/checkout with token: uses: actions/checkout@v3 with: token: ${{ secrets.GITHUB_TOKEN }}", "percentage": 85, "note": "Auto-provided token"},
+        {"solution": "Run container as root: options: --user root", "percentage": 75, "note": "For Docker containers"}
+    ]'::jsonb,
+    'GitHub repository, Actions workflow file, GITHUB_TOKEN available',
+    'Workflow completes successfully, No permission denied errors',
+    'Default GITHUB_TOKEN has read-only permissions. Must explicitly grant write permissions in workflow file.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72851548/'
+);
+
+-- GitHub Actions: Permission denied github-actions[bot]
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'GitHub Actions: Permission denied to github-actions[bot]',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Grant workflow permissions: Settings → Actions → General → Workflow permissions → Read and write", "percentage": 95, "note": "Repository-level setting"},
+        {"solution": "Add permissions block to workflow: permissions: contents: write pull-requests: write", "percentage": 90, "note": "Workflow-level override"},
+        {"solution": "Use PAT instead of GITHUB_TOKEN: secrets.PAT with repo scope", "percentage": 80, "note": "For cross-repo access"}
+    ]'::jsonb,
+    'GitHub repository with Actions enabled, Admin access to repo settings',
+    'Bot can push commits, create PRs, No permission errors',
+    'Repository settings override workflow permissions. Check Settings → Actions → Workflow permissions first.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72851548/'
+);
+
+-- Fetch API: CORS error
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Fetch API CORS error blocked by browser',
+    'fetch-api',
+    'VERY_HIGH',
+    '[
+        {"solution": "Server must set Access-Control-Allow-Origin header: Cannot be fixed from client", "percentage": 95, "note": "Server-side configuration required"},
+        {"solution": "Use server-side proxy: Client → Your server → External API", "percentage": 90, "note": "Bypasses browser CORS"},
+        {"solution": "For development: Use browser extension to disable CORS or cors-anywhere proxy", "percentage": 60, "note": "Development only, not production"}
+    ]'::jsonb,
+    'Fetch API, External API endpoint, Browser environment',
+    'Fetch succeeds, Response data accessible, No CORS error in console',
+    'CORS is browser security. cURL works fine. mode: no-cors returns opaque response (unusable). Server must enable CORS.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/48728173/'
+);
+
+-- Fetch API: React CORS
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'React Fetch API CORS error with external API',
+    'react',
+    'HIGH',
+    '[
+        {"solution": "Create proxy in package.json: \"proxy\": \"http://api.example.com\" then fetch(\"/api/endpoint\")", "percentage": 90, "note": "React dev server feature"},
+        {"solution": "Setup backend proxy route: Express server forwards requests to external API", "percentage": 85, "note": "Server-to-server no CORS"},
+        {"solution": "Check if API provides CORS-enabled endpoint or JSONP alternative", "percentage": 70, "note": "Some APIs have /cors/ path"}
+    ]'::jsonb,
+    'React app with dev server or backend proxy',
+    'API calls succeed, Data loads in React components, No CORS errors',
+    'package.json proxy only works in development with react-scripts. Production needs real proxy server.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/51128176/'
+);
+
+-- Vue: Component not rendering
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Vue component not rendering or not found',
+    'vue',
+    'HIGH',
+    '[
+        {"solution": "Define template in component: Vue.component(name, { template: \"<div>...</div>\" })", "percentage": 90, "note": "Template required"},
+        {"solution": "Export component properly: export default { name, template, ... } in .vue file", "percentage": 85, "note": "SFC must have export default"},
+        {"solution": "Remove duplicate component registration: Check components: {} object for conflicts", "percentage": 80, "note": "Global vs local registration"}
+    ]'::jsonb,
+    'Vue installed, Component file created',
+    'Component renders in DOM, No Vue warnings in console',
+    'Component needs template defined. Cannot use only script. Check component name does not conflict with HTML tags.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40789789/'
+);
+
+-- FastAPI: 422 Validation Error
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'FastAPI 422 Unprocessable Entity validation error',
+    'fastapi',
+    'VERY_HIGH',
+    '[
+        {"solution": "Check request Content-Type header is application/json", "percentage": 90, "note": "Pydantic requires JSON"},
+        {"solution": "Verify request body matches Pydantic model exactly: All required fields present", "percentage": 85, "note": "Field names must match"},
+        {"solution": "In Postman: Body → raw → JSON format selected", "percentage": 80, "note": "Postman specific"}
+    ]'::jsonb,
+    'FastAPI application, Pydantic models defined, API client (Postman/curl)',
+    'Request returns 200 status, Validation passes, Response contains expected data',
+    '422 means request format invalid. Check Pydantic model vs request body. Type hints create automatic validation.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/59929028/'
+);
+
+-- FastAPI: 422 in Swagger docs
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'FastAPI Swagger shows 422 Validation Error in responses',
+    'fastapi',
+    'MEDIUM',
+    '[
+        {"solution": "This is expected behavior: Type hints automatically add 422 to possible responses", "percentage": 95, "note": "Not an error, just documentation"},
+        {"solution": "422 appears when path/query parameters have type hints: def read_item(id: int)", "percentage": 90, "note": "Shows validation is working"},
+        {"solution": "To hide 422: Remove type hints or customize OpenAPI schema", "percentage": 60, "note": "Loses validation benefit"}
+    ]'::jsonb,
+    'FastAPI application, Swagger UI enabled at /docs',
+    '422 documentation is accurate, Validation works as expected',
+    '422 in Swagger docs is normal when using type hints. Shows FastAPI will validate input. Not a bug.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69441838/'
+);
+

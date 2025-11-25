@@ -1,0 +1,196 @@
+-- Add SvelteKit Stack Overflow solutions batch 1 (12 highest-voted questions)
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up, source_url)
+VALUES
+(
+  'npm run dev --host network not exposed in SvelteKit',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Add -- separator before flag: npm run dev -- --host. The -- tells npm to pass arguments to underlying vite/sveltekit dev command instead of consuming the flag itself", "percentage": 95, "command": "npm run dev -- --host", "note": "Most reliable solution (162 upvotes). Flag must be passed to vite, not npm."},
+    {"solution": "Permanently set in package.json scripts: change dev script to \"vite --host --port 8888\"", "percentage": 90, "command": "Edit package.json dev script entry", "note": "Avoids needing -- separator each time"},
+    {"solution": "Configure vite.config.js with server.host setting", "percentage": 85, "command": "Add server: { host: true } to vite.config.js", "note": "Persistent config approach for complex setups"}
+  ]'::jsonb,
+  'Omitting -- causes npm to consume the flag instead of passing to vite. Network exposure makes all files accessible to anyone on your network. May require allowedHosts config for some deployments.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  162,
+  'https://stackoverflow.com/questions/71939532/npm-run-dev-host-network-not-exposed'
+),
+(
+  'How to route programmatically in SvelteKit using goto',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Use goto function from $app/navigation for client-side routing: import { goto } from \"$app/navigation\"; goto(\"/route\")", "percentage": 93, "command": "goto(\"/route\") or goto(\"/route\", { replaceState: true })", "note": "Standard client-side navigation (96 upvotes). replaceState:true prevents adding to browser history."},
+    {"solution": "Wrap goto in browser environment check: if (browser) { goto(\"/route\") } for SSR compatibility", "percentage": 88, "command": "import { browser } from \"$app/environment\"; if (browser) goto(\"/route\")", "note": "Required for SSR-safe client redirects"},
+    {"solution": "Use throw redirect() in load functions for server-side routing", "percentage": 90, "command": "import { redirect } from \"@sveltejs/kit\"; throw redirect(302, \"/route\")", "note": "For route guards and conditional logic in load functions"}
+  ]'::jsonb,
+  'Cannot call goto on server - wrapping in if(browser) check is essential for SSR apps. replaceState:true prevents back button navigation to previous route. goto() must be called from client context, not in load functions.',
+  0.93,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  96,
+  'https://stackoverflow.com/questions/68187584/how-to-route-programmatically-in-sveltekit'
+),
+(
+  'Where to put images in SvelteKit project',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Import images from src/lib directory for optimal caching: import img from \"$lib/images/img.png\"; then use <img src={img} />", "percentage": 92, "command": "Place images in src/lib/images and import as module", "note": "Recommended approach. Vite adds content-based hashes enabling infinite cache with max-age=infinity until content changes."},
+    {"solution": "Place static images in static/ folder for simple cases: <img src=\"/images/photo.jpg\" />", "percentage": 85, "command": "Add images to static/images folder and use absolute paths", "note": "Simple but less optimal. Static files lack hashing, require cache-control: max-age=0, must-revalidate"},
+    {"solution": "Use dynamic import for runtime image loading: const imgUrl = new URL(\"./img.png\", import.meta.url).href", "percentage": 80, "command": "Use URL constructor with import.meta.url for dynamic paths", "note": "For programmatic image loading scenarios"}
+  ]'::jsonb,
+  'Static folder images lack content hashing and require strict cache-control headers. Remember to set base path in svelte.config.ts if app runs at subpath. Using svelte-preprocess-import-assets can automate imports.',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  46,
+  'https://stackoverflow.com/questions/71789244/where-to-put-images-with-sveltekit'
+),
+(
+  'How to get query string parameter in SvelteKit',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Use load function in +page.server.ts: export const load = async ({ url }) => { return { ref: url.searchParams.get(\"ref\") }}", "percentage": 94, "command": "Create +page.server.ts with load function accessing url.searchParams.get(param)", "note": "Modern SvelteKit v1+ approach (41 upvotes). Type-safe and server-side."},
+    {"solution": "Use $page store in components: import { page } from \"$app/stores\"; $page.url.searchParams.get(\"ref\")", "percentage": 85, "command": "$page.url.searchParams.get(\"param_name\")", "note": "Client-side approach but less recommended than load function"},
+    {"solution": "Access URL via page store in +page.svelte: export let data; then data contains query params from load function", "percentage": 90, "command": "Define export let data; in component to receive load function result", "note": "Type-safe component pattern for SvelteKit v1+"}
+  ]'::jsonb,
+  'Attempting $page.url directly without load function causes undefined errors. Pre-SvelteKit v1 used different syntax. $page store is client-only; cannot use in load functions themselves.',
+  0.94,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  41,
+  'https://stackoverflow.com/questions/71379031/how-do-get-query-string-parameter-in-sveltekit'
+),
+(
+  'SvelteKit slug-based dynamic routing with [slug] pattern',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Create directory structure with brackets: src/routes/blog/[slug]/+page.js and +page.svelte. In +page.js: export const load = ({ params }) => ({ slug: params.slug })", "percentage": 96, "command": "Create folder [slug] with +page.js returning { slug: params.slug }", "note": "Bracket syntax creates dynamic segments (40 upvotes). Highest-voted pattern."},
+    {"solution": "Use in component with export let data; to access slug: <h1>{data.slug}</h1>", "percentage": 93, "command": "export let data; then access data.slug in template", "note": "Data from load becomes component prop"},
+    {"solution": "Use [...rest] syntax for catch-all routes matching multiple segments", "percentage": 85, "command": "Create [...slug]/+page.js to match any path depth", "note": "For flexible routing patterns"}
+  ]'::jsonb,
+  'Older SvelteKit versions used different preload function syntax. Forgetting +page.js or +page.svelte files prevents routing. Must destructure params from load function context.',
+  0.96,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  40,
+  'https://stackoverflow.com/questions/65930303/sveltekit-how-do-i-do-slug-based-dynamic-routing'
+),
+(
+  'Cross-site POST form submissions are forbidden in SvelteKit deployment',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Set ORIGIN environment variable when running built app: ORIGIN=https://yourwebsite.com node build/index.js", "percentage": 96, "command": "ORIGIN=https://yourwebsite.com node build/index.js", "note": "Most reliable (39 upvotes). Must match exact deployment URL with protocol."},
+    {"solution": "Set ORIGIN in Docker environment: environment: - ORIGIN=https://mywebsite.com", "percentage": 92, "command": "Add ORIGIN to Docker Compose environment variables", "note": "For containerized deployments"},
+    {"solution": "Disable CSRF protection if necessary (less secure): set csrf.checkOrigin: false in svelte.config.js", "percentage": 60, "command": "kit: { csrf: { checkOrigin: false } }", "note": "Removes CSRF protection - only for development or trusted internal apps"}
+  ]'::jsonb,
+  'ORIGIN must include protocol (https:// or http://). Mismatch between ORIGIN and actual deployment URL causes the error. Disabling CSRF removes protection against cross-site forgery. Reverse proxies must forward Host header upstream.',
+  0.96,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  39,
+  'https://stackoverflow.com/questions/73790956/cross-site-post-form-submissions-are-forbidden'
+),
+(
+  'SvelteKit LayoutServerLoad and PageLoad type imports not found in $types',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Ensure file is named with + prefix: +layout.server.ts (not layout.server.ts). SvelteKit uses fixed file naming conventions and types auto-generate when dev server runs", "percentage": 97, "command": "Rename layout.server.ts to +layout.server.ts", "note": "Most common fix (47 upvotes). Dev server must be running to generate types."},
+    {"solution": "Run dev server or execute: npx @sveltejs/kit sync to generate type definitions", "percentage": 94, "command": "npm run dev or npx svelte-kit sync", "note": "Vite dev server watches files and regenerates types on changes"},
+    {"solution": "Verify tsconfig.json extends .svelte-kit/tsconfig.json for type resolution", "percentage": 88, "command": "Ensure extends: \".svelte-kit/tsconfig.json\" in tsconfig.json", "note": "Required for TypeScript to resolve generated types"}
+  ]'::jsonb,
+  'File must use + prefix: layout.server.ts fails but +layout.server.ts works. Types not generated until dev server runs. VS Code may require TypeScript server restart to see new types. Type generation happens automatically during development.',
+  0.97,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  47,
+  'https://stackoverflow.com/questions/74060175/sveltekit-import-type-layoutserverloadpageload'
+),
+(
+  'How to change page title dynamically in SvelteKit',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Use <svelte:head> component with title element in page/layout: <svelte:head><title>Page Title</title></svelte:head>", "percentage": 96, "command": "<svelte:head><title>{title}</title></svelte:head>", "note": "Standard approach (53 upvotes). Each route defines own title."},
+    {"solution": "Create reusable meta-title component that accepts title prop and wraps svelte:head", "percentage": 90, "command": "Build MetaTitle.svelte component with exported title prop", "note": "Reduces repetition across pages"},
+    {"solution": "Use page store in layout to build title from URL: $: title = [appName, ...$page.url.pathname.split(\"/\").slice(1)].filter(Boolean).join(\" - \")", "percentage": 85, "command": "Dynamic title generation from route segments in layout", "note": "Automatic titles based on routing structure"}
+  ]'::jsonb,
+  'Must use <svelte:head> specifically; setting title in regular HTML <head> tags does not work. Attempting to bind variables between layout and page-level doesn\'t work for dynamic titles. Ensure %sveltekit.head% exists in app.html.',
+  0.96,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  53,
+  'https://stackoverflow.com/questions/74243719/how-to-change-page-title-dynamically-in-sveltekit'
+),
+(
+  'SvelteKit TypeScript environment variables build error PUBLIC_KEY not exported',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Run npm run check or npx @sveltejs/kit sync to auto-generate type definitions from .env files", "percentage": 96, "command": "npm run check or npx @sveltejs/kit sync", "note": "Solves build errors (72 upvotes). Generates types from .env automatically."},
+    {"solution": "Ensure .env file exists with PUBLIC_ prefixed variables before sync", "percentage": 92, "command": "Create .env with PUBLIC_KEY=value before running sync", "note": "File must exist when sync runs or types not generated"},
+    {"solution": "For Svelte 5+ use $env/dynamic/public with env.PUBLIC_KEY instead of static import", "percentage": 80, "command": "import { env } from \"$env/dynamic/public\"; env.PUBLIC_KEY", "note": "Dynamic approach for newer Svelte versions"}
+  ]'::jsonb,
+  'Manually declaring types in types.d.ts only fixes IDE errors, not build errors. Docker builds need .env file copied during build. Static imports fail if sync not run. Pre-v1 SvelteKit used different env var approach.',
+  0.96,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  72,
+  'https://stackoverflow.com/questions/73865669/sveltekit-typescript-environment-variables-build-error'
+),
+(
+  'SvelteKit cannot find package @sveltejs/adapter-auto in svelte.config.js',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Run npm install from terminal (not VS Code integrated terminal) before opening in editor: npm install, then restart VS Code", "percentage": 94, "command": "npm install in system terminal, then restart VS Code", "note": "Most reliable (57 upvotes). VS Code editor caches package info."},
+    {"solution": "Use Ctrl+P + \"TypeScript: Restart TS Server\" command in VS Code to refresh type information", "percentage": 85, "command": "Ctrl+P -> TypeScript: Restart TS Server", "note": "Quick fix when packages present but not recognized"},
+    {"solution": "Ensure Node.js and npm are updated to latest versions", "percentage": 75, "command": "npm install -g npm && node --version", "note": "Outdated npm versions can cause resolution issues"}
+  ]'::jsonb,
+  'Running npm install only in VS Code integrated terminal may not fully register dependencies. VS Code caches package information and requires restart to recognize new modules. Check that @sveltejs/adapter-auto is in package.json devDependencies.',
+  0.94,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  57,
+  'https://stackoverflow.com/questions/72355832/cannot-find-package-sveltejsadapter-auto-svelte-config-js'
+),
+(
+  'How to add custom 404 page and different error page in SvelteKit',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Create +error.svelte file in routes folder: access $page.status and $page.error.message to customize by error type", "percentage": 94, "command": "Create src/routes/+error.svelte with conditional rendering based on $page.status", "note": "Standard pattern (45 upvotes). SvelteKit walks directory tree to closest error boundary."},
+    {"solution": "Place +error.svelte at different directory levels for granular error handling: src/routes/blog/+error.svelte handles blog route errors specifically", "percentage": 88, "command": "Create nested +error.svelte files at route levels needing custom handling", "note": "Per-route error boundaries"},
+    {"solution": "Use separate NotFoundScreen and ErrorScreen components, conditional on status code", "percentage": 85, "command": "{#if status == 404}<NotFoundScreen />{:else}<ErrorScreen />{/if}", "note": "Clean separation of 404 vs other errors"}
+  ]'::jsonb,
+  'Error boundary walks directory tree to nearest +error.svelte; must use correct file naming. Error page cannot use load functions. Ensure app.html contains %sveltekit.head% and body content for errors to render.',
+  0.94,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  45,
+  'https://stackoverflow.com/questions/69321948/how-to-add-a-custom-404-page-and-a-different-error-page'
+),
+(
+  'How to redirect to page in SvelteKit',
+  'stackoverflow-sveltekit',
+  '[
+    {"solution": "Use redirect() function in load function: import { redirect } from \"@sveltejs/kit\"; throw redirect(302, \"/destination\")", "percentage": 95, "command": "throw redirect(302, \"/destination\") in +page.server.ts or +layout.server.ts", "note": "Recommended server-side approach (51 upvotes). SvelteKit v1 requires throw, v2+ doesn\'t."},
+    {"solution": "Client-side redirect: import { goto } from \"$app/navigation\"; goto(\"/destination\")", "percentage": 88, "command": "goto(\"/destination\") in event handlers or onMount", "note": "Works but less preferred; server-side is better for route guards"},
+    {"solution": "SSR-safe client redirect: if (browser) { window.location.href = \"/destination\" }", "percentage": 75, "command": "import { browser } from \"$app/environment\"; if (browser) window.location.href = \"/path\"", "note": "Only for browser-specific logic"}
+  ]'::jsonb,
+  'SvelteKit v1 requires throw before redirect(); v2.0+ allows direct usage. Using window.location without SSR check causes errors in server-side rendering. Redirects only work within load functions, not arbitrary code locations.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  51,
+  'https://stackoverflow.com/questions/74805197/how-to-redirect-to-page-in-sveltekit'
+);

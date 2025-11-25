@@ -1,0 +1,4 @@
+-- Approve 2 new pending contributions
+UPDATE pending_contributions
+SET status = 'approved', reviewed_at = NOW()
+WHERE id IN (14, 15) AND status = 'pending';

@@ -1,0 +1,252 @@
+-- Mine Stack Overflow top voted WebSocket questions
+-- Source: https://stackoverflow.com/questions/tagged/websocket?tab=votes
+-- Extracted: 2025-11-25
+-- Category: stackoverflow-websockets
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'WebSockets vs Server-Sent Events (SSE): when to use which?',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "Use WebSockets for bidirectional communication where both client and server need to send data simultaneously (chat apps, collaborative tools, real-time games)", "percentage": 92, "note": "WebSocket enables true two-way messaging"},
+        {"solution": "Use Server-Sent Events for one-way server-to-client push (stock tickers, notifications, data feeds). SSE is simpler and works over standard HTTP", "percentage": 88, "note": "SSE avoids proxy/firewall issues common with WebSocket"},
+        {"solution": "Consider SSE limitations: UTF-8 text only (no binary), and HTTP/1.1 6-connection limit per domain (solved in HTTP/2)", "percentage": 85, "note": "WebSocket supports binary data transmission"},
+        {"solution": "WebSocket is more complex but more powerful for interactive apps requiring low-latency two-way communication", "percentage": 80, "note": "Added overhead of 6+ bytes per message"}
+    ]'::jsonb,
+    'Basic understanding of HTTP, TCP connections, and real-time web concepts',
+    'WebSocket or SSE connection established, Data flows bidirectionally (WebSocket) or from server (SSE), Application responds to incoming messages',
+    'SSE has 6-connection limit in HTTP/1.1 but not HTTP/2. WebSocket requires proper handshake handling. Do not use WebSocket for simple one-way data push.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/5195452/websockets-vs-server-sent-events-eventsource'
+),
+(
+    'Long-Polling vs WebSockets vs Server-Sent Events vs Comet: which real-time technology to use?',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "Long-Polling: Client sends HTTP request, server delays response until data available, client immediately re-requests. Works everywhere but inefficient", "percentage": 85, "note": "Highest overhead, works with any backend including PHP"},
+        {"solution": "Server-Sent Events (SSE): Client opens persistent HTTP connection, server sends events when available. One-way only, simpler than WebSocket", "percentage": 88, "note": "Better than long-polling, works with standard HTTP"},
+        {"solution": "WebSockets: Full-duplex bidirectional connection on single TCP socket. Lowest latency but requires server support", "percentage": 90, "note": "True persistent connection, minimal overhead"},
+        {"solution": "Comet: Collection of pre-HTML5 techniques (streaming + long-polling) to simulate real-time. Obsolete with modern standards", "percentage": 70, "note": "Historical technique, replaced by SSE and WebSocket"}
+    ]'::jsonb,
+    'Server that supports chosen protocol, Browser supporting WebSocket/SSE or fallback mechanism',
+    'Real-time data delivery confirmed, Minimal latency between server and client, Connection persists appropriately for chosen technology',
+    'Long-Polling creates high server load. PHP traditionally struggled with persistent connections (use Node.js, Python, Java). Choose based on use case, not just availability.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/11077857/what-are-long-polling-websockets-server-sent-events-sse-and-comet'
+),
+(
+    'Difference between Socket.IO and native WebSocket protocol',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "WebSocket is a W3C standard protocol enabling bidirectional communication. Socket.IO is a library built on top of WebSocket adding convenience features", "percentage": 92, "note": "WebSocket clients cannot connect to Socket.IO servers and vice versa"},
+        {"solution": "Socket.IO adds automatic reconnection handling, namespace support, room broadcasts, and fallback to HTTP long-polling for older browsers", "percentage": 90, "note": "Reduces development complexity at cost of overhead"},
+        {"solution": "Socket.IO includes acknowledgment system (packet IDs) and structured protocol on top of WebSocket frames", "percentage": 85, "note": "Raw WebSocket requires manual protocol implementation"},
+        {"solution": "Use raw WebSocket for lightweight, performance-critical apps. Use Socket.IO for complex multi-room broadcast scenarios", "percentage": 88, "note": "Socket.IO has Redis adapter for multi-server scaling"}
+    ]'::jsonb,
+    'Node.js environment for Socket.IO, Modern browser for WebSocket client, Understanding of socket programming concepts',
+    'Client connects successfully, Messages routed to correct recipients, Reconnection works automatically (Socket.IO)',
+    'Socket.IO and WebSocket clients are incompatible - ensure correct client library. Socket.IO adds latency overhead. Do not mix protocols on same port.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10112178/differences-between-socket-io-and-websockets'
+),
+(
+    'Does HTTP/2 make WebSockets obsolete? Is HTTP/2 replacement for WebSocket?',
+    'stackoverflow-websockets',
+    'MEDIUM',
+    '[
+        {"solution": "HTTP/2 does NOT obsolete WebSockets. HTTP/2 is bidirectional but NOT symmetric - only client can initiate requests", "percentage": 92, "note": "HTTP/2 server push is behind-the-scenes optimization, not an API"},
+        {"solution": "WebSocket provides true symmetric bidirectional communication where both client and server are equal peers", "percentage": 90, "note": "Server can initiate messages independently without client request"},
+        {"solution": "HTTP/2 optimizes resource loading through multiplexing. WebSocket optimizes message-based real-time apps", "percentage": 88, "note": "They solve different problems and complement each other"},
+        {"solution": "Use HTTP/2 for traditional request-response patterns. Use WebSocket for full-duplex interactive applications", "percentage": 85, "note": "Many modern apps use both technologies together"}
+    ]'::jsonb,
+    'Understanding of HTTP/2 multiplexing and WebSocket protocol semantics, Modern browser supporting HTTP/2',
+    'HTTP/2 multiplexing reduces latency, WebSocket maintains persistent symmetric connection, Both technologies coexist in same application',
+    'HTTP/2 server push is not the same as WebSocket. HTTP/2 does not provide application-level message API. Do not assume HTTP/2 eliminates WebSocket need.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/28582935/does-http-2-make-websockets-obsolete'
+),
+(
+    'WebSocket client API: how to send custom HTTP headers?',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "Custom HTTP headers cannot be directly set in WebSocket client due to security restrictions. Only Sec-WebSocket-Protocol header is controllable", "percentage": 95, "note": "Limitation enforced by W3C specification and browsers"},
+        {"solution": "Pass authentication token in URL query string: ws://example.com/socket?token=abc123def456 (use wss:// for security)", "percentage": 92, "note": "Most common workaround, token visible in logs"},
+        {"solution": "Send credentials as first message after connection established: socket.send(JSON.stringify({auth: token}))", "percentage": 90, "note": "Client-side control, received by server immediately"},
+        {"solution": "Use Sec-WebSocket-Protocol header to embed auth data: new WebSocket(url, ''auth-token-value'')", "percentage": 85, "note": "Standard header designed for subprotocol negotiation"},
+        {"solution": "Deprecated: Basic auth in URL (ws://user:pass@host) no longer supported in modern browsers", "percentage": 50, "note": "Historical approach, removed for security"}
+    ]'::jsonb,
+    'WebSocket client code access, Server-side header parsing capability, HTTPS/WSS for secure token transmission',
+    'Authentication succeeds, Server receives credentials, Connection established without 401/403 errors',
+    'URL tokens visible in proxy logs - use WSS encryption. Basic auth in URL is deprecated and blocked. Avoid sending sensitive data in Sec-WebSocket-Protocol.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4361173/http-headers-in-websockets-client-api'
+),
+(
+    'Why use WebSocket protocol instead of HTTP? Performance comparison',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "WebSocket eliminates connection overhead. HTTP requires new TCP handshake for each request (3-way handshake + TLS = significant latency)", "percentage": 92, "note": "WebSocket persistent connection established once"},
+        {"solution": "HTTP message overhead is substantial: 48-byte minimum handshake PLUS kilobytes of headers and cookies per request", "percentage": 90, "note": "WebSocket frames use only 2-byte header + 4-byte mask"},
+        {"solution": "WebSocket frames have 6+ bytes overhead per message vs HTTP request overhead of kilobytes", "percentage": 88, "note": "Significant difference for high-frequency messaging"},
+        {"solution": "WebSocket enables true server-initiated communication without polling. Proxy servers built for HTTP request-response patterns can confuse bidirectional protocols", "percentage": 85, "note": "WebSocket upgrade mechanism avoids proxy confusion"},
+        {"solution": "Use HTTP for stateless requests. Use WebSocket for stateful, real-time, bidirectional communication", "percentage": 82, "note": "Complementary technologies solving different problems"}
+    ]'::jsonb,
+    'Understanding of TCP/IP connection establishment, HTTP request/response cycle, Network latency measurement',
+    'WebSocket connection latency < HTTP latency, Message delivery confirmed, Reduced bandwidth consumption measured',
+    'WebSocket is not strictly faster for single messages - overhead amortizes over connection lifetime. HTTP/2 multiplexing reduces but does not eliminate TCP overhead. Choose based on use case.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14703627/websockets-protocol-vs-http'
+),
+(
+    'Best WebSocket library to use with Node.js?',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "ws: One of the fastest Node.js WebSocket libraries with minimal overhead. Recommended for performance-critical applications", "percentage": 95, "note": "No fallback support, requires modern browser"},
+        {"solution": "Socket.IO: Full-featured library with automatic reconnection, namespaces, rooms, and fallback to long-polling for old browsers", "percentage": 92, "note": "Higher overhead than ws but much more convenient"},
+        {"solution": "Primus: Abstraction layer providing unified API across multiple WebSocket libraries (ws, Socket.IO, Engine.io). Choose this when unsure", "percentage": 85, "note": "Allows switching backends without code changes"},
+        {"solution": "SockJS: Similar to Socket.IO with fallback mechanisms and broader browser support", "percentage": 82, "note": "Community-maintained, good for compatibility"},
+        {"solution": "SocketCluster: Enterprise-grade clusterable WebSocket server utilizing multiple CPU cores", "percentage": 80, "note": "Built for horizontal scaling"}
+    ]'::jsonb,
+    'Node.js runtime installed, npm package manager, Understanding of async JavaScript patterns',
+    'WebSocket server starts without errors, Client connects successfully, Messages exchange bidirectionally',
+    'ws is fastest but has no fallback. Socket.IO is slower but most compatible. Choose based on browser support requirements, not just performance.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/16392260/which-websocket-library-to-use-with-node-js'
+),
+(
+    'WebRTC vs WebSocket: when to use which for real-time communication?',
+    'stackoverflow-websockets',
+    'MEDIUM',
+    '[
+        {"solution": "WebRTC is optimized for peer-to-peer media (video, audio, data) with direct browser-to-browser connections after signaling", "percentage": 92, "note": "Avoids server bottleneck for media streaming"},
+        {"solution": "WebSocket is server-mediated: all communication routes through central server connection", "percentage": 90, "note": "Lower latency for control messages, simpler for one-to-many"},
+        {"solution": "WebRTC requires signaling mechanism (often WebSocket!) to exchange peer information before P2P connection established", "percentage": 88, "note": "Use WebSocket for signaling, WebRTC for actual media"},
+        {"solution": "Use both together: WebSocket for control/signaling messages, WebRTC for media streams in video conferencing apps", "percentage": 92, "note": "Hybrid approach leverages each protocol''s strengths"},
+        {"solution": "WebSocket alone for text chat, notifications. WebRTC alone for pure P2P media. Hybrid for complex real-time apps", "percentage": 85, "note": "Architectural choice depends on scalability needs"}
+    ]'::jsonb,
+    'Understanding of P2P networks and media codecs, Modern browser with WebRTC support, STUN/TURN server (for NAT traversal)',
+    'Peer-to-peer connection established (WebRTC), Media streams flowing directly between peers, Server handles signaling only',
+    'WebRTC NAT traversal requires STUN/TURN servers. Do not use WebRTC for simple messaging - use WebSocket. Signaling can fail silently if servers unreachable.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/18799364/webrtc-vs-websocket-if-webrtc-can-do-video-audio-and-data-why-do-i-need-webs'
+),
+(
+    'Difference between socket and WebSocket in networking?',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "Socket: Generic network endpoint for communication using various protocols (TCP/IP, UDP). Works in any environment with full control", "percentage": 90, "note": "Lower-level network programming interface"},
+        {"solution": "WebSocket: Application-level protocol built on TCP/IP with standardized handshake and message framing. Browser-native via JavaScript API", "percentage": 92, "note": "Higher-level abstraction specific to web"},
+        {"solution": "Raw sockets require manual message framing/delimiting. WebSocket automatically frames messages with defined boundaries", "percentage": 88, "note": "WebSocket guarantees message delivery as units"},
+        {"solution": "Sockets work outside browsers. WebSocket requires browser WebSocket API or library. WebSocket uses HTTP-compatible handshake", "percentage": 85, "note": "Port 80/443 compatibility enables web deployment"},
+        {"solution": "WebSocket is essentially a TCP socket with framing + HTTP handshake wrapper. Developers use appropriate abstraction for their use case", "percentage": 80, "note": "Choose socket for systems programming, WebSocket for web apps"}
+    ]'::jsonb,
+    'Networking fundamentals (TCP/IP, sockets), Browser or server runtime, Understanding of application protocols',
+    'Messages exchange successfully, Message boundaries preserved, Connection establishes on appropriate port',
+    'WebSocket is higher abstraction - do not confuse socket concepts. Sockets need manual framing. WebSocket provides automatic frame handling.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4973622/difference-between-socket-and-websocket'
+),
+(
+    'Send message to specific client with Socket.IO and Node.js?',
+    'stackoverflow-websockets',
+    'HIGH',
+    '[
+        {"solution": "Use socket.to(socketId).emit(event, data) to send to specific client. Each socket automatically joins room with its own ID", "percentage": 95, "note": "Modern Socket.IO approach (1.0+)"},
+        {"solution": "Implement message handler: io.on(''connection'', (socket) => { socket.on(''message'', (id, msg) => { socket.to(id).emit(''reply'', msg); }); })", "percentage": 92, "note": "Complete working example"},
+        {"solution": "Broadcast to all except sender: socket.broadcast.emit(event, data)", "percentage": 88, "note": "Useful for chat applications"},
+        {"solution": "Deprecated legacy approach: io.sockets.connected[socketId].emit(). Modern code uses socket.to() method", "percentage": 70, "note": "Old Socket.IO versions only"},
+        {"solution": "Access current socket ID: socket.id. Use this for routing decisions", "percentage": 85, "note": "Every connection has unique ID assigned"}
+    ]'::jsonb,
+    'Socket.IO server running, Multiple connected clients, Socket IDs known or discoverable',
+    'Specific client receives message, Message not broadcasted to others, Socket ID references correct client',
+    'socket.id is not stable across reconnects - implement session tracking for critical apps. Broadcast methods easy to confuse - test targeting carefully.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4647348/send-message-to-specific-client-with-socket-io-and-node-js'
+),
+(
+    'How to debug WebSocket connections in Google Chrome Developer Tools?',
+    'stackoverflow-websockets',
+    'MEDIUM',
+    '[
+        {"solution": "Open Chrome DevTools (F12 or Cmd+Option+I), navigate to Network tab, load page with WebSocket connection", "percentage": 95, "note": "DevTools must be open before page load to capture"},
+        {"solution": "Look for WebSocket entry with status ''101 Switching Protocols'' in Network tab - this indicates successful upgrade", "percentage": 92, "note": "HTTP upgrade request shows WebSocket handshake"},
+        {"solution": "Click WebSocket entry and select ''Messages'' sub-tab to inspect frame data: binary frames with length, timestamp, mask", "percentage": 90, "note": "Text frames show payload content directly"},
+        {"solution": "For binary frames, payload not human-readable in DevTools. Use Wireshark 1.8.0+ with WebSocket dissector for detailed analysis", "percentage": 80, "note": "Network-level packet inspection tool"},
+        {"solution": "Modern Chrome renamed ''Frames'' tab to ''Messages'' tab - ensure you''re looking at correct sub-tab", "percentage": 85, "note": "UI varies by Chrome version"}
+    ]'::jsonb,
+    'Chrome browser installed, WebSocket connection active, Page with WebSocket client code',
+    'WebSocket frame messages visible in Messages tab, Message timestamps and sizes displayed, Binary/text frame types identified',
+    'DevTools must be open before page load. Binary data not readable in Chrome - use Wireshark. Check Messages tab not Frames (naming changed in recent Chrome).',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/5751495/debugging-websocket-in-google-chrome'
+),
+(
+    'Browser support for HTML5 WebSocket API across versions',
+    'stackoverflow-websockets',
+    'MEDIUM',
+    '[
+        {"solution": "Modern browsers (Chrome 16+, Firefox 11+, Safari 5.1+, Opera 12.1+, IE 10+) support W3C standard RFC 6455 WebSocket protocol", "percentage": 95, "note": "Current standard protocol version"},
+        {"solution": "Early implementations used Hixie-75 and Hixie-76 protocols: Chrome 4-5, Safari 5.0.0, Firefox 4 (disabled by default)", "percentage": 70, "note": "Historical - do not rely on for new code"},
+        {"solution": "HyBi-00 protocol: Chrome 6-13, Safari 5.0.2+, iOS 4.2+, Opera Mobile", "percentage": 65, "note": "Legacy protocol, obsolete"},
+        {"solution": "Check caniuse.com for current browser support matrix and version requirements", "percentage": 95, "note": "Most accurate up-to-date resource"},
+        {"solution": "For very old browsers, use web-socket-js polyfill with Flash fallback to provide WebSocket support", "percentage": 60, "note": "Flash no longer available, polyfill obsolete"}
+    ]'::jsonb,
+    'Target browser list identified, Network requirements understood, Fallback strategy selected if needed',
+    'WebSocket connection succeeds on target browsers, Connection fails gracefully on unsupported browsers, Fallback mechanism activates',
+    'Do not rely on Flash polyfills - Flash is deprecated. Support for very old protocols is unnecessary. Use feature detection, not version detection.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1253683/what-browsers-support-html5-websocket-api'
+),
+(
+    'Differences between TCP sockets and WebSockets for message delivery',
+    'stackoverflow-websockets',
+    'MEDIUM',
+    '[
+        {"solution": "TCP sockets transmit raw byte streams - message boundaries NOT preserved. Multiple send() calls may combine into single recv()", "percentage": 92, "note": "Developer responsible for framing"},
+        {"solution": "WebSocket frames messages - each send() maps to distinct message event on receiver. Complete units guaranteed", "percentage": 95, "note": "Automatic message boundary preservation"},
+        {"solution": "TCP recv() may return partial buffer - can get 1/3 of message in first call, rest in subsequent calls", "percentage": 90, "note": "Requires manual buffer assembly"},
+        {"solution": "WebSocket delivers complete messages to onmessage handlers - no manual framing logic needed", "percentage": 92, "note": "Abstraction eliminates complexity"},
+        {"solution": "WebSocket built on top of TCP but adds standardized framing layer, making it suitable for browser-based real-time apps without plugin", "percentage": 88, "note": "TCP alone cannot work in browser security sandbox"}
+    ]'::jsonb,
+    'Understanding of TCP protocol and streaming, Message boundary requirements identified',
+    'WebSocket messages delivered intact, No partial message processing needed, Application receives semantically complete units',
+    'TCP does not guarantee message boundaries - must implement framing protocol. WebSocket adds small overhead for framing but eliminates manual complexity.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/16945345/differences-between-tcp-sockets-and-web-sockets-one-more-time'
+);

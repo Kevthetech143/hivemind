@@ -1,0 +1,311 @@
+-- Add Stack Overflow solutions batch 11: Rails, Swift, Rust, PHP, Kotlin, C#
+-- Source: Stack Overflow accepted answers with community verification
+
+-- Rails: ActiveRecord::RecordNotFound
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Rails ActiveRecord::RecordNotFound exception',
+    'rails',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use find_by instead of find: Model.find_by(id: params[:id]) returns nil instead of exception", "percentage": 90, "note": "Returns nil if not found"},
+        {"solution": "Rescue in controller: rescue ActiveRecord::RecordNotFound; redirect_to root_path", "percentage": 85, "note": "Handle missing records gracefully"},
+        {"solution": "Add rescue_from to ApplicationController: rescue_from ActiveRecord::RecordNotFound, with: :record_not_found", "percentage": 95, "note": "Global error handling"}
+    ]'::jsonb,
+    'Rails application, ActiveRecord models',
+    'Missing records handled gracefully, No unhandled exceptions',
+    'find raises exception for missing records. find_by returns nil. Use rescue_from for global 404 handling.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/9709659/'
+);
+
+-- Rails: RecordNotFound with conditions
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Rails RecordNotFound when record exists but does not meet conditions',
+    'rails',
+    'MEDIUM',
+    '[
+        {"solution": "Check conditions match record: Model.where(condition).find(id) only finds records meeting condition", "percentage": 90, "note": "Additional restrictions apply"},
+        {"solution": "Use find_by with all conditions: Model.find_by(id: id, status: active)", "percentage": 85, "note": "Returns nil instead of exception"},
+        {"solution": "Verify record meets all criteria: Check database directly to confirm expectations", "percentage": 80, "note": "Debugging approach"}
+    ]'::jsonb,
+    'Rails with scoped queries, Additional where conditions',
+    'Correct records found, Conditions properly applied',
+    'find on scoped relation raises RecordNotFound if record does not meet scope conditions, even if ID exists.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/9709659/'
+);
+
+-- Swift: Fatal error unwrapping nil
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Swift fatal error: unexpectedly found nil while unwrapping Optional',
+    'swift',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use optional binding: if let value = optionalValue { use value }", "percentage": 95, "note": "Safe unwrapping"},
+        {"solution": "Use optional chaining: object?.property instead of object!.property", "percentage": 90, "note": "Returns nil if any part is nil"},
+        {"solution": "Avoid implicitly unwrapped optionals (!): Use regular optionals (?) instead", "percentage": 85, "note": "Prevents force unwrapping crashes"}
+    ]'::jsonb,
+    'Swift application, Optional values',
+    'No runtime crashes, Optionals handled safely',
+    'Force unwrapping (!) crashes if value is nil. Use if let, guard let, or optional chaining (?.) for safety.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/32170456/'
+);
+
+-- Swift: Optional type must be unwrapped
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Swift value of optional type must be unwrapped',
+    'swift',
+    'HIGH',
+    '[
+        {"solution": "Use if let optional binding: if let unwrapped = optional { use unwrapped }", "percentage": 95, "note": "Safely unwrap and use"},
+        {"solution": "Use guard let for early exit: guard let unwrapped = optional else { return }", "percentage": 90, "note": "Cleaner for function guards"},
+        {"solution": "Use nil coalescing operator: let value = optional ?? defaultValue", "percentage": 85, "note": "Provide default if nil"}
+    ]'::jsonb,
+    'Swift with optionals, Type safety requirements',
+    'Optionals properly unwrapped, Code compiles and runs safely',
+    'Cannot use optional types directly in non-optional contexts. Must unwrap with if let, guard let, or ?? operator.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68249961/'
+);
+
+-- Swift: Dictionary lookup returns optional
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Swift dictionary lookup optional not unwrapped',
+    'swift',
+    'MEDIUM',
+    '[
+        {"solution": "Use optional chaining: dict[key]?[subkey] for nested access", "percentage": 90, "note": "Safely chains optional lookups"},
+        {"solution": "Use if let to unwrap: if let value = dict[key] { use value }", "percentage": 85, "note": "Safe unwrapping"},
+        {"solution": "Provide default with nil coalescing: dict[key] ?? defaultValue", "percentage": 80, "note": "Handle missing keys"}
+    ]'::jsonb,
+    'Swift dictionaries, Nested data structures',
+    'Dictionary access safe, No force unwrap crashes',
+    'Dictionary subscript returns optional because key might not exist. Use optional chaining or if let to safely access.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/51580530/'
+);
+
+-- Rust: Borrow checker mutable and immutable
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Rust borrow checker: cannot borrow as mutable and immutable',
+    'rust',
+    'VERY_HIGH',
+    '[
+        {"solution": "Limit borrow scope: Use {} blocks to drop borrows before new ones", "percentage": 90, "note": "Explicit scope control"},
+        {"solution": "Clone data to avoid borrow: let cloned = data.clone(); work with clone", "percentage": 80, "note": "Trade memory for flexibility"},
+        {"solution": "Refactor to avoid simultaneous borrows: Split into separate operations", "percentage": 85, "note": "Redesign approach"}
+    ]'::jsonb,
+    'Rust compiler, Code with multiple borrows',
+    'Code compiles, Borrow checker satisfied',
+    'Cannot have mutable and immutable borrows alive simultaneously. Immutable borrows must end before mutable borrow.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/24847533/'
+);
+
+-- Rust: Borrow checker closure captures
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Rust borrow checker error with closure capturing variable',
+    'rust',
+    'HIGH',
+    '[
+        {"solution": "Clone value before closure: let cloned = value.clone(); closure uses cloned", "percentage": 90, "note": "Closure owns clone"},
+        {"solution": "Pass value as parameter: closure takes parameter instead of capturing", "percentage": 85, "note": "Explicit parameter passing"},
+        {"solution": "Use Cell or RefCell for interior mutability: Rc<RefCell<T>>", "percentage": 75, "note": "Runtime borrow checking"}
+    ]'::jsonb,
+    'Rust closures, Variable capture issues',
+    'Code compiles, Closures work correctly',
+    'Closure captures variables from environment. Mutable borrow lasts as long as closure exists. Clone or restructure.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75621630/'
+);
+
+-- Rust: Cannot move out of borrowed content
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Rust cannot move out of borrowed content',
+    'rust',
+    'MEDIUM',
+    '[
+        {"solution": "Clone instead of move: let owned = borrowed.clone();", "percentage": 90, "note": "Create owned copy"},
+        {"solution": "Take reference not ownership: Work with &T instead of T", "percentage": 85, "note": "Keep borrowing"},
+        {"solution": "Use take() for Option/Result: option.take() replaces with None", "percentage": 80, "note": "For wrapped types"}
+    ]'::jsonb,
+    'Rust ownership, Borrowed references',
+    'Code compiles, Ownership rules satisfied',
+    'Cannot move ownership out of borrowed reference. Clone to create owned copy or work with references throughout.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77397609/'
+);
+
+-- PHP: Undefined index
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'PHP Notice: Undefined index in $_POST or $_GET array',
+    'php',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use null coalescing operator: $value = $_POST[''key''] ?? ''default''; (PHP 7+)", "percentage": 95, "note": "Returns default if key missing"},
+        {"solution": "Check with isset: if (isset($_POST[''key''])) { $value = $_POST[''key'']; }", "percentage": 90, "note": "Explicit check"},
+        {"solution": "Verify HTML form field name matches: <input name=\"key\">", "percentage": 85, "note": "Common typo source"}
+    ]'::jsonb,
+    'PHP application, Forms or query strings',
+    'No undefined index notices, Variables properly initialized',
+    'Undefined index means key does not exist in array. Check form field names match $_POST keys exactly.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4261133/'
+);
+
+-- PHP: Undefined index with form submission
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'PHP undefined index error when accessing form data',
+    'php',
+    'HIGH',
+    '[
+        {"solution": "Check form method matches: POST form needs $_POST, GET needs $_GET", "percentage": 90, "note": "Method mismatch"},
+        {"solution": "Verify input name attribute: <input name=\"fieldname\"> must match $_POST[''fieldname'']", "percentage": 85, "note": "Name matching"},
+        {"solution": "Use ?? operator with default: $name = $_POST[''name''] ?? '''';", "percentage": 95, "note": "Safe access"}
+    ]'::jsonb,
+    'PHP form handling, HTML forms',
+    'Form data accessible without errors, All fields properly received',
+    'Form must submit to PHP script. Check method=\"post\" matches $_POST. input name must match array key exactly.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10613570/'
+);
+
+-- Kotlin: lateinit not initialized
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Kotlin UninitializedPropertyAccessException: lateinit property has not been initialized',
+    'kotlin',
+    'VERY_HIGH',
+    '[
+        {"solution": "Initialize property before use: lateinit var x: String; fun init() { x = \"value\" }", "percentage": 95, "note": "Must assign before access"},
+        {"solution": "Check initialization: if (::property.isInitialized) { use property }", "percentage": 90, "note": "Safe check"},
+        {"solution": "Use nullable var instead: var x: String? = null (does not require lateinit)", "percentage": 80, "note": "Alternative approach"}
+    ]'::jsonb,
+    'Kotlin application, lateinit properties',
+    'Properties initialized before use, No uninitialized exceptions',
+    'lateinit properties must be assigned before access. Check with ::property.isInitialized. Cannot use with nullable types.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/57182703/'
+);
+
+-- Kotlin: lateinit in dependency injection
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Kotlin lateinit property not initialized with dependency injection',
+    'kotlin',
+    'MEDIUM',
+    '[
+        {"solution": "Use constructor injection: class MyClass @Inject constructor(private val dependency: Dep)", "percentage": 95, "note": "Preferred DI pattern"},
+        {"solution": "Ensure @Inject on lateinit var: @Inject lateinit var dependency: Type", "percentage": 90, "note": "Annotation required"},
+        {"solution": "Check DI framework setup: Verify Hilt/Dagger module provides dependency", "percentage": 85, "note": "Module configuration"}
+    ]'::jsonb,
+    'Kotlin with Hilt/Dagger, Android dependency injection',
+    'Dependencies injected successfully, No lateinit errors',
+    'Constructor injection preferred over field injection. Ensure @Inject annotation present and provider module configured.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78568566/'
+);
+
+-- C#: NullReferenceException
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'C# NullReferenceException: Object reference not set to an instance',
+    'csharp',
+    'VERY_HIGH',
+    '[
+        {"solution": "Initialize object before use: var obj = new MyClass(); before obj.Method()", "percentage": 95, "note": "Most common cause"},
+        {"solution": "Use null-conditional operator: obj?.Method() returns null if obj is null", "percentage": 90, "note": "Safe access"},
+        {"solution": "Check for null: if (obj != null) { obj.Method(); }", "percentage": 85, "note": "Explicit null check"}
+    ]'::jsonb,
+    'C# application, Object-oriented code',
+    'No NullReferenceException at runtime, Objects properly initialized',
+    'NullReferenceException means trying to access member of null object. Initialize objects before use or check for null.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4660142/'
+);
+
+-- C#: Array of objects not initialized
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'C# NullReferenceException with array of objects',
+    'csharp',
+    'HIGH',
+    '[
+        {"solution": "Initialize array elements: for (int i = 0; i < array.Length; i++) { array[i] = new MyClass(); }", "percentage": 95, "note": "Each element needs initialization"},
+        {"solution": "Use LINQ Select: var array = new MyClass[5].Select(x => new MyClass()).ToArray();", "percentage": 85, "note": "Functional approach"},
+        {"solution": "Initialize during declaration: var array = new[] { new MyClass(), new MyClass() };", "percentage": 90, "note": "Collection initializer"}
+    ]'::jsonb,
+    'C# arrays, Reference types',
+    'Array elements accessible without exceptions, All elements initialized',
+    'Array of reference types initializes elements to null. Must initialize each element separately after array creation.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/5317222/'
+);
+

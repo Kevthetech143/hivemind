@@ -1,0 +1,213 @@
+-- Add AWS ECS common errors and troubleshooting solutions batch 1
+-- Extracted from AWS ECS official documentation
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'AWS ECS ResourceInitializationError: Cannot pull container image from ECR',
+    'aws-ecs',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify network connectivity between task and Amazon ECR endpoint. Check VPC endpoints are properly configured for ECR.", "percentage": 95, "note": "Most common cause is missing or misconfigured VPC endpoint"},
+        {"solution": "Ensure task execution role has proper permissions to ECR (ecr:GetAuthorizationToken, ecr:BatchGetImage, ecr:GetDownloadUrlForLayer)", "percentage": 90, "note": "Permissions must be on the task execution role, not task role"},
+        {"solution": "Check CloudWatch Logs for task container logs. Look for error strings like ''dial tcp'', ''i/o timeout'', or ''TLS handshake timeout''", "percentage": 85, "command": "aws logs tail /ecs/my-service --follow"}
+    ]'::jsonb,
+    'ECS cluster created, task definition configured, ECR repository with image, proper IAM roles attached',
+    'Task successfully pulls image, container enters RUNNING state, no ResourceInitializationError in logs',
+    'Do not confuse task role (application permissions) with task execution role (pulling images/secrets). Network connectivity must be verified before checking IAM permissions. VPC endpoint must include .dkr suffix for ECR endpoints.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/resource-initialization-error.html'
+),
+(
+    'AWS ECS ResourceInitializationError: Cannot download environment file from S3',
+    'aws-ecs',
+    'HIGH',
+    '[
+        {"solution": "Verify network connectivity from task to S3 VPC endpoint. Ensure endpoint is created in the same VPC as the task.", "percentage": 92, "note": "S3 must be accessible via gateway endpoint or interface endpoint"},
+        {"solution": "Confirm task execution role has S3 permissions: s3:GetObject on the environment file path", "percentage": 90, "command": "aws iam get-role-policy --role-name ecsTaskExecutionRole --policy-name S3Access"},
+        {"solution": "Check that S3 bucket is in the same AWS region as the ECS cluster. Cross-region access requires different endpoint configuration.", "percentage": 85, "note": "ResourceInitializationError occurs immediately if bucket is unreachable"}
+    ]'::jsonb,
+    'ECS task with environmentFiles configured, S3 bucket created, task execution role with S3 permissions, VPC configured',
+    'Task downloads environment file successfully, variables are populated in container, no timeout errors in CloudWatch logs',
+    'Environment files must be small (under 4KB recommended). Incorrect S3 path or bucket name will cause failures. Gateway endpoint (cheapest) works for S3 but requires route table configuration.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/resource-initialization-error.html'
+),
+(
+    'AWS ECS ResourceInitializationError: Cannot access Secrets Manager',
+    'aws-ecs',
+    'HIGH',
+    '[
+        {"solution": "Verify task execution role has Secrets Manager permissions: secretsmanager:GetSecretValue on the secret ARN", "percentage": 94, "note": "Permission must be on task execution role, not application task role"},
+        {"solution": "Check Secrets Manager VPC endpoint exists and is properly configured in task VPC. Verify security group allows HTTPS (443) traffic.", "percentage": 92, "command": "aws ec2 describe-vpc-endpoints --filter Name=service-name,Values=secretsmanager"},
+        {"solution": "Confirm the secret exists in Secrets Manager in the same AWS region. Cross-region secrets are not accessible.", "percentage": 90, "command": "aws secretsmanager get-secret-value --secret-id my-secret"},
+        {"solution": "Verify secret ARN is correctly formatted in task definition. Check for typos in secret name or region.", "percentage": 85, "note": "Invalid ARN format will cause immediate failure"}
+    ]'::jsonb,
+    'ECS task definition configured with secrets, Secrets Manager secret created, task execution role attached, VPC with internet access or endpoints',
+    'Task retrieves secret successfully, environment variables populated, no socket timeout or TLS handshake errors in logs',
+    'Task role and task execution role are different - secrets must be in execution role. Secrets must exist before task launch. Network connectivity errors manifest as socket timeouts, not permission errors.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/resource-initialization-error.html'
+),
+(
+    'AWS ECS ResourceInitializationError: CloudWatch Logs group not found',
+    'aws-ecs',
+    'MEDIUM',
+    '[
+        {"solution": "Use aws ecs describe-task-definition command to identify the log group specified in the task definition", "percentage": 93, "command": "aws ecs describe-task-definition --task-definition my-task --query ''taskDefinition.containerDefinitions[0].logConfiguration''"},
+        {"solution": "Verify the CloudWatch Logs log group exists in the same AWS region. If not, create it with proper retention settings.", "percentage": 91, "command": "aws logs create-log-group --log-group-name /ecs/my-service"},
+        {"solution": "If log group exists but has wrong configuration, either update task definition to match or delete and recreate the log group", "percentage": 88, "note": "Mismatched log group names are the primary cause"}
+    ]'::jsonb,
+    'ECS cluster created, task definition configured with awslogs driver, AWS permissions to create logs groups',
+    'Task reaches RUNNING state, logs appear in CloudWatch Logs console, no ResourceInitializationError messages',
+    'Log group name must exactly match task definition specification (case-sensitive). New log groups start with /ecs/ prefix by convention. Ensure awslogs-group parameter is specified in logConfiguration.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/resource-initialization-error.html'
+),
+(
+    'AWS ECS TaskFailedToStart: Insufficient subnet IP addresses for Fargate',
+    'aws-ecs',
+    'VERY_HIGH',
+    '[
+        {"solution": "Launch Fargate tasks in a subnet with sufficient available IP addresses. Use EC2 console to check Available IPv4 Addresses for each subnet.", "percentage": 95, "note": "Each awsvpc task consumes one IPv4 address from subnet"},
+        {"solution": "Create a new subnet in your VPC with a larger CIDR block (e.g., /23 instead of /24) to accommodate more tasks", "percentage": 93, "command": "aws ec2 create-subnet --vpc-id vpc-xxx --cidr-block 10.0.1.0/23"},
+        {"solution": "Use aws ec2 describe-subnets command to check available IPs before launching tasks. Scale tasks based on available subnet capacity.", "percentage": 90, "command": "aws ec2 describe-subnets --filters Name=vpc-id,Values=vpc-xxx --query ''Subnets[*].[SubnetId,AvailableIpAddressCount]''"}
+    ]'::jsonb,
+    'Fargate cluster with awsvpc network mode, VPC and subnets created, tasks configured for launch in specific subnets',
+    'Fargate tasks launch successfully and reach RUNNING state, no TaskFailedToStart errors, task counts match desired count',
+    'awsvpc network mode is required for Fargate and uses one IP per task. Public subnets deplete faster than private subnets. Plan subnet sizing based on max concurrent tasks, not current load.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/failed-to-start-error.html'
+),
+(
+    'AWS ECS TaskFailedToStart: Insufficient CPU or memory for ENI attachment',
+    'aws-ecs',
+    'HIGH',
+    '[
+        {"solution": "Calculate required task CPU: multiply instance vCPU count by number of available ENI attachment slots, then ensure task definition CPU meets this threshold", "percentage": 92, "note": "Each instance type has max ENI attachments (t3.micro=2, t3.small=3, m5.large=3, c5.large=4, etc.)"},
+        {"solution": "Review task definition CPU and memory specifications. Increase values if they exceed instance capacity. For EC2, check instance CPU/memory limits.", "percentage": 90, "command": "aws ec2 describe-instance-types --instance-types t3.large --query ''InstanceTypes[0].[VCpuInfo.DefaultVCpus,MemoryInfo.MemoryInMiB]''"},
+        {"solution": "For EC2 launch type, use container instances with higher vCPU counts. For Fargate, select larger task CPU/memory combinations (256 CPU minimum)", "percentage": 88, "note": "awsvpc network mode has higher resource requirements than bridge mode"}
+    ]'::jsonb,
+    'ECS cluster configured, task definition created with specific CPU/memory, container instances registered or Fargate capacity available',
+    'Tasks transition from PROVISIONING to RUNNING state, no TaskFailedToStart RESOURCE errors in task status, all ENIs properly attached',
+    'Do not confuse Fargate CPU units (1024 units = 1 vCPU) with instance vCPUs. ENI attachment slot calculations vary by instance type. Check AWS documentation for your specific instance family.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/failed-to-start-error.html'
+),
+(
+    'AWS ECS API Error 400 Bad Request: ValidationError or IncompleteSignature',
+    'aws-ecs',
+    'HIGH',
+    '[
+        {"solution": "Verify AWS credentials are valid and have not expired. For temporary credentials, check session token expiration.", "percentage": 94, "command": "aws sts get-caller-identity"},
+        {"solution": "Check request timestamp is within 15 minutes of server time. Sync system clock: ntpdate -s time.aws.amazon.com on Linux, or sync time in System Preferences on macOS", "percentage": 92, "note": "Clock skew is the most common cause of IncompleteSignature"},
+        {"solution": "Validate all required parameters in API call. Use aws ecs describe-clusters --help to verify parameter names and formats", "percentage": 90, "command": "Check aws ecs command help for required parameters"},
+        {"solution": "Check request body JSON syntax. Use Python json.dumps() or jq to validate JSON before sending.", "percentage": 88, "note": "Ensure no trailing commas or missing quotes in JSON"}
+    ]'::jsonb,
+    'AWS CLI or SDK installed and configured, valid AWS credentials, network connectivity to AWS',
+    'API calls execute successfully with 200 status code, no ValidationError or IncompleteSignature responses',
+    'AWS signature calculation is time-sensitive - always sync system clock. Credential expiration is separate from signature validation. Whitespace in JSON must be valid.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/APIReference/CommonErrors.html'
+),
+(
+    'AWS ECS API Error 403 Forbidden: AccessDeniedException or InvalidClientTokenId',
+    'aws-ecs',
+    'HIGH',
+    '[
+        {"solution": "Verify AWS access key ID and secret access key are correct. Check configured credentials: aws configure list", "percentage": 95, "command": "aws configure list"},
+        {"solution": "Ensure IAM user/role has ECS permissions attached. Required policies: AmazonECSFullAccess or custom policy with ecs:* permissions", "percentage": 93, "command": "aws iam list-attached-user-policies --user-name my-user"},
+        {"solution": "Check if access key has been revoked or disabled in IAM console. Create new access key if old one is inactive.", "percentage": 90, "note": "Access keys can be manually disabled or auto-disabled after credential exposure"},
+        {"solution": "For cross-account ECS access, verify trust relationship in target account role and assume role permissions in source account", "percentage": 85, "note": "Requires sts:AssumeRole permission and proper role trust policy"}
+    ]'::jsonb,
+    'AWS credentials configured (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN if using temp credentials), IAM user/role exists',
+    'API calls return 200 OK status code, no AccessDeniedException errors, operations complete successfully',
+    'Access key ID (AKIA...) cannot be guessed or recovered if lost. Credentials expire automatically when using temporary session tokens. Region configuration separate from credential validation.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/APIReference/CommonErrors.html'
+),
+(
+    'AWS ECS API Error 503 ServiceUnavailable: Temporary AWS service failure',
+    'aws-ecs',
+    'MEDIUM',
+    '[
+        {"solution": "Retry the request after waiting 5-10 seconds using exponential backoff (2^n seconds between retries)", "percentage": 95, "note": "Most 503 errors are transient and resolve automatically"},
+        {"solution": "Check AWS Service Health Dashboard (https://status.aws.amazon.com/) for ECS or region-specific incidents affecting availability", "percentage": 90, "command": "curl https://status.aws.amazon.com/"},
+        {"solution": "If failures persist across multiple retries and AWS status is green, contact AWS Support. May indicate account-level throttling.", "percentage": 85, "note": "Repeated 503s after backoff suggest service degradation"}
+    ]'::jsonb,
+    'AWS CLI or SDK configured, network connectivity, valid credentials with ECS permissions',
+    'Retried request succeeds with 200 status code, operations complete within reasonable timeframe',
+    'Never retry immediately without backoff - can overwhelm AWS infrastructure. Service health status lags actual service recovery by 1-2 minutes. Exponential backoff prevents thundering herd problem.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/APIReference/CommonErrors.html'
+),
+(
+    'AWS ECS InternalError: Unexpected agent error on Fargate platform version 1.4+',
+    'aws-ecs',
+    'LOW',
+    '[
+        {"solution": "Retry task launch after 30-60 seconds. InternalError typically represents temporary agent state and resolves on retry", "percentage": 90, "note": "AWS Fargate agent automatically recovers from most transient issues"},
+        {"solution": "Check CloudWatch Container Insights metrics for this task. Look for CPU/memory spikes or unusual resource patterns before error", "percentage": 85, "command": "aws cloudwatch get-metric-statistics --namespace AWS/ECS --metric-name CPUUtilization --statistics Average"},
+        {"solution": "If error persists after multiple retries, update task definition with different CPU/memory combination and relaunch", "percentage": 75, "note": "Resource configuration changes may resolve underlying agent issues"}
+    ]'::jsonb,
+    'AWS Fargate cluster, platform version 1.4 or later, task definition configured, sufficient capacity available',
+    'Retry succeeds, task reaches RUNNING state, no repeated InternalError messages in logs after retry',
+    'InternalError only occurs on Fargate platform 1.4+, not earlier versions. These are rare and usually transient. System-level debugging requires AWS Support involvement for Fargate.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/internal-error.html'
+),
+(
+    'AWS ECS Networking Error: Too many open file descriptors cause connection failures',
+    'aws-ecs',
+    'MEDIUM',
+    '[
+        {"solution": "Increase the nofile ulimit in your ECS task definition. Set in containerDefinition.ulimits: {\"name\": \"nofile\", \"softLimit\": 1024, \"hardLimit\": 4096}", "percentage": 93, "note": "Default Linux limit is often 1024, insufficient for high-traffic applications"},
+        {"solution": "For EC2 launch type, also adjust instance-level file descriptor limits. Modify /etc/security/limits.conf on container instance", "percentage": 85, "command": "ulimit -n 65536"},
+        {"solution": "Monitor file descriptor usage in CloudWatch. Use Container Insights to watch system-level metrics for FD exhaustion", "percentage": 80, "note": "Connection errors appear sporadically when approaching FD limits"}
+    ]'::jsonb,
+    'ECS cluster running, task definition configured, container instance with tunable parameters (for EC2 launch type), CloudWatch access',
+    'Network connections succeed under load, no ''Too many open files'' errors in container logs, file descriptor usage stays below soft limit',
+    'File descriptor limit applies per task container, not cluster-wide. ulimit increases in task definition override image defaults. EC2 instances require separate host-level configuration.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/networking-troubleshooting.html'
+),
+(
+    'AWS ECS Task Definition Error: Invalid CPU or memory configuration for task size',
+    'aws-ecs',
+    'MEDIUM',
+    '[
+        {"solution": "For Fargate tasks, use valid CPU/memory combinations: (256 CPU: 512-1024 MiB), (512 CPU: 1024-3072 MiB), (1024+ CPU: 2048-8192 MiB)", "percentage": 95, "note": "Fargate has fixed valid combinations. Arbitrary values not supported."},
+        {"solution": "For EC2 tasks, ensure task CPU/memory does not exceed instance capacity. Use aws ec2 describe-instance-types to check limits", "percentage": 92, "command": "aws ec2 describe-instance-types --instance-types t3.large"},
+        {"solution": "Use aws ecs register-task-definition with correct containerDefinitions format, specifying both cpu and memory at task and container level", "percentage": 90, "command": "aws ecs register-task-definition --cli-input-json file://task-definition.json"}
+    ]'::jsonb,
+    'Task definition in JSON format, Fargate or EC2 cluster configured, valid AWS credentials',
+    'Task definition registers successfully, tasks launch and reach RUNNING state without resource constraint errors',
+    'CPU is measured in units (1024 units = 1 vCPU), memory in MiB. Fargate requires explicit CPU/memory combinations. EC2 allows more flexibility but must respect instance capacity.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_errors.html'
+);

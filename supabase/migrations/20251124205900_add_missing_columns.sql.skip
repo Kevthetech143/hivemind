@@ -1,0 +1,7 @@
+-- Add missing columns to knowledge_entries table
+-- Required for new batch migrations
+
+ALTER TABLE knowledge_entries
+ADD COLUMN IF NOT EXISTS prerequisites TEXT,
+ADD COLUMN IF NOT EXISTS success_indicators TEXT,
+ADD COLUMN IF NOT EXISTS source_url TEXT;

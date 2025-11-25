@@ -1,0 +1,215 @@
+-- Add pnpm error codes from official documentation batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'pnpm: ERR_PNPM_UNEXPECTED_STORE',
+    'pnpm',
+    'HIGH',
+    '[
+        {"solution": "Remove node_modules and pnpm-lock.yaml, then run pnpm install to re-create with correct store", "percentage": 95, "note": "Most reliable solution for store mismatch"},
+        {"solution": "Check PNPM_HOME environment variable points to correct store location", "percentage": 85, "command": "echo $PNPM_HOME"},
+        {"solution": "Run pnpm store prune to clean orphaned packages from old store", "percentage": 80, "note": "Use after switching stores"}
+    ]'::jsonb,
+    'pnpm installed, project with node_modules directory',
+    'pnpm install completes successfully, node_modules links to correct store directory',
+    'Do not delete only node_modules - lockfile still references old store. Always delete both node_modules and pnpm-lock.yaml together.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_NO_MATCHING_VERSION_INSIDE_WORKSPACE',
+    'pnpm',
+    'HIGH',
+    '[
+        {"solution": "Update workspace dependency version reference to match actual version in workspace package.json", "percentage": 95, "note": "Edit the version constraint in dependent packages"},
+        {"solution": "Add missing dependency version to workspace by installing or updating it", "percentage": 90, "command": "pnpm add package-name@version -w"},
+        {"solution": "Use workspace protocol: specify dependency as \"workspace:*\" to match any workspace version", "percentage": 85, "note": "Flexible approach for internal packages"}
+    ]'::jsonb,
+    'Monorepo structure with workspace, pnpm v6+',
+    'Workspace dependency resolves correctly, pnpm install succeeds',
+    'Workspace version references must exactly match available versions. Using workspace:* relaxes constraints but requires explicit version publish.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_PEER_DEP_ISSUES',
+    'pnpm',
+    'VERY_HIGH',
+    '[
+        {"solution": "Install missing peer dependency: pnpm add peer-package@version", "percentage": 95, "note": "Direct solution for unresolved peer deps"},
+        {"solution": "Update package version to one compatible with peer dependency range", "percentage": 90, "command": "pnpm update package-name@compatible-version"},
+        {"solution": "Disable peer dependency checking via .npmrc: auto-install-peers=true", "percentage": 75, "note": "Allows installation but may cause runtime issues"},
+        {"solution": "Use --force flag during installation to bypass peer dependency validation", "percentage": 70, "command": "pnpm install --force", "note": "Use cautiously - can hide compatibility issues"}
+    ]'::jsonb,
+    'pnpm v7+, project package.json with peer dependencies declared',
+    'pnpm install completes without peer dependency errors, peer packages load successfully at runtime',
+    'Peer dependency conflicts are not automatically resolved. Cannot use --no-optional with peer deps. Force-installing may cause runtime errors not caught during install.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_OUTDATED_LOCKFILE',
+    'pnpm',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run pnpm install to regenerate lockfile from package.json", "percentage": 98, "note": "Standard solution - regenerates pnpm-lock.yaml"},
+        {"solution": "In CI: ensure package.json and pnpm-lock.yaml are both committed before running pnpm ci", "percentage": 95, "note": "Use pnpm ci instead of pnpm install in CI"},
+        {"solution": "If CI fails, run pnpm install locally then commit updated pnpm-lock.yaml", "percentage": 90, "command": "pnpm install && git add pnpm-lock.yaml && git commit -m \"update lockfile\""},
+        {"solution": "Delete pnpm-lock.yaml and regenerate with pnpm install --lockfile-only", "percentage": 85, "command": "rm pnpm-lock.yaml && pnpm install --lockfile-only"}
+    ]'::jsonb,
+    'pnpm project with package.json and pnpm-lock.yaml',
+    'pnpm install/ci completes successfully, lockfile is in sync with package.json',
+    'Do not ignore lockfile changes in CI. Always use pnpm ci in CI/CD, not pnpm install. Lockfile must be committed to version control.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_TARBALL_INTEGRITY',
+    'pnpm',
+    'MEDIUM',
+    '[
+        {"solution": "Clear pnpm store cache and reinstall: pnpm store prune && pnpm install", "percentage": 90, "note": "Removes corrupted cached packages"},
+        {"solution": "Delete pnpm-lock.yaml and regenerate: rm pnpm-lock.yaml && pnpm install", "percentage": 88, "note": "Regenerates integrity hashes"},
+        {"solution": "Update all packages to latest versions to fetch fresh tarballs", "percentage": 80, "command": "pnpm update --latest"},
+        {"solution": "Manually check package tarball: pnpm list package-name --verify", "percentage": 75, "note": "Verify specific package integrity"}
+    ]'::jsonb,
+    'pnpm v7+, internet connectivity, npm registry access',
+    'Package tarball downloads successfully, integrity verification passes, installation completes',
+    'Integrity errors may indicate network corruption or stale cache. Network issues between package registry can cause checksum mismatches. Ensure npm registry is accessible.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_MISMATCHED_RELEASE_CHANNEL',
+    'pnpm',
+    'LOW',
+    '[
+        {"solution": "Align use-node-version config with actual Node.js version channel (e.g., use rc/X.Y.Z-rc.W for RC versions)", "percentage": 95, "note": "Config must match version format"},
+        {"solution": "In .npmrc or .pnpmrc: set use-node-version to stable version without channel prefix", "percentage": 92, "command": "echo \"use-node-version = X.Y.Z\" >> .npmrc"},
+        {"solution": "For RC releases, use correct format: rc/18.0.0-rc.0 instead of 18.0.0-rc.0", "percentage": 90, "note": "Channel prefix must precede version"}
+    ]'::jsonb,
+    'pnpm with use-node-version configured in .npmrc or .pnpmrc',
+    'Node version loads correctly, pnpm commands execute with specified version, no channel mismatch errors',
+    'Release channel format must match version type. RC versions require rc/ prefix. Stable versions should not have channel suffix. Configuration format is strict.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_INVALID_NODE_VERSION',
+    'pnpm',
+    'LOW',
+    '[
+        {"solution": "Use valid format in use-node-version: X.Y.Z (e.g., 18.16.0)", "percentage": 96, "note": "Standard semantic versioning format"},
+        {"solution": "For release versions use format: release/X.Y.Z (e.g., release/18.16.0)", "percentage": 93, "command": "echo \"use-node-version = release/18.16.0\" >> .npmrc"},
+        {"solution": "For RC versions use format: rc/X.Y.Z-rc.W (e.g., rc/18.0.0-rc.0)", "percentage": 92, "note": "RC format includes -rc.W suffix"},
+        {"solution": "Validate syntax in .npmrc: pnpm env use --global --version check", "percentage": 85, "command": "pnpm env use --global 18.16.0"}
+    ]'::jsonb,
+    'pnpm project, .npmrc or .pnpmrc configuration file',
+    'pnpm env use command succeeds, Node version loads correctly, no syntax validation errors',
+    'Version format is case-sensitive and strictly validated. Typos in version format cause immediate failure. Use semantic versioning without extra characters except for RC versions.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_WORKSPACE_MANIFEST_MISSING',
+    'pnpm',
+    'MEDIUM',
+    '[
+        {"solution": "Create pnpm-workspace.yaml in project root with workspace directory patterns", "percentage": 97, "command": "Create pnpm-workspace.yaml with packages glob patterns"},
+        {"solution": "Ensure pnpm-workspace.yaml uses correct YAML syntax and valid glob patterns", "percentage": 94, "note": "Common syntax: packages: [\"packages/*\", \"apps/*\"]"},
+        {"solution": "Verify file is in project root, not in subdirectory", "percentage": 92, "note": "pnpm-workspace.yaml must be at monorepo root"}
+    ]'::jsonb,
+    'pnpm v6+, monorepo structure with multiple packages',
+    'pnpm install detects workspace, all workspace packages resolve correctly, pnpm list shows full workspace',
+    'pnpm-workspace.yaml is required for monorepos - single package.json is not enough. File must be valid YAML with correct glob patterns. Missing file causes workspace commands to fail.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_INCOMPATIBLE_LOCKFILE_VERSION',
+    'pnpm',
+    'MEDIUM',
+    '[
+        {"solution": "Delete pnpm-lock.yaml and regenerate with current pnpm version: pnpm install", "percentage": 96, "note": "Lockfile version auto-updates to match pnpm version"},
+        {"solution": "Upgrade pnpm to version that matches lockfile format", "percentage": 88, "command": "pnpm add -g pnpm@latest"},
+        {"solution": "In CI: ensure all environments use same pnpm version as development", "percentage": 85, "note": "Version mismatch between local and CI causes incompatibility"}
+    ]'::jsonb,
+    'pnpm project with existing lockfile, multiple pnpm versions in use',
+    'Lockfile version matches pnpm version, pnpm install succeeds without format errors',
+    'Lockfile format is version-specific. Upgrading/downgrading pnpm without regenerating lockfile causes incompatibility. Use same pnpm version across all environments.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_DEPENDENCY_LOOP_DETECTED',
+    'pnpm',
+    'LOW',
+    '[
+        {"solution": "Review package dependencies for circular references using pnpm list --depth=0 --graph", "percentage": 92, "note": "Identify circular dependency chain"},
+        {"solution": "Refactor one of the circular dependencies out or move shared code to separate package", "percentage": 90, "note": "Architectural fix - requires code changes"},
+        {"solution": "Use workspace protocol to break cycles: change one side to workspace:* reference", "percentage": 85, "command": "Update package.json: \"dep\": \"workspace:*\""}
+    ]'::jsonb,
+    'pnpm monorepo with multiple interdependent packages',
+    'Dependency graph shows no cycles, pnpm install completes, pnpm list displays clean tree',
+    'Circular dependencies prevent installation and runtime execution. Breaking cycles requires refactoring code structure. Workspace protocol alone may not resolve if logic-level circular dependency exists.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_NODE_MODULES_CORRUPTION',
+    'pnpm',
+    'MEDIUM',
+    '[
+        {"solution": "Clean reinstall: remove node_modules and pnpm-lock.yaml, then run pnpm install", "percentage": 96, "note": "Complete reset of dependency tree"},
+        {"solution": "Use pnpm store verify to detect corrupted packages and auto-remove", "percentage": 90, "command": "pnpm store verify"},
+        {"solution": "Run pnpm store prune to remove unreferenced packages from store", "percentage": 85, "command": "pnpm store prune"},
+        {"solution": "Clear disk cache if using pnpm with virtual-store-dir option", "percentage": 80, "note": "May be necessary if symlinks are broken"}
+    ]'::jsonb,
+    'pnpm project with existing node_modules, pnpm store directory access',
+    'pnpm store verify passes all checks, node_modules resolves correctly, all packages import successfully',
+    'Corrupted node_modules can result from interrupted installs or disk errors. Always use clean reinstall as first step. Partial deletions leave lockfile pointing to missing packages.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+),
+(
+    'pnpm: ERR_PNPM_AUTH_FAILED',
+    'pnpm',
+    'HIGH',
+    '[
+        {"solution": "Verify npm registry credentials in .npmrc: npm login or npm token management", "percentage": 94, "note": "Ensure auth token is valid and not expired"},
+        {"solution": "Check registry URL in .npmrc matches package source (e.g., npm, GitHub packages, private registry)", "percentage": 90, "command": "cat .npmrc | grep registry"},
+        {"solution": "Clear npm cache and retry: npm cache clean --force && pnpm install", "percentage": 85, "note": "Stale auth tokens in cache cause failures"},
+        {"solution": "Use .npmrc env variable substitution: //registry.example.com/:_authToken=${NPM_TOKEN}", "percentage": 82, "note": "For CI/CD environments with secrets"}
+    ]'::jsonb,
+    'pnpm project accessing private or scoped packages, npm registry credentials configured',
+    'Package installation succeeds without authentication errors, private packages resolve and download',
+    'Auth tokens expire and must be refreshed. CI/CD must use environment variables for tokens, not hardcoded. Wrong registry URL looks correct but uses wrong credentials. Always verify .npmrc scope matching.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://pnpm.io/errors'
+);

@@ -1,0 +1,185 @@
+-- Add Stack Overflow top voted Angular questions/answers batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Angular: ngModel binding error - Can''t bind to ''ngModel'' since it isn''t a known property of ''input''',
+    'stackoverflow-angular',
+    'VERY_HIGH',
+    '[
+        {"solution": "Import FormsModule in your app.module.ts: import { FormsModule } from ''@angular/forms''; and add it to imports array", "percentage": 95, "note": "Most common fix - works for all Angular 2+ versions"},
+        {"solution": "If using feature modules, import FormsModule in each module where ngModel is used", "percentage": 90, "note": "Modules don''t inherit imported directives from parent modules"},
+        {"solution": "In unit tests, add FormsModule to TestBed.configureTestingModule() imports", "percentage": 85, "note": "Required for testing components with ngModel"},
+        {"solution": "Verify correct two-way binding syntax: use [(ngModel)] not [ngModel]", "percentage": 80, "note": "Syntax validation"}
+    ]'::jsonb,
+    'Angular application with app.module.ts file, FormsModule available in @angular/forms',
+    'Component renders without binding error, two-way binding works correctly, ngModel value updates',
+    'Forgetting to import FormsModule in feature modules when using lazy loading. Incorrect syntax like *ngClass instead of [ngClass]. Not adding FormsModule to test configuration.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38892771/cant-bind-to-ngmodel-since-it-isnt-a-known-property-of-input'
+),
+(
+    'Angular: What is the difference between Promises and Observables?',
+    'stackoverflow-angular',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use Promises for single asynchronous event scenarios (basic HTTP calls returning one value)", "percentage": 90, "note": "Promises handle single value completion or failure"},
+        {"solution": "Use Observables for streams and multiple events, complex async operations with operators like map, retry, debounceTime", "percentage": 92, "note": "Observables provide rich operator chains and lazy execution"},
+        {"solution": "Observables support cancellation via unsubscribe; Promises in ES6 do not support cancellation", "percentage": 85, "note": "Critical difference for resource management"},
+        {"solution": "Use Observable with debounceTime(400) and distinctUntilChanged() for search features to avoid flooding servers", "percentage": 88, "note": "Practical pattern for user input handling"}
+    ]'::jsonb,
+    'RxJS library installed, understanding of async patterns, Angular application',
+    'Search debouncing works correctly, multiple events are handled, operators execute as expected',
+    'Trying to use Promise operators like debounceTime. Not understanding lazy execution of Observables. Treating Observables like Promises for single-value scenarios.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37364973/what-is-the-difference-between-promises-and-observables'
+),
+(
+    'Angular: Difference between Constructor and ngOnInit in component lifecycle',
+    'stackoverflow-angular',
+    'HIGH',
+    '[
+        {"solution": "Use Constructor for dependency injection and simple initialization only", "percentage": 95, "note": "Executed when class is instantiated"},
+        {"solution": "Use ngOnInit for component initialization logic, accessing @Input values, and service calls", "percentage": 95, "note": "@Input properties not available in constructor, only after change detection"},
+        {"solution": "Initialize properties with default values and data binding resolution happens during ngOnInit", "percentage": 90, "note": "Angular lifecycle: constructor executes before change detection, ngOnInit executes during"},
+        {"solution": "Keep constructors simple for easier testing and debugging; perform real work in ngOnInit", "percentage": 85, "note": "Best practice for component design"}
+    ]'::jsonb,
+    'Angular component with lifecycle hooks, TypeScript class syntax understanding',
+    'Constructor executes without accessing @Input values, ngOnInit accesses component bindings correctly, service calls work in ngOnInit',
+    'Trying to access @Input values in constructor. Calling remote services in constructor instead of ngOnInit. Complex initialization logic in constructor.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/35763730/difference-between-constructor-and-ngoninit'
+),
+(
+    'Angular: Can''t bind to ''formGroup'' since it isn''t a known property of ''form''',
+    'stackoverflow-angular',
+    'VERY_HIGH',
+    '[
+        {"solution": "Import ReactiveFormsModule from @angular/forms and add to module imports array", "percentage": 96, "note": "Primary fix for formGroup binding error"},
+        {"solution": "In feature modules and lazy-loaded modules, import ReactiveFormsModule in each module separately", "percentage": 92, "note": "Modules don''t inherit imported directives from parent modules"},
+        {"solution": "Use lowercase formGroup in template binding: [formGroup]=\"formName\" not [FormGroup]", "percentage": 85, "note": "Common syntax error"},
+        {"solution": "For testing, add ReactiveFormsModule to TestBed.configureTestingModule imports", "percentage": 88, "note": "Required for unit tests with reactive forms"}
+    ]'::jsonb,
+    'Angular application, ReactiveFormsModule available in @angular/forms, FormBuilder setup',
+    'Form renders without binding error, formGroup binding works, form controls accessible',
+    'Only importing ReactiveFormsModule in AppModule, not in feature modules. Using FormGroup instead of formGroup in template. Not restarting dev server after import changes.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39152071/cant-bind-to-formgroup-since-it-isnt-a-known-property-of-form'
+),
+(
+    'Angular: How to conditionally apply CSS classes with ngClass',
+    'stackoverflow-angular',
+    'HIGH',
+    '[
+        {"solution": "Use property binding [ngClass] with object syntax: [ngClass]=\"{''active'': step === ''step1''}\"", "percentage": 93, "note": "Most flexible and commonly used approach"},
+        {"solution": "Use class binding for single condition: [class.active]=\"step === ''step1''\" - simpler syntax", "percentage": 90, "note": "Best for single class conditions"},
+        {"solution": "Use ternary operator: [ngClass]=\"step === ''step1'' ? ''active'' : ''inactive''\"", "percentage": 85, "note": "Good for alternative class values"},
+        {"solution": "Extract logic to component method: [ngClass]=\"getClasses()\" and return object from method", "percentage": 80, "note": "Cleaner for complex logic"}
+    ]'::jsonb,
+    'Angular component with template, CSS classes defined in stylesheet',
+    'Conditional CSS classes apply correctly, element styling updates based on component state',
+    'Using *ngClass instead of [ngClass] - asterisk syntax is for structural directives not property bindings. Not using object syntax correctly. Using ngClass without property binding brackets.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/35269179/angular-conditional-class-with-ngclass'
+),
+(
+    'Angular: HTML binding - rendering HTML content instead of escaped text',
+    'stackoverflow-angular',
+    'HIGH',
+    '[
+        {"solution": "Use [innerHTML] property binding to render HTML: <div [innerHTML]=\"theHtmlString\"></div>", "percentage": 95, "note": "Renders actual HTML markup instead of escaped text"},
+        {"solution": "Do not use standard interpolation {{}} for HTML content - it encodes and displays as text", "percentage": 90, "note": "{{}} automatically escapes HTML entities"},
+        {"solution": "For potentially unsafe HTML, use Angular DomSanitizer or custom pipe with bypassSecurityTrustHtml()", "percentage": 85, "note": "Security consideration for user-generated content"},
+        {"solution": "Create SafeHtml pipe when handling dynamic HTML from external sources", "percentage": 80, "note": "Prevents XSS vulnerabilities"}
+    ]'::jsonb,
+    'Angular component with HTML content, understanding of security implications',
+    'HTML content renders as markup, not escaped text, page displays formatted HTML correctly',
+    'Using {{}} interpolation for HTML content and expecting it to render. Not considering security implications of [innerHTML]. Not sanitizing user-provided HTML.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/31548311/angular-html-binding'
+),
+(
+    'Angular RxJS: When should I unsubscribe from Subscription?',
+    'stackoverflow-angular',
+    'HIGH',
+    '[
+        {"solution": "Distinguish between finite observables (HTTP - complete automatically) and infinite observables (DOM events, route params - require cleanup)", "percentage": 92, "note": "Key principle for subscription management"},
+        {"solution": "Use takeUntil pattern with destroy subject: implement OnDestroy, create Subject, pipe takeUntil(this.ngUnsubscribe) in ngOnDestroy", "percentage": 94, "note": "Angular team recommended pattern"},
+        {"solution": "Add takeUntil as final operator to prevent intermediate observable leaks", "percentage": 90, "note": "Operator placement is critical"},
+        {"solution": "HTTP observables handled by Angular internally; manual unsubscribe not required for HTTP requests", "percentage": 85, "note": "Angular manages HTTP observable lifecycle"}
+    ]'::jsonb,
+    'RxJS knowledge, understanding of Observable lifecycle, OnDestroy lifecycle hook',
+    'No memory leaks in component, subscriptions cleaned up on component destruction, takeUntil triggers cleanup',
+    'Unsubscribing from HTTP observables unnecessarily. Not using takeUntil as final operator. Forgetting to implement OnDestroy for infinite observables. Not calling next() in ngOnDestroy.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38008334/angular-rxjs-when-should-i-unsubscribe-from-subscription'
+),
+(
+    'RxJS: What is the difference between BehaviorSubject and Observable?',
+    'stackoverflow-angular',
+    'HIGH',
+    '[
+        {"solution": "BehaviorSubject requires initial value and replays last value to new subscribers automatically", "percentage": 94, "note": "Key characteristic of BehaviorSubject"},
+        {"solution": "Observable only emits values after subscription is called; no replay to late subscribers", "percentage": 92, "note": "Late subscribers miss previous emissions"},
+        {"solution": "Use BehaviorSubject for shared state across components and service-based state management", "percentage": 90, "note": "Ideal for maintaining application state"},
+        {"solution": "Use Observable for single observers or independent streams that don''t need state preservation", "percentage": 85, "note": "Avoids unnecessary state complexity"}
+    ]'::jsonb,
+    'RxJS library, understanding of Subject variants, Angular service architecture',
+    'BehaviorSubject provides immediate value to subscribers, Observable emits only future values, state sharing works correctly',
+    'Using Observable when BehaviorSubject needed for state sharing. Expecting Observable to replay previous values. Not initializing BehaviorSubject with default value.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/39494058/what-is-the-difference-between-behaviorsubject-and-observable'
+),
+(
+    'Angular: How to use *ngIf else syntax with ng-template?',
+    'stackoverflow-angular',
+    'HIGH',
+    '[
+        {"solution": "Use *ngIf with else: <div *ngIf=\"isValid;else other_content\">content</div><ng-template #other_content>other content</ng-template>", "percentage": 95, "note": "Angular 4+ supported syntax for if-else"},
+        {"solution": "Use then and else together: *ngIf=\"isValid;then content else other_content\" with separate ng-template blocks", "percentage": 92, "note": "More explicit control over conditional rendering"},
+        {"solution": "Use then alone: *ngIf=\"isValid;then content\" without else block", "percentage": 88, "note": "When only true condition needs custom rendering"},
+        {"solution": "Remember ng-template is Angular''s template element that holds content not rendered initially", "percentage": 85, "note": "ng-template differs from HTML template element"}
+    ]'::jsonb,
+    'Angular 4+, ng-template understanding, template syntax knowledge',
+    'Conditional rendering displays correct content, else block shows when condition is false, template references work correctly',
+    'Using div instead of ng-template for else content. Using old *ngIf syntax without else. Not understanding that ng-template content doesn''t render unless instantiated.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43006550/how-can-i-use-ngif-else'
+),
+(
+    'TypeScript Angular: Property has no initializer and is not definitely assigned in the constructor',
+    'stackoverflow-angular',
+    'MEDIUM',
+    '[
+        {"solution": "Initialize property with default value: makes: any[] = []; - provides safe default for async data", "percentage": 94, "note": "Recommended approach for Angular components"},
+        {"solution": "Use definite assignment assertion operator (!) after property: makes!: any[]; - tells TypeScript it will be assigned", "percentage": 85, "note": "Common with @Input decorators and ngOnInit assignments"},
+        {"solution": "Disable strictPropertyInitialization in tsconfig.json for entire project - reduce type safety but removes error", "percentage": 60, "note": "Not recommended - reduces TypeScript benefits"},
+        {"solution": "Initialize in ngOnInit via observable subscription with empty array default", "percentage": 90, "note": "Prevents template errors before async data loads"}
+    ]'::jsonb,
+    'TypeScript with strict mode enabled, Angular component, understanding of property initialization',
+    'TypeScript compilation succeeds without initialization errors, properties have safe default values before async data loads',
+    'Setting strictPropertyInitialization: false globally without considering impact. Using (!) assertion without understanding implications. Not initializing arrays that could be undefined.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/49699067/property-has-no-initializer-and-is-not-definitely-assigned-in-the-construc'
+);

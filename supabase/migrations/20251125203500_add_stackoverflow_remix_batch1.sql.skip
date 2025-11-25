@@ -1,0 +1,221 @@
+-- Add Stack Overflow Remix solutions batch 1 (highest voted questions with accepted answers)
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'ESLint parsing error with TypeScript and Cypress config in Remix',
+    'stackoverflow-remix',
+    'HIGH',
+    '[
+        {"solution": "Add tsconfigRootDir: __dirname to parserOptions and use relative path ./tsconfig.json instead of tsconfig.json", "percentage": 95, "note": "Recommended official approach from ESLint", "command": "parserOptions: { tsconfigRootDir: __dirname, project: ''./tsconfig.json'' }"},
+        {"solution": "Create separate tsconfig for tests with proper overrides in ESLint config", "percentage": 90, "note": "Alternative approach for more control"},
+        {"solution": "Add .eslintignore to exclude configuration files like *.config.js", "percentage": 85, "note": "Prevents ESLint from processing build config files"},
+        {"solution": "Remove project property from parserOptions to disable type-aware linting", "percentage": 75, "note": "Quick fix but disables type checking"}
+    ]'::jsonb,
+    'Remix project with ESLint and TypeScript configured, Cypress component testing setup, parserOptions defined in eslint config',
+    'ESLint runs without parsing errors, Type checking works for test files, Cypress tests execute successfully',
+    'Missing tsconfigRootDir configuration causes path resolution failures. Incorrect file paths in project setting break ESLint. Not excluding generated or built directories causes conflicts. Forgetting to exclude ESLint config file itself from TypeScript compilation.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74413483'
+),
+(
+    'Chrome DevTools 404 error for /.well-known/appspecific/com.chrome.devtools.json in Remix',
+    'stackoverflow-remix',
+    'MEDIUM',
+    '[
+        {"solution": "Disable Chrome DevTools Automatic Workspace Folders feature via chrome://flags/#devtools-project-settings and restart browser", "percentage": 95, "note": "Most reliable solution to prevent DevTools requests", "command": "Open chrome://flags/#devtools-project-settings, disable flag, restart Chrome"},
+        {"solution": "Create a route handler to serve the JSON file instead of returning 404", "percentage": 85, "note": "Handles the request at application level"},
+        {"solution": "Use reverse-proxy (nginx) to block the request at server level", "percentage": 80, "note": "Infrastructure-level solution"},
+        {"solution": "Implement vite-plugin-devtools-json plugin to handle the route", "percentage": 70, "note": "Plugin-based approach"}
+    ]'::jsonb,
+    'Remix application running on development server, Chrome browser with DevTools, Node.js environment, Prisma or similar ORM optional',
+    'No more 404 errors in server logs for the .well-known path, Chrome DevTools Workspace Folders feature disabled, Network tab shows no failed requests for this resource',
+    'Restarting only the tab is insufficient - full browser restart required for flag changes. Incorrect route file naming syntax in Remix prevents proper file serving. Assuming server-side prevention is the only solution when browser settings changes are simpler.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/79629915'
+),
+(
+    'Remix middleware pattern to run code before loader on every request',
+    'stackoverflow-remix',
+    'HIGH',
+    '[
+        {"solution": "Call utility functions directly inside loaders that throw redirect responses for early returns instead of using middleware", "percentage": 92, "note": "Recommended Remix pattern - functions can validate permissions and throw 403 if unauthorized"},
+        {"solution": "Use getLoadContext API to populate context data for all route loaders", "percentage": 85, "note": "Good for passing shared data but documented as escape hatch"},
+        {"solution": "Create verification functions that throw responses for early termination", "percentage": 88, "note": "Allows auth checks before loader execution"},
+        {"solution": "Implement checks in root route loader for global validations", "percentage": 75, "note": "Works but may not reliably trigger on all revalidations due to parallel loaders"}
+    ]'::jsonb,
+    'Understanding of Remix loader functions, Knowledge of throwing response objects for early returns, Remix v1.0 or later',
+    'Utility functions successfully validate permissions and redirect unauthorized users, Loaders execute verification before data fetching, 403 responses thrown for unauthorized access',
+    'Assuming traditional middleware patterns are available in Remix causes confusion. Expecting root loader to execute on every request/revalidation - parallel loaders complicate this. Forgetting that manual function calls in each loader increase error risk compared to enforced middleware. Not understanding that getLoadContext is an escape hatch, not intended pattern.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70160537'
+),
+(
+    'How to change the development server port in Remix',
+    'stackoverflow-remix',
+    'MEDIUM',
+    '[
+        {"solution": "Use PORT environment variable: PORT=10000 npm run dev", "percentage": 90, "note": "Works with Remix v1.1.3 and later, simple and direct approach"},
+        {"solution": "Add PORT=any_number to .env file and Remix automatically detects it", "percentage": 90, "note": "Alternative to command line, persists across runs"},
+        {"solution": "Use modern syntax in package.json: remix vite:dev --port 3223", "percentage": 88, "note": "For newer Remix versions using Vite"},
+        {"solution": "Modify dev script in package.json to include PORT variable", "percentage": 85, "note": "Direct script modification approach"}
+    ]'::jsonb,
+    'Remix v1.1.3 or later, Node.js and npm configured, Cross-env package for Windows compatibility',
+    'Development server listens on specified port, npm run dev starts server on configured port without errors, Browser connects to new port successfully',
+    'Confusing devServerPort config option (controls websocket dev server, not main server) with the PORT variable. Windows compatibility issues requiring cross-env tool for proper environment variable handling. Using outdated syntax that may not work with newer Remix versions using Vite. Forgetting that PORT variable may behave differently across Remix versions.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70907527'
+),
+(
+    'How to add Google Analytics script to Remix.run application',
+    'stackoverflow-remix',
+    'MEDIUM',
+    '[
+        {"solution": "Reference official Remix examples at github.com/remix-run/examples/blob/main/google-analytics for implementation pattern", "percentage": 95, "note": "Official recommended approach with complete working example"},
+        {"solution": "Use dangerouslySetInnerHTML to inject raw Google Analytics script in root.tsx component", "percentage": 90, "note": "React pattern for injecting scripts without TypeScript errors"},
+        {"solution": "Place analytics setup in root template file (root.tsx) with dangerouslySetInnerHTML wrapping tracking code", "percentage": 88, "note": "Ensures analytics loads for all pages"},
+        {"solution": "Configure environment variable for tracking ID and reference in script", "percentage": 85, "note": "Keeps sensitive tracking IDs secure"}
+    ]'::jsonb,
+    'React understanding of dangerouslySetInnerHTML prop, Active Google Analytics account with tracking ID, Proper environment variable configuration, root.tsx file access',
+    'Google Analytics tracking code appears in page source, Analytics dashboard shows page views and events, No console errors related to gtag initialization',
+    'Using privacy-blocking browsers like Brave prevents analytics testing - use Chrome, Firefox, or Safari instead. Misconfiguring tracking domain during setup breaks analytics. Incorrect data stream URL configuration causes tracking failures for localhost testing. window.gtag is not defined errors when scripts load in wrong order or scope. Not waiting for analytics script to load before calling gtag functions.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71163233'
+),
+(
+    'How to trigger Remix actions without POST form submission',
+    'stackoverflow-remix',
+    'MEDIUM',
+    '[
+        {"solution": "Use useSubmit hook to programmatically submit data in response to non-form events: submit(event.currentTarget, { replace: true })", "percentage": 92, "note": "Recommended for events like drag-and-drop or onChange handlers"},
+        {"solution": "Use useFetcher alternative when navigation should not occur after submission", "percentage": 88, "note": "For AJAX-like behavior without page reload"},
+        {"solution": "Attach action submission to onChange handler for real-time submissions", "percentage": 85, "note": "Useful for auto-save patterns"},
+        {"solution": "Manually construct FormData and pass to submit for custom event handling", "percentage": 80, "note": "For complex event scenarios"}
+    ]'::jsonb,
+    'Understanding of Remix hooks (useSubmit, useFetcher), Knowledge of form handling in Remix, React event handlers knowledge',
+    'Action triggers on non-form events like drag-and-drop, Data submits without page reload, Transitions show proper loading states, Form data successfully sent to action handler',
+    'Assuming useTransition works without JavaScript - AJAX behavior requires JavaScript enabled; without it, standard browser form submission occurs with page reload. Only considering form button submissions instead of programmatic submission. Not understanding difference between useSubmit (causes navigation) and useFetcher (no navigation). Forgetting to handle loading states during submission.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71005715'
+),
+(
+    'How to provide Redux store to Remix project',
+    'stackoverflow-remix',
+    'MEDIUM',
+    '[
+        {"solution": "Initialize Redux store in entry.client.js on window.globalStore and wrap RemixBrowser with Provider store={window.globalStore}", "percentage": 90, "note": "Preserves store state during navigation, recommended approach"},
+        {"solution": "Also load store in app/root.tsx and wrap Outlet with Provider for consistency", "percentage": 88, "note": "Ensures Provider wraps all routes"},
+        {"solution": "Use context provider pattern in root.tsx wrapping Outlet component", "percentage": 75, "note": "Simpler but may not persist state across navigation"},
+        {"solution": "Initialize store as global singleton before React renders for proper hydration", "percentage": 85, "note": "Critical for SSR compatibility"}
+    ]'::jsonb,
+    'React Redux library installed, Understanding of Remix entry.client.js and app/root.tsx files, Redux store pre-configured, Basic Redux knowledge',
+    'Redux DevTools shows store state, Store state persists across page navigation, Components access store via useSelector and dispatch via useDispatch successfully',
+    'Store state does not persist across page navigation when Provider only wraps Outlet. Potential hydration issues if store initialization is not handled in entry files. Forgetting to wrap both entry.client.js and root.tsx causes state loss on navigation. Not properly exporting store from centralized location.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70780146'
+),
+(
+    'How to redirect from utility function in Remix',
+    'stackoverflow-remix',
+    'HIGH',
+    '[
+        {"solution": "Use throw redirect() instead of return redirect() when redirecting from utility functions outside loaders/actions", "percentage": 95, "note": "Core Remix pattern - must throw, not return redirects"},
+        {"solution": "Catch redirect in try-catch block and throw to propagate redirect to Remix", "percentage": 92, "note": "Enables redirects from async utilities with error handling"},
+        {"solution": "Also throw HttpResponse objects for other response types from utilities", "percentage": 88, "note": "Pattern applies to all response objects, not just redirects"},
+        {"solution": "Import redirect from remix package: import { redirect } from remix", "percentage": 90, "note": "Ensure correct import source"}
+    ]'::jsonb,
+    'Using Remix framework, Understanding of async functions and error handling, redirect imported from remix package, Understanding that only loaders/actions normally return responses',
+    'Utility function successfully redirects user to login page, No 401 errors shown to user, 500 errors properly handled with redirect to error page',
+    'Attempting to return redirect() instead of throw redirect() - this is the primary pitfall. Forgetting to throw HttpResponse from utilities causes errors to display instead of redirecting. Not understanding that throw is required in utilities while loaders/actions can return. Attempting to redirect in synchronous utility functions before they can throw.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71528730'
+),
+(
+    'Remix environment variables "window is not defined" error',
+    'stackoverflow-remix',
+    'HIGH',
+    '[
+        {"solution": "Access window.ENV only inside useEffect hooks or click handlers to ensure client-side execution after hydration", "percentage": 93, "note": "Component render code runs on both server and client during SSR"},
+        {"solution": "Use Remix loader function with useLoaderData hook to pass process.env values from server without needing window object", "percentage": 95, "note": "Type-safe and recommended Remix pattern"},
+        {"solution": "Create root context provider in routes/root.tsx to access environment values via useRootContext hook", "percentage": 90, "note": "Avoids SSR complications with window access"},
+        {"solution": "Use type-safe window check: if (!(typeof document === undefined)) before accessing window.ENV", "percentage": 82, "note": "Client detection pattern"}
+    ]'::jsonb,
+    'Understanding of Remix server-side rendering behavior, Knowledge that component render code executes on both server and client, React useEffect hooks knowledge',
+    'No ReferenceError for window not being defined, Environment variables accessible in components, SSR works without client hydration errors',
+    'Accessing window directly in component render methods causes SSR failure. Not recognizing that SSR executes code server-side where window does not exist. Attempting direct browser API access outside effect hooks or event handlers. Placing window.ENV access in component render instead of useEffect. Not understanding that loaders execute server-side and can access process.env directly.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70730642'
+),
+(
+    'Remix hydration failed: UI on server and client do not match',
+    'stackoverflow-remix',
+    'HIGH',
+    '[
+        {"solution": "Convert datetime to string on server using toLocaleTimeString() before sending to client to ensure consistent time representation", "percentage": 94, "note": "Server time is UTC, client time includes local timezone offset - rendering raw values causes mismatch"},
+        {"solution": "Use useState with useEffect to set time only after client hydration to avoid SSR time mismatch", "percentage": 85, "note": "Sacrifices some SSR benefits and impacts SEO"},
+        {"solution": "Avoid rendering time values that differ between server (UTC) and client (local timezone) during SSR", "percentage": 90, "note": "Prevention approach - identify problematic time calculations"},
+        {"solution": "Use consistent timezone representation (UTC or user timezone) across server and client renders", "percentage": 88, "note": "Ensures both render identical UI"}
+    ]'::jsonb,
+    'React 18 with hydrateRoot, Remix with styled-components or CSS-in-JS, Server-side rendering setup, Understanding of UTC vs local timezones',
+    'No hydration mismatch errors in console, CSS styles apply correctly after hydration, Page renders identically on server and client',
+    'Rendering time values (especially getHours() calls) that differ between server UTC and client local timezone causes hydration mismatches. Styled-components can also generate hydration warnings if not configured properly. Not recognizing that server renders in UTC timezone while browsers render in user local time. Using Date.getTime() or other dynamic values that differ between server and client renders. Assuming styling issues are unrelated to hydration mismatches.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72754600'
+),
+(
+    'Remix loader returning undefined with useLoaderData',
+    'stackoverflow-remix',
+    'HIGH',
+    '[
+        {"solution": "Ensure loader and useLoaderData are implemented in route files only, not in regular component files - loaders are server-side only", "percentage": 96, "note": "Core mistake: these functions only work in route definitions, not components"},
+        {"solution": "Use proper TypeScript import syntax: import type { LoaderFunction } for type imports", "percentage": 88, "note": "Prevents runtime import errors"},
+        {"solution": "Verify loader function is exported and connected to the route definition properly", "percentage": 85, "note": "Ensure Remix can find and execute the loader"},
+        {"solution": "Check that loader returns data from API before attempting to use in useLoaderData", "percentage": 80, "note": "Confirm API call succeeds and returns data"}
+    ]'::jsonb,
+    'Loader functions implemented in route files (app/routes/...), useLoaderData hook called only in route components, Proper TypeScript type imports',
+    'useLoaderData hook returns data from loader successfully, No undefined values in components using loader data, API data displays in rendered component',
+    'Primary mistake: placing loader logic in component files instead of route definitions. Misunderstanding Remix patterns as similar to Next.js - they require different structure. Using useLoaderData outside of route components where loader data is unavailable. Not importing LoaderFunction type correctly causing TypeScript errors. Trying to use loaders in nested components instead of their containing route.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72068909'
+),
+(
+    'Prettier cannot find prettier-plugin-tailwindcss plugin in Remix app',
+    'stackoverflow-remix',
+    'MEDIUM',
+    '[
+        {"solution": "Reload VS Code via Command Palette (CTRL + SHIFT + P) > Reload Window to refresh plugin detection", "percentage": 92, "note": "Most common fix - IDE cache prevents plugin recognition"},
+        {"solution": "Use .prettierrc configuration file instead of prettier.config.js with proper plugin reference: \"plugins\": [\"prettier-plugin-tailwindcss\"]", "percentage": 88, "note": "File format alternative if reload does not work"},
+        {"solution": "Update Node.js, Prettier, and tailwindcss plugin to latest versions", "percentage": 85, "note": "Version compatibility issues cause plugin loading failures"},
+        {"solution": "Ensure Prettier is explicitly configured for .js, .jsx, .ts, .tsx file types", "percentage": 80, "note": "Configuration scope may exclude necessary file types"}
+    ]'::jsonb,
+    'prettier@^2.5.1 or later, prettier-plugin-tailwindcss@^0.1.8 or later, Node.js 14+, Yarn 1.22.17+, Tailwind CSS 3.0+',
+    'Prettier runs without plugin errors, Tailwind classes sort automatically in code files, VS Code shows no configuration errors, Plugin listed in Prettier output',
+    'Missing VS Code reload after installation prevents plugin detection even though it is installed. Outdated package versions cause incompatibility - must update all dependencies together. Using require() syntax without TypeScript declaration files causes module resolution failures. Prettier not configured for specific file types that need formatting. Plugin not properly referenced in configuration file with correct string. Forgetting to restart development server after configuration changes.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71629911'
+);

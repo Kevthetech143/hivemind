@@ -1,0 +1,59 @@
+-- Add 5 verified solutions from Stack Overflow and GitHub
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up)
+VALUES
+(
+  'How to use Claude Code with existing Anthropic API key without /login',
+  'authentication',
+  '[{"solution": "Create ~/.claude/settings.json with apiKeyHelper pointing to environment variable", "percentage": 95, "command": "echo ''{ \"apiKeyHelper\": \"bash -c ''source .env && echo $ANTHROPIC_API_KEY''\" }'' > ~/.claude/settings.json", "note": "Store API key in .env file in project root. Verify with /status command showing ''Auth Token: apiKeyHelper''"}]'::jsonb,
+  '/login command requires organizational permissions to create new keys. This workaround allows using existing API keys from console.anthropic.com',
+  0.95,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'VS Code Claude extension SyntaxError Unexpected token C on clean install',
+  'general',
+  '[{"solution": "Run claude command in terminal and select reset with default configuration", "percentage": 100, "command": "claude", "note": "When prompted with configuration error dialog, select ''reset with default configuration''. Tested on Ubuntu 24.04.3 LTS with VS Code 1.104.3 and claude CLI 1.0.128"}]'::jsonb,
+  'Extension v2.0.13 fails with ''SyntaxError: Unexpected token ''C'', "Claude con"... is not valid JSON'' blocking all side panel functionality. Corrupted config file.',
+  1.0,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'API Error 400 invalid beta flag when using Claude 3.5 Haiku with Bedrock',
+  'api',
+  '[{"solution": "Use Claude 3.7 Sonnet instead of 3.5 Haiku or wait for CLI update", "percentage": 90, "command": "ANTHROPIC_MODEL=''us.anthropic.claude-3-7-sonnet-20250219-v1:0'' claude -p hi", "note": "CLI unconditionally adds token-efficient-tools beta header. Haiku doesn''t support this beta. Sonnet 3.7 works fine."}]'::jsonb,
+  'Claude CLI always adds beta header for Sonnet 3.7 features. 3.5 Haiku lacks token-efficient-tools beta support so request fails before reaching model.',
+  0.90,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'MCP HTTP/SSE transport ignores authentication headers always uses OAuth2',
+  'mcp-troubleshooting',
+  '[{"solution": "Add X-API-Key header alongside Authorization header to bypass OAuth flow", "percentage": 80, "command": "Add to .mcp.json: \"headers\": {\"X-API-Key\": \"your-key\", \"Authorization\": \"Bearer token\"}", "note": "User-confirmed workaround. Issue #7290 still open as of v1.0.108. Forces non-OAuth path."}]'::jsonb,
+  'Regression from v1.0.40. Both http and sse transport types ignore configured auth headers and attempt OAuth2 Dynamic Client Registration. Related: #2831, #6204, #5960',
+  0.80,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS environment variable not honored in settings.json',
+  'general',
+  '[{"solution": "Use command-line environment variable until settings.json fix ships", "percentage": 90, "command": "export CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1", "note": "Maintainer confirmed fix coming in next release after v2.0.36. Issue #11960. Command-line workaround works immediately."}]'::jsonb,
+  'Regression from v2.0.36. Setting env vars in settings.json under env section has no effect. Command-line export works fine.',
+  0.90,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+);

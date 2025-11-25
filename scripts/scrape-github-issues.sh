@@ -5,9 +5,7 @@
 set -euo pipefail
 
 REPO="anthropics/claude-code"
-BATCH_SIZE=30  # Small batches to avoid rate limits
-DELAY=2        # Seconds between batches
-MAX_ISSUES=300 # Total limit
+MAX_ISSUES=300 # Total limit (gh max is 1000)
 OUTPUT_DIR="./scraped-issues"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
@@ -50,92 +48,42 @@ fi
 
 check_rate_limit
 
-log "Scraping up to $MAX_ISSUES issues in batches of $BATCH_SIZE"
-log "Delay between batches: ${DELAY}s"
+log "Fetching up to $MAX_ISSUES closed issues..."
 log "Output directory: $OUTPUT_DIR"
 
-# Calculate number of batches
-BATCHES=$(( (MAX_ISSUES + BATCH_SIZE - 1) / BATCH_SIZE ))
-SCRAPED=0
+OUTPUT_FILE="$OUTPUT_DIR/all-issues-${TIMESTAMP}.json"
 
-for ((i=1; i<=BATCHES; i++)); do
-  PAGE=$i
-  OUTPUT_FILE="$OUTPUT_DIR/batch_${i}_${TIMESTAMP}.json"
+# Fetch with retry logic
+RETRY_COUNT=0
+MAX_RETRIES=3
 
-  log "Batch $i/$BATCHES: Fetching $BATCH_SIZE issues..."
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if gh issue list \
+    --repo "$REPO" \
+    --state closed \
+    --limit "$MAX_ISSUES" \
+    --json number,title,body,labels,comments,closedAt \
+    > "$OUTPUT_FILE" 2>&1; then
 
-  # Fetch batch with retry logic
-  RETRY_COUNT=0
-  MAX_RETRIES=3
-
-  while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if gh issue list \
-      --repo "$REPO" \
-      --state closed \
-      --limit "$BATCH_SIZE" \
-      --json number,title,body,labels,comments,closedAt \
-      --page "$PAGE" \
-      > "$OUTPUT_FILE" 2>/dev/null; then
-
-      # Count issues in batch
-      BATCH_COUNT=$(jq 'length' "$OUTPUT_FILE")
-
-      if [ "$BATCH_COUNT" -eq 0 ]; then
-        log "No more issues to fetch"
-        rm "$OUTPUT_FILE"
-        break 2
-      fi
-
-      SCRAPED=$((SCRAPED + BATCH_COUNT))
-      WITH_COMMENTS=$(jq '[.[] | select(.comments | length > 0)] | length' "$OUTPUT_FILE")
-
-      log "✓ Fetched $BATCH_COUNT issues ($WITH_COMMENTS with comments)"
-      log "Total scraped: $SCRAPED"
-
-      # Check rate limit every 3 batches
-      if [ $((i % 3)) -eq 0 ]; then
-        REMAINING=$(gh api rate_limit --jq '.resources.core.remaining')
-        log "Rate limit remaining: $REMAINING"
-
-        if [ "$REMAINING" -lt 50 ]; then
-          warn "Rate limit low. Stopping early to be safe."
-          break 2
-        fi
-      fi
-
-      break
-    else
-      RETRY_COUNT=$((RETRY_COUNT + 1))
-      warn "Request failed. Retry $RETRY_COUNT/$MAX_RETRIES..."
-      sleep $((DELAY * RETRY_COUNT))
-    fi
-  done
-
-  if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    error "Failed after $MAX_RETRIES retries"
-    exit 1
-  fi
-
-  # Stop if we hit max
-  if [ "$SCRAPED" -ge "$MAX_ISSUES" ]; then
-    log "Reached maximum ($MAX_ISSUES issues)"
+    log "✓ Fetch successful"
     break
-  fi
-
-  # Delay between batches
-  if [ $i -lt $BATCHES ]; then
-    sleep "$DELAY"
+  else
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    warn "Request failed. Retry $RETRY_COUNT/$MAX_RETRIES..."
+    sleep $((2 * RETRY_COUNT))
   fi
 done
 
-# Merge all batch files
-log "Merging batches..."
-jq -s 'add' "$OUTPUT_DIR"/batch_*.json > "$OUTPUT_DIR/all-issues-${TIMESTAMP}.json"
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+  error "Failed after $MAX_RETRIES retries"
+  cat "$OUTPUT_FILE" 2>/dev/null || true
+  exit 1
+fi
 
 # Stats
-TOTAL=$(jq 'length' "$OUTPUT_DIR/all-issues-${TIMESTAMP}.json")
-SOLVED=$(jq '[.[] | select(.comments | length > 0)] | length' "$OUTPUT_DIR/all-issues-${TIMESTAMP}.json")
-BUGS=$(jq '[.[] | select(.labels | map(.name) | contains(["bug"]))] | length' "$OUTPUT_DIR/all-issues-${TIMESTAMP}.json")
+TOTAL=$(jq 'length' "$OUTPUT_FILE")
+SOLVED=$(jq '[.[] | select(.comments | length > 0)] | length' "$OUTPUT_FILE")
+BUGS=$(jq '[.[] | select(.labels | map(.name) | contains(["bug"]))] | length' "$OUTPUT_FILE")
 
 log ""
 log "✅ Scraping complete!"
@@ -144,7 +92,7 @@ log "Total issues: $TOTAL"
 log "With comments: $SOLVED ($(( SOLVED * 100 / TOTAL ))%)"
 log "Bug reports: $BUGS"
 log ""
-log "Output: $OUTPUT_DIR/all-issues-${TIMESTAMP}.json"
+log "Output: $OUTPUT_FILE"
 
 # Check final rate limit
 FINAL_REMAINING=$(gh api rate_limit --jq '.resources.core.remaining')
@@ -160,7 +108,7 @@ jq '[.[] | select(.comments | length > 0)] | .[0] | {
   title,
   labels: [.labels[].name],
   comments_count: .comments | length
-}' "$OUTPUT_DIR/all-issues-${TIMESTAMP}.json"
+}' "$OUTPUT_FILE"
 
 log ""
 log "Next: Run transform script to convert to clauderepo format"

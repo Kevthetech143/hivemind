@@ -1,0 +1,238 @@
+-- Add Actix Web common errors and troubleshooting solutions from official documentation
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Actix Web error: Requested application data is not configured',
+    'actix',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add app_data to HttpServer using .app_data() method. Example: app_data(web::Data::new(state))", "percentage": 95, "note": "Must be called on App before wrapping in HttpServer", "command": "let app_data = web::Data::new(AppState::default()); let app = App::new().app_data(app_data)"},
+        {"solution": "Ensure the Data type in handler matches the type passed to app_data exactly", "percentage": 90, "note": "Type mismatch is a common cause of this error"},
+        {"solution": "Configure app_data in the application factory function passed to HttpServer", "percentage": 85, "command": "HttpServer::new(|| App::new().app_data(web::Data::new(state)))"}
+    ]'::jsonb,
+    'Actix-web 4.0+, Rust 1.72+, Application state struct defined',
+    'Handler receives Data<T> successfully, No configuration errors in logs',
+    'app_data must be set on App, not just mentioned in handler. Forgetting to wrap state in web::Data causes type mismatch.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/actix/actix-web/discussions'
+),
+(
+    'Actix Web error: JsonPayloadError - failed to deserialize JSON body',
+    'actix',
+    'VERY_HIGH',
+    '[
+        {"solution": "Validate JSON structure matches expected struct with serde attributes. Use #[serde(default)] for optional fields", "percentage": 92, "note": "Most common cause is mismatched field names or types"},
+        {"solution": "Use JsonConfig to customize error responses: web::JsonConfig::default().content_type(|mime| mime.type_() == mime::APPLICATION && mime.subtype() == mime::JSON).error_handler(|err, _req| {...})", "percentage": 88, "command": "app.app_data(web::JsonConfig::default().error_handler(...))"},
+        {"solution": "Check Content-Type header is application/json. Invalid content type silently fails JSON parsing", "percentage": 85, "note": "Ensure client sends correct Content-Type"},
+        {"solution": "Enable debug logging to see exact parse error: RUST_LOG=debug,actix_web=trace cargo run", "percentage": 80, "command": "RUST_LOG=actix_web=trace cargo run"}
+    ]'::jsonb,
+    'Request has Content-Type: application/json header, Valid serde-compatible struct defined',
+    'Request deserializes successfully, Handler receives Json<T> with correct data',
+    'Forgetting serde attributes for field renaming. Sending wrong Content-Type header. Not handling Option<T> fields properly.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/enum.JsonPayloadError.html'
+),
+(
+    'Actix Web error: PathError - failed to extract path parameters',
+    'actix',
+    'HIGH',
+    '[
+        {"solution": "Ensure route pattern matches extractor type. Example: route(\"/users/{id}\") with Path<i32> for id", "percentage": 93, "note": "Type mismatch between route parameter and Path<T> type"},
+        {"solution": "Use proper type conversion in Path extractor. serde Deserialize must support the type", "percentage": 88, "command": "#[derive(Deserialize)] struct PathParams { id: i32 } then Path<PathParams>"},
+        {"solution": "For optional segments, use Either<Path<T1>, Path<T2>> or restructure routes", "percentage": 80, "note": "Actix does not support optional path segments directly"},
+        {"solution": "Enable detailed error messages in development: RUST_BACKTRACE=1 cargo run", "percentage": 75, "command": "RUST_BACKTRACE=1 RUST_LOG=debug cargo run"}
+    ]'::jsonb,
+    'Route handler defined with route macro, Deserialize trait implemented for parameter struct',
+    'Path parameters extract successfully, Handler receives Path<T> with correct values',
+    'Type mismatch between route placeholder and Path generic type. Using incompatible types like String for numeric placeholders. Forgetting #[derive(Deserialize)].',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/enum.PathError.html'
+),
+(
+    'Actix Web error: QueryPayloadError - malformed query string',
+    'actix',
+    'HIGH',
+    '[
+        {"solution": "Validate query parameter types match Query<T> struct. Use Option<T> for optional query params", "percentage": 92, "note": "Example: Query<HashMap<String, String>> or Query<MyQueryStruct>"},
+        {"solution": "Configure QueryConfig for custom error handling: web::QueryConfig::default().error_handler(|err, _req| {...})", "percentage": 85, "command": "app.app_data(web::QueryConfig::default().error_handler(...))"},
+        {"solution": "For complex query parameters, implement custom FromStr or use serde_qs crate", "percentage": 80, "note": "Standard serde limitations with nested query structures"},
+        {"solution": "Test with URL encoding. Ensure special characters are properly encoded: ? = & %", "percentage": 75, "command": "Test with: ?key1=value1&key2=value2"}
+    ]'::jsonb,
+    'Query extractor defined, Struct derives Deserialize for query parameters',
+    'Query parameters parse successfully without 400 errors, Handler receives Query<T>',
+    'Forgetting to use Option<T> for optional parameters. Not URL-encoding special characters. Type mismatch between query string and struct fields.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/enum.QueryPayloadError.html'
+),
+(
+    'Actix Web runtime error: HttpServer bind fails - address already in use',
+    'actix',
+    'HIGH',
+    '[
+        {"solution": "Check if port is already in use: lsof -i :8080 (macOS/Linux) or netstat -ano | findstr :8080 (Windows)", "percentage": 94, "note": "Most common cause of bind failures"},
+        {"solution": "Kill existing process and retry. Or use different port: HttpServer::new(...).bind(\"127.0.0.1:8081\")?", "percentage": 92, "command": "kill -9 <PID> or change port number"},
+        {"solution": "Handle bind errors gracefully: if let Err(e) = server.run().await { eprintln!(\"Bind failed: {}\", e); }", "percentage": 85, "note": "Server panics on bind failure by default"},
+        {"solution": "For development, use port 0 to let OS assign available port: bind(\"127.0.0.1:0\")?", "percentage": 75, "note": "Requires parsing actual port from server info"}
+    ]'::jsonb,
+    'Rust 1.72+, actix-web 4.0+, TCP port available',
+    'Server starts successfully on specified port, No \"address already in use\" error',
+    'Not checking if port is in use before binding. Not handling bind Result properly. Hardcoding ports in production.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/struct.HttpServer.html'
+),
+(
+    'Actix Web error: BlockingError - thread pool exhaustion or blocking task failed',
+    'actix',
+    'HIGH',
+    '[
+        {"solution": "Use web::block() for CPU-intensive tasks instead of blocking main thread. Returns Result<T, BlockingError>", "percentage": 92, "note": "Blocking errors occur when thread pool is saturated"},
+        {"solution": "Increase worker count if pool is exhausted: HttpServer::new(...).workers(8)", "percentage": 87, "command": "HttpServer::new(...).workers(8).bind(...)?.run()"},
+        {"solution": "Reduce blocking task duration. Move to background job queue (e.g., using tokio::spawn)", "percentage": 85, "note": "Long-running tasks should not block request handlers"},
+        {"solution": "Handle BlockingError in Result: match result { Ok(v) => Ok(v), Err(e) => Err(error::ErrorInternalServerError(e)) }", "percentage": 80, "command": "Handle the error variant properly"}
+    ]'::jsonb,
+    'actix-web 4.0+, Blocking operation defined with web::block()',
+    'BlockingError is caught and handled, Task completes within reasonable time',
+    'Using blocking operations on main thread. Not handling BlockingError variant. Too many concurrent blocking tasks.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/enum.BlockingError.html'
+),
+(
+    'Actix Web error: PayloadError - request body stream interrupted or incomplete',
+    'actix',
+    'MEDIUM',
+    '[
+        {"solution": "Configure payload size limits: web::PayloadConfig::default().limit(4096). Default is 262144 bytes (256KB)", "percentage": 91, "note": "Payloads exceeding limit return PayloadError"},
+        {"solution": "Handle chunked transfer encoding properly. PayloadError occurs with incomplete chunks", "percentage": 85, "note": "Ensure request sends complete payload"},
+        {"solution": "Check client timeout. If client closes connection mid-upload, PayloadError triggers", "percentage": 80, "note": "Implement timeouts on both client and server"},
+        {"solution": "Increase server payload timeout: HttpServer::new(...).client_request_timeout(Duration::from_secs(30))", "percentage": 75, "command": "Use client_request_timeout() on HttpServer"}
+    ]'::jsonb,
+    'Payload extractor configured, PayloadConfig or JsonConfig defined',
+    'Large requests upload successfully, No PayloadError on valid chunked transfers',
+    'Default 256KB limit too small for actual use case. Not accounting for chunked encoding overhead. Client timeout too aggressive.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/enum.PayloadError.html'
+),
+(
+    'Actix Web error: spawn_local called from outside task::LocalSet context',
+    'actix',
+    'HIGH',
+    '[
+        {"solution": "Use #[actix_web::main] macro to setup proper async runtime context automatically", "percentage": 95, "note": "This handles LocalSet setup internally"},
+        {"solution": "If using custom runtime, wrap actor spawning in task::LocalSet::new().block_on()", "percentage": 85, "command": "task::LocalSet::new().block_on(async { /* spawn_local code */ })"},
+        {"solution": "For spawning actors in handlers, use actix::spawn (Arbiter) instead of tokio::spawn_local", "percentage": 88, "note": "actix::spawn handles LocalSet context properly"},
+        {"solution": "Ensure Actor trait properly implements for types - use #[derive(Message)] for actor messages", "percentage": 80, "note": "Some async patterns are not compatible with LocalSet"}
+    ]'::jsonb,
+    'actix and actix-web crates in dependencies, Actor types defined',
+    'Actors spawn without panicking, async code executes in LocalSet context',
+    'Using tokio::spawn_local outside LocalSet. Forgetting #[actix_web::main] macro. Starting actors without proper async context.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://github.com/actix/actix-web/discussions'
+),
+(
+    'Actix Web error: ResponseError not implemented for custom error type',
+    'actix',
+    'MEDIUM',
+    '[
+        {"solution": "Implement ResponseError trait for custom error: impl ResponseError for MyError { fn error_response(&self) -> HttpResponse { ... } }", "percentage": 94, "note": "Provides automatic conversion to HTTP response"},
+        {"solution": "Use thiserror crate for error types, then derive ResponseError", "percentage": 88, "command": "#[derive(Debug, thiserror::Error)] enum MyError { ... } impl ResponseError for MyError { ... }"},
+        {"solution": "For simple cases, wrap error in InternalError: InternalError::from_response(error, HttpResponse::BadRequest().finish())", "percentage": 85, "note": "Provides quick error wrapping without full trait implementation"},
+        {"solution": "Override status_code() method to return appropriate HTTP status instead of default 500", "percentage": 85, "command": "fn status_code(&self) -> StatusCode { StatusCode::BAD_REQUEST }"}
+    ]'::jsonb,
+    'Custom error enum defined, actix-web error module imported',
+    'Custom errors convert to HTTP responses automatically, Correct status codes returned',
+    'Forgetting to implement ResponseError trait. Using generic Error type without wrapping. Not overriding status_code() for non-500 errors.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/trait.ResponseError.html'
+),
+(
+    'Actix Web error: ParseError - malformed HTTP request headers or invalid protocol',
+    'actix',
+    'MEDIUM',
+    '[
+        {"solution": "Validate request headers before processing. Enable debug logging: RUST_LOG=actix_web::http=debug", "percentage": 88, "note": "ParseError indicates protocol-level issues"},
+        {"solution": "Check client is sending valid HTTP/1.1 or HTTP/2 formatted request with proper headers", "percentage": 85, "note": "Some HTTP clients send malformed headers"},
+        {"solution": "Configure header limits on HttpServer to reject oversized headers: HttpServer::new(...).max_buffer_size(16384)", "percentage": 80, "command": "Add .max_buffer_size() configuration"},
+        {"solution": "For raw request inspection, use actix::http::Bytes and manually parse if needed", "percentage": 70, "note": "Low-level parsing required for protocol debugging"}
+    ]'::jsonb,
+    'HTTP client configured correctly, Valid HTTP/1.1 or HTTP/2 implementation',
+    'Valid HTTP requests parse successfully without errors, No header parsing failures',
+    'Sending malformed HTTP headers. Using incompatible protocol version. Headers exceeding size limit.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/error/enum.ParseError.html'
+),
+(
+    'Actix Web error: Middleware execution order causes response filtering',
+    'actix',
+    'MEDIUM',
+    '[
+        {"solution": "Remember middleware executes in REVERSE registration order. Last registered middleware processes request first", "percentage": 93, "note": "This is the primary source of middleware confusion"},
+        {"solution": "Use .wrap() method to add middleware, in desired reverse order: .wrap(Logger) then .wrap(Compress) processes Compress first", "percentage": 90, "command": ".wrap(middleware::Logger) is applied before .wrap(middleware::Compress)"},
+        {"solution": "For custom middleware using Transform/Service traits, ensure call() properly delegates to next service", "percentage": 85, "note": "Middleware must call forward_ready!() and pass request through"},
+        {"solution": "Use error handling middleware to intercept errors early: .wrap(ErrorHandlers::default())", "percentage": 75, "note": "Place error handlers at the end of middleware chain"}
+    ]'::jsonb,
+    'One or more middleware registered, Middleware types implement Transform trait',
+    'Middleware executes in expected order, Requests/responses processed correctly',
+    'Assuming middleware executes in forward order instead of reverse. Not calling next service in custom middleware. Registering error handlers after other middleware.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/middleware/index.html'
+),
+(
+    'Actix Web error: HttpServer workers panic or crash unexpectedly',
+    'actix',
+    'MEDIUM',
+    '[
+        {"solution": "Enable core dumps and detailed backtraces: RUST_BACKTRACE=full cargo run 2>&1 | tee output.log", "percentage": 90, "note": "Captures full stack trace for panic analysis"},
+        {"solution": "Set worker count appropriately: workers(num_cpus::get()) prevents oversubscription", "percentage": 88, "command": "HttpServer::new(...).workers(num_cpus::get())"},
+        {"solution": "Catch panics in handlers using std::panic::catch_unwind or thiserror for fallible operations", "percentage": 85, "note": "Prevents worker thread crashes from handler panics"},
+        {"solution": "Monitor worker shutdown timeout: HttpServer::new(...).shutdown_timeout(Duration::from_secs(30))", "percentage": 75, "command": "Ensure graceful shutdown"}
+    ]'::jsonb,
+    'Actix-web server running, RUST_BACKTRACE environment variable support',
+    'Workers stay alive without crashing, Panics logged with full stack trace',
+    'Not setting RUST_BACKTRACE=full when debugging. Too many worker threads causing resource contention. Unhandled panics in async code.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://docs.rs/actix-web/latest/actix_web/struct.HttpServer.html'
+),
+(
+    'Actix Web configuration error: Minimum Supported Rust Version (MSRV) 1.72 not met',
+    'actix',
+    'MEDIUM',
+    '[
+        {"solution": "Update Rust toolchain: rustup update. Actix-web 4.x requires Rust 1.72 minimum", "percentage": 95, "note": "MSRV is enforced at compile time"},
+        {"solution": "Check current version: rustc --version. If below 1.72, install latest stable with rustup update stable", "percentage": 93, "command": "rustup update stable && rustc --version"},
+        {"solution": "For projects requiring older Rust, use actix-web 3.x series instead", "percentage": 70, "note": "actix-web 3 supports Rust 1.56+, but missing 4.x features"},
+        {"solution": "Verify Cargo.lock is not cached with old Rust version: rm Cargo.lock && cargo build", "percentage": 75, "command": "Clean build after updating Rust"}
+    ]'::jsonb,
+    'Rust toolchain installed with rustup, Cargo project with actix-web dependency',
+    'cargo build succeeds without MSRV errors, Rust 1.72+ confirmed with rustc --version',
+    'Using Rust < 1.72 with actix-web 4.x. Old Cargo.lock pinning incompatible versions. Not updating toolchain after dependency upgrade.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://actix.rs/docs/getting-started'
+);

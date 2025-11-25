@@ -1,0 +1,199 @@
+-- Add Stack Overflow Jotai (state management) solutions batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES
+(
+    'Jotai - Update a async loadable atom',
+    'stackoverflow-jotai',
+    'HIGH',
+    '[
+        {"solution": "Separate concerns by creating a base atom holding response data and a write-only setter atom that performs async fetch and updates base atom", "percentage": 90, "note": "Avoids wrapping with loadable() which makes setter unavailable"},
+        {"solution": "Call refreshData() on demand to trigger refetches instead of reactive loading", "percentage": 85, "note": "Manual refetch pattern works better than reactive pattern for loadable atoms"},
+        {"solution": "Use atom(null) for base response and atom(null, async (get, set) => ...) for write-only fetch function", "percentage": 80, "command": "const setAsyncAtom = atom(null, async (get, set) => { const res = await fetch(...).json(); set(responseAsync, res); })"}
+    ]'::jsonb,
+    'Understanding Jotai atom structure, Familiarity with async patterns',
+    'Successfully triggering data refetches on demand without TypeScript errors, Loadable atom state updates correctly',
+    'Do not wrap async atoms directly with loadable() as it prevents external updates. Wrapping makes setter unavailable. Use separate base atom instead.',
+    0.90,
+    NOW(),
+    'https://stackoverflow.com/questions/74500870/jotai-update-a-async-loadable-atom'
+),
+(
+    'Storing function as jotai atom',
+    'stackoverflow-jotai',
+    'HIGH',
+    '[
+        {"solution": "Wrap the function in an object structure: atom({ fn: () => yourFunction })", "percentage": 92, "note": "Official recommended approach from Jotai library creator"},
+        {"solution": "Create derived readable/writable atoms from the object wrapper using atom getter and setter patterns", "percentage": 88, "note": "Provides both read and write operations"},
+        {"solution": "Use higher-order function pattern to wrap function storage in computed atoms", "percentage": 80, "note": "Alternative approach for dynamic function updates"}
+    ]'::jsonb,
+    'Basic Jotai knowledge, Understanding of React hooks (useAtom), Familiarity with atom creation patterns',
+    'Functions callable after retrieval from useAtom hook, Updates possible without errors, Both read and write operations functional',
+    'Direct function storage causes Jotai to treat it as read operation. Attempting updates to function-valued atoms produces "not writable atom" errors. Native pattern fails because Jotai intercepts function values.',
+    0.92,
+    NOW(),
+    'https://stackoverflow.com/questions/73449599/storing-function-as-jotai-atom'
+),
+(
+    'Imports with Jotai and create react app failing: Cannot find module',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Use barrel export from utils: import { useHydrateAtoms } from \"jotai/react/utils\"", "percentage": 95, "note": "Correct import path that works with Create React App"},
+        {"solution": "Do not attempt subpath imports like jotai/react/utils/useHydrateAtoms as type definitions exist there but actual implementation is in utils.js", "percentage": 90, "note": "Jest moduleDirectories configuration may not help due to CRA restrictions"},
+        {"solution": "Verify jotai package is installed and node_modules is up to date", "percentage": 85, "command": "npm install jotai"}
+    ]'::jsonb,
+    'Node.js/npm environment, jotai package installed, Create React App with TypeScript template, Jest testing setup',
+    'Import resolves without errors, Function becomes accessible within test files, No module resolution errors',
+    'Subpath imports do not correspond to actual file locations in packages. Create React App disallows Jest configuration overrides in package.json. Avoid custom Jest moduleDirectories config.',
+    0.95,
+    NOW(),
+    'https://stackoverflow.com/questions/77030671/imports-with-jotai-and-create-react-app-failing'
+),
+(
+    'TypeScript Error: Cannot Find Name SetAtom When Using Jotai',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Create custom generic type definition since SetAtom is not exported: type SetAtom<Args extends any[], Result> = (...args: Args) => Result", "percentage": 93, "note": "Official solution for typing setter functions"},
+        {"solution": "Apply custom SetAtom type to hook interface for proper TypeScript compilation", "percentage": 90, "note": "Allows type checking of SetStateAction parameters"},
+        {"solution": "Define type as part of custom hook interface rather than using non-existent Jotai export", "percentage": 85, "command": "setShowModal: SetAtom<[SetStateAction<ModalType>], void>"}
+    ]'::jsonb,
+    'Understanding of TypeScript generics and type annotations, Familiarity with Jotai useAtom hook API, Knowledge of React custom hooks',
+    'TypeScript compiler accepts type annotation without throwing TS2304 error, Code compiles successfully, IDE shows proper type hints',
+    'SetAtom is not exported from Jotai core. Do not attempt to import directly. Custom types must match your specific setter function signature.',
+    0.93,
+    NOW(),
+    'https://stackoverflow.com/questions/77346295/typescript-error-cannot-find-name-setatom-when-using-jotai'
+),
+(
+    'How to read data from an array of atoms in Jotai state management',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Use derived atom pattern backed by list of other atoms for collective updates instead of individual element updates", "percentage": 88, "note": "Only viable approach for array atom management"},
+        {"solution": "Do not use hooks like useAtom inside handleSubmit or non-React functions - violates React hooks rules", "percentage": 85, "note": "Hooks can only be called at top-level of components"},
+        {"solution": "Avoid looping useAtom calls over array items - create single derived atom instead", "percentage": 80, "note": "Prevents hooks rule violations and improves performance"}
+    ]'::jsonb,
+    'Understanding of React hooks, Familiarity with Jotai state management basics, Knowledge of derived atom patterns',
+    'Successfully managing array atom updates through derived atoms, No warnings about hooks violations, Data consolidation works correctly',
+    'Cannot put useAtom in loops - violates React hooks rules. Cannot use hooks inside event handlers like handleSubmit. Attempting to update individual array elements with hooks is not supported.',
+    0.88,
+    NOW(),
+    'https://stackoverflow.com/questions/73925283/how-to-read-data-from-an-array-of-atoms-in-jotai-state-management-library'
+),
+(
+    'Nav Menu Active Element and State Management Issue with React Router',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Replace anchor elements with NavLink components from react-router-dom for proper client-side routing", "percentage": 92, "note": "Prevents full page reloads and preserves state"},
+        {"solution": "Use as={NavLink} prop on Nav.Link and replace href with to prop, set eventKey to match link target", "percentage": 90, "note": "Proper integration of react-bootstrap with react-router"},
+        {"solution": "Include end prop on home route (to=\"/\") to prevent matching descendant paths and causing false active matches", "percentage": 88, "command": "<Nav.Link as={NavLink} to=\"/\" end eventKey=\"/\">"}
+    ]'::jsonb,
+    'React Router DOM installed, Understanding of client-side routing vs server-side navigation, Knowledge of react-bootstrap component composition',
+    'Navigation remains responsive without white flashing, Active pill styling persists when navigating between routes, Browser history functions correctly',
+    'Using native anchor elements triggers full page reloads. Confusing react-bootstrap navigation with react-router navigation. Missing end prop on root path causes false active matches. Improper eventKey matching prevents active state styling.',
+    0.92,
+    NOW(),
+    'https://stackoverflow.com/questions/74382650/nav-menu-active-element-and-state-management-issue'
+),
+(
+    'Next.js 13 Jotai useHydrateAtoms hook causes UI mismatch',
+    'stackoverflow-jotai',
+    'HIGH',
+    '[
+        {"solution": "Move useHydrateAtoms hook to the top of component tree to ensure all children render with consistent values during hydration", "percentage": 91, "note": "Primary solution for hydration mismatches"},
+        {"solution": "Avoid dynamically imported client components with ssr: false when consuming hydrated state as they render before state initializes", "percentage": 88, "note": "Dynamic imports with ssr:false cause value changes on first render"},
+        {"solution": "Restructure component hierarchy so hydration logic is not deep in tree where some children render before state initializes", "percentage": 85, "note": "Ensures consistent component tree during hydration"}
+    ]'::jsonb,
+    'Understanding React hydration and component tree structure, Next.js 13 app directory, Jotai state management',
+    'No hydration errors, UI matches between server and client renders, All components render with consistent state values',
+    'Do not use dynamic imports with ssr:false while accessing hydrated state - causes mismatches. Placing hydration logic too deep in component tree allows children to render before state initializes. useHydrateAtoms must be at tree top.',
+    0.91,
+    NOW(),
+    'https://stackoverflow.com/questions/76430039/next-js-13-jotais-usehydrateatoms-hook-causes-a-ui-missmatch'
+),
+(
+    'React: Jotai handling Promise inside atom()',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Use await with async atom function to resolve Promise before applying array methods: atom(async (get) => { const all = await get(allPokemon); return all.filter(...); })", "percentage": 93, "note": "Proper async pattern in Jotai 2.x"},
+        {"solution": "Make atom async when dealing with Promise returns from dependencies instead of treating as synchronous value", "percentage": 90, "note": "Jotai 2.x returns Promise | T, requires await"},
+        {"solution": "Do not attempt to use useAtom hook inside atom definition - violates React hooks rules and does not work", "percentage": 85, "note": "Common mistake from version 1.x patterns"}
+    ]'::jsonb,
+    'Jotai state management library, React application, TanStack Query integration with Jotai (optional), Async/await understanding',
+    'TypeScript error resolves, Filter operations execute without type errors, Promise resolves before array method invocation',
+    'Attempting to call useAtom within atom definition violates React hooks rules and fails. Making atom async affects downstream components requiring async handling. Do not mix sync and async patterns.',
+    0.93,
+    NOW(),
+    'https://stackoverflow.com/questions/76234066/react-jotai-how-to-handle-promise-inside-atom'
+),
+(
+    'How to make a local atom available in the whole child component tree',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Use jotai-scope library specifically designed for scoped atoms that override parent values within subtrees", "percentage": 90, "note": "Official dedicated library for this use case"},
+        {"solution": "Combine atom families with Context API to distribute unique ID without full prop drilling", "percentage": 85, "note": "Works well for customer-specific or branch-specific state"},
+        {"solution": "Create atoms dynamically in components and distribute via React Context with useMemo to maintain immutability", "percentage": 80, "command": "const AtomContext = createContext(undefined); const someAtom = useMemo(() => atom(0), [])"}
+    ]'::jsonb,
+    'React Context API knowledge, Jotai fundamentals, Understanding of atom families, TypeScript familiarity for type safety',
+    'Child components access scoped atoms without prop drilling, State remains isolated per subtree, No unnecessary re-renders from immutable memo',
+    'Prop drilling through every intermediate component is tedious and error-prone. Multiple Providers may isolate global atoms unintentionally. Context API alone cannot distribute atoms - needs with atom families or dynamic creation.',
+    0.90,
+    NOW(),
+    'https://stackoverflow.com/questions/75885535/how-to-make-a-local-atom-availble-in-the-whole-child-component-tree'
+),
+(
+    'Formik state change performance issue with debounced calculations',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Replace Formik with react-hook-form which uses subscriptions and uncontrolled forms for better performance", "percentage": 88, "note": "Significantly faster than Formik for complex calculations"},
+        {"solution": "Use React 18 useTransition() to keep UI responsive during expensive calculations without debounce delay", "percentage": 82, "note": "Defers rendering updates to maintain responsiveness"},
+        {"solution": "Implement useDeferredValue() for deferred expensive calculations based on remaining workload", "percentage": 80, "note": "Prioritizes user input over calculation rendering"},
+        {"solution": "Wrap components like FormikInput with React.memo() to prevent unnecessary re-renders", "percentage": 78, "command": "const FormikInput = React.memo(({ field, form }) => ...)"}
+    ]'::jsonb,
+    'React with Material-UI components, Understanding of Formik FieldArray, Form state management knowledge, React 18 features (optional)',
+    'TextField input experience noticeably smoother, Reduced form re-render cycles, Faster response to user input without delays',
+    'Storing calculated values in Formik state unnecessarily causes re-renders. Excessive .toFixed() and Number() conversions during calculations add overhead. Debounce introduces artificial delays regardless of actual computation time. Formik controlled forms re-render on every change.',
+    0.88,
+    NOW(),
+    'https://stackoverflow.com/questions/76843883/formik-state-change'
+),
+(
+    'Why Jotai makes a component infinitely re-render when atom defined as function with parameter',
+    'stackoverflow-jotai',
+    'HIGH',
+    '[
+        {"solution": "Wrap atom creation in useMemo with proper dependencies to maintain referential equality: const marineHeaderAtom = useMemo(() => marineHeaderObject(langState), [langState])", "percentage": 94, "note": "Essential for dynamic atom creation"},
+        {"solution": "Define atoms outside functional components to establish stable references instead of creating new instances per render", "percentage": 89, "note": "Static atoms avoid re-creation on every render"},
+        {"solution": "Understand that atoms need stable references - each new atom instance triggers continuous updates causing infinite re-renders", "percentage": 85, "note": "Core principle of Jotai atom referential equality"}
+    ]'::jsonb,
+    'Understanding of React hooks (useMemo), Jotai state management, Knowledge of referential equality, React component lifecycle',
+    'Component renders only when language state actually changes, No Maximum update depth exceeded error, Proper atom reference stability maintained',
+    'Creating atoms dynamically inside components breaks referential equality. Each render creates new atom instance triggering continuous updates. Maximum update depth exceeded error indicates atom creation in render loop. Use useMemo or define atoms outside components.',
+    0.94,
+    NOW(),
+    'https://stackoverflow.com/questions/73746466/why-jotai-makes-a-component-infinitely-re-render-when-i-define-the-related-atom'
+),
+(
+    'Nextjs Server component data reload from client component trigger',
+    'stackoverflow-jotai',
+    'MEDIUM',
+    '[
+        {"solution": "Accept that server components require re-querying - leverage Next.js Server Actions pattern for mutations from client components", "percentage": 87, "note": "Server Actions maintain server-side logic while allowing client triggers"},
+        {"solution": "Convert to client components with state management for interactive updates and use optimistic UI patterns", "percentage": 82, "note": "Client components can update state directly without re-querying"},
+        {"solution": "Understand server component architecture - they render to HTML on each request without client-side state synchronization", "percentage": 80, "note": "Server components cannot avoid re-querying due to template-like nature"}
+    ]'::jsonb,
+    'Understanding Next.js App Router architecture, Knowledge of server vs client component distinctions, Familiarity with parallel routes, Server Actions familiarity',
+    'Data updates reflect immediately in UI after client-triggered mutations, Server Actions execute server-side logic, Parallel routes display updated data',
+    'Server components function like templating engines - updating them requires refreshing. Attempting to avoid database re-queries conflicts with server component architecture. Cannot pass data directly from client to server component without request.',
+    0.87,
+    NOW(),
+    'https://stackoverflow.com/questions/78041611/nextjs-how-to-re-get-data-in-server-component-when-triggered-from-client-compone'
+);

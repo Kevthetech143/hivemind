@@ -1,0 +1,59 @@
+-- Add 5 more GitHub-sourced solutions directly to knowledge_entries
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, thumbs_up)
+VALUES
+(
+  'Organization has been disabled error when using ANTHROPIC_API_KEY',
+  'authentication',
+  '[{"solution": "Remove ANTHROPIC_API_KEY environment variable to use subscription credentials", "percentage": 95, "command": "unset ANTHROPIC_API_KEY", "note": "Remove export ANTHROPIC_API_KEY from .bashrc/.zshrc for permanent fix"}]'::jsonb,
+  'API key environment variable overrides subscription auth. Old organizational keys from employers/schools cause this when organization gets disabled.',
+  0.95,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'sudo chown chmod /usr command bricked system',
+  'security',
+  '[{"solution": "NEVER run sudo chown -R $USER /usr or sudo chmod -R u+w /usr - breaks sudo and system security", "percentage": 100, "note": "Use user-accessible npm prefix instead: npm config set prefix ~/.npm-global"}]'::jsonb,
+  'This command makes critical system files writable by unprivileged users, breaks sudo binary, requires rescue mode to fix. Never recursively change /usr permissions.',
+  1.0,
+  'LOW',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'CLAUDE_CODE_MAX_OUTPUT_TOKENS validation error 64000 tokens Sonnet',
+  'api',
+  '[{"solution": "Sonnet supports 64k tokens but validation incorrectly caps at 32k - bug in validation function", "percentage": 90, "note": "Haiku: 8192 max, Sonnet: 64000 max, Opus: 32000 max. Bug reported, workaround is to use 32000 or wait for fix."}]'::jsonb,
+  'Validation function hardcodes 32k limit for all models instead of checking model-specific limits',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'Claude Code CLI crashes on startup Node.js 24.0.0',
+  'general',
+  '[{"solution": "Upgrade Node.js from 24.0.0 to 24.0.1 or later", "percentage": 100, "command": "nvm install 24.1.0 && nvm use 24.1.0 && npm i -g @anthropic-ai/claude-code", "note": "Node.js 24.0.0 has compatibility issue causing Cannot read properties of undefined"}]'::jsonb,
+  'Node.js 24.0.0 specifically broken - 24.0.1+ works fine',
+  1.0,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+),
+(
+  'Claude doctor reports insufficient permissions automatic updates NVM',
+  'general',
+  '[{"solution": "Migrate to native installation instead of npm-global", "percentage": 90, "command": "npm uninstall -g @anthropic-ai/claude-code && curl -fsSL https://claude.ai/install.sh | bash", "note": "Installs to ~/.local/bin/claude with proper update permissions"}, {"solution": "Use claude migrate-installer command", "percentage": 70, "command": "claude migrate-installer", "note": "May silently fail in some configurations"}]'::jsonb,
+  'NVM''s npm prefix causes permission detection issues. Manual updates via npm update -g still work. Avoid sudo chown on system directories.',
+  0.90,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  0
+);

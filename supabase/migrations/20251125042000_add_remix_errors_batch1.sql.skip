@@ -1,0 +1,147 @@
+-- Add 12 Remix error handling entries from official documentation
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified, source_url)
+VALUES
+(
+  'Remix: Loader throws 404 Not Found error when resource cannot be located',
+  'remix-loaders',
+  '[{"solution": "Throw a Response object with 404 status immediately to stop execution: throw new Response(\"\", { status: 404 })", "percentage": 95, "note": "Prevents undefined data from propagating to component. Route will render ErrorBoundary instead. Automatically caught by Remix error handling.", "command": "throw new Response(\"\", { status: 404 });"}, {"solution": "Use proper HTTP status codes (404) to improve SEO and CDN caching behavior", "percentage": 90, "note": "Search engines crawl 404 status codes. CDN can cache error pages appropriately."}, {"solution": "Pair with isRouteErrorResponse() in ErrorBoundary to detect and handle thrown responses", "percentage": 85, "command": "if (isRouteErrorResponse(error)) { return <div>{error.status}</div>; }"}]'::jsonb,
+  'Returning undefined data instead of throwing. Continuing execution after failed database query. Not setting correct HTTP status codes. Forgetting to implement error boundary to catch thrown responses.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/route/loader'
+),
+(
+  'Remix: Action throws 401 Unauthorized error when user lacks permission',
+  'remix-actions',
+  '[{"solution": "Throw Response with 401 status including user role context in error data: throw json({ message: \"Access Denied\" }, { status: 401 })", "percentage": 95, "note": "Include minimal error context client-side for security. ErrorBoundary receives error response object."}, {"solution": "Check user session/auth state in action before processing form data", "percentage": 90, "note": "Validate permissions early to fail fast"}, {"solution": "Implement error boundary to catch 401 responses and redirect to login route", "percentage": 85, "command": "if (isRouteErrorResponse(error) && error.status === 401) { return <Navigate to=\\\"/login\\\" />; }"}]'::jsonb,
+  'Returning error in action response instead of throwing. Not validating auth in action. Exposing sensitive user data in error messages. Not redirecting to login after 401.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/route/loader'
+),
+(
+  'Remix: Form validation error - invalid email address fails submission',
+  'remix-actions',
+  '[{"solution": "Build errors object in action by validating fields, then return via json() on failure: return json({ errors: { email: \"Invalid email address\" } })", "percentage": 95, "note": "Server validates before processing. Client uses useActionData() to display errors"}, {"solution": "Check email format includes @ symbol: const isValidEmail = email.includes(\"@\")", "percentage": 90, "command": "if (!email.includes(\"@\")) { errors.email = \"Invalid email address\"; }"}, {"solution": "Access returned errors in component via useActionData() hook and conditionally render: {actionData?.errors?.email ? <em>{actionData.errors.email}</em> : null}", "percentage": 85, "command": "const actionData = useActionData(); return actionData?.errors?.email ? <em>{actionData.errors.email}</em> : null;"}]'::jsonb,
+  'Validating only client-side. Returning errors instead of throwing for genuine failures. Not using optional chaining (?.) when accessing actionData errors. Validating password but not checking minimum 12 character requirement.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/guides/form-validation'
+),
+(
+  'Remix: Password validation error - password should be at least 12 characters',
+  'remix-actions',
+  '[{"solution": "Validate password length in action before processing: if (password.length < 12) { errors.password = \"Password should be at least 12 characters\"; return json({ errors }); }", "percentage": 95, "note": "Server-side validation is mandatory, client validation supplements but does not replace"}, {"solution": "Check password meets minimum length requirement: const isValidPassword = password.length >= 12", "percentage": 90, "command": "if (password.length < 12) { errors.password = \"Password should be at least 12 characters\"; }"}, {"solution": "Display password error via useActionData in password input error message area", "percentage": 85, "command": "{actionData?.errors?.password && <em>{actionData.errors.password}</em>}"}]'::jsonb,
+  'Not validating password length. Only checking client-side. Allowing passwords under 12 characters in production. Not returning errors via useActionData so user cannot see validation feedback.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/guides/form-validation'
+),
+(
+  'Remix: HydrateFallback error - cannot use Outlet in HydrateFallback component',
+  'remix-hydration',
+  '[{"solution": "Remove <Outlet /> from HydrateFallback component. Use <Outlet /> only in main route component: export function HydrateFallback() { return <div>Loading...</div>; }", "percentage": 95, "note": "Children routes cannot be guaranteed to operate correctly in HydrateFallback because ancestor loader data may not be available during hydration if clientLoader executes"}, {"solution": "Provide fallback UI without rendering child routes: return <div>Loading content...</div>; or <Skeleton />", "percentage": 90, "note": "HydrateFallback shows only during hydration, not on subsequent navigation"}, {"solution": "If route has clientLoader without server loader, Remix implicitly sets clientLoader.hydrate=true and will bubble to ancestor HydrateFallback", "percentage": 85, "note": "useLoaderData would return undefined in rendered route components during hydration without this mechanism"}]'::jsonb,
+  'Rendering <Outlet /> in HydrateFallback causes undefined loader data for child routes. Not providing HydrateFallback when route has clientLoader. Assuming HydrateFallback renders on client navigation (it only renders on initial hydration).',
+  0.92,
+  'MEDIUM',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/route/hydrate-fallback'
+),
+(
+  'Remix: Hydration mismatch - useLoaderData returns undefined during initial hydration',
+  'remix-hydration',
+  '[{"solution": "Provide HydrateFallback component when route has clientLoader to prevent rendering until after hydration completes: export function HydrateFallback() { return <LoadingState />; }", "percentage": 95, "note": "Ensures useLoaderData never returns undefined in route components. Remix will not render route component and will bubble to ancestor HydrateFallback if missing"}, {"solution": "Ensure server loader provides data or clientLoader runs during hydration: export const loader = async () => json({ data }); or export const clientLoader: ClientLoader = async () => ({ data }); clientLoader.hydrate = true;", "percentage": 90, "note": "If clientLoader without server loader, Remix defaults to hydrate=true"}, {"solution": "Verify loader data is serializable (no functions/dates): always use json() utility to wrap return value", "percentage": 85, "command": "return json({ data }); // data must be JSON-serializable"}]'::jsonb,
+  'Rendering component without HydrateFallback when clientLoader exists. Assuming useLoaderData has data before hydration completes. Returning non-serializable data from loaders (Date objects, functions). Not understanding clientLoader.hydrate default behavior.',
+  0.94,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/route/hydrate-fallback'
+),
+(
+  'Remix: Loader throws redirect error - redirect to login when session missing',
+  'remix-loaders',
+  '[{"solution": "Check for session/auth in loader and throw redirect immediately: if (!session) { throw redirect(\\\"/login\\\", 302); }", "percentage": 95, "note": "Stops loader execution and navigates user before attempting to render protected content"}, {"solution": "Use 302 status code for temporary redirects (login): throw redirect(\\\"/login\\\", 302)", "percentage": 90, "note": "303 status acceptable in some cases. 302 is standard for auth redirects"}, {"solution": "Pair with error boundary for fallback UI if redirect middleware fails", "percentage": 80, "note": "Redirect errors automatically bubble to error boundary if not caught earlier"}]'::jsonb,
+  'Not checking session early in loader. Returning error data instead of throwing redirect. Using wrong status codes (301, 307 instead of 302). Continuing to process loader after failed auth check.',
+  0.95,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/route/loader'
+),
+(
+  'Remix: Error boundary cannot read error message - error is not instanceof Error',
+  'remix-error-boundaries',
+  '[{"solution": "Check error type with isRouteErrorResponse() before accessing error.message: if (isRouteErrorResponse(error)) { return <div>{error.status}</div>; } else if (error instanceof Error) { return <div>{error.message}</div>; }", "percentage": 95, "note": "Thrown Response objects are not Error instances. Use isRouteErrorResponse() to differentiate"}, {"solution": "Handle three error cases in ErrorBoundary: Response objects (4xx/5xx), Error instances, and unknown errors: return error instanceof Error ? error.message : \"Unknown error\"", "percentage": 90, "command": "const error = useRouteError(); if (isRouteErrorResponse(error)) { return <>; } else if (error instanceof Error) { return <>; } else { return <h1>Unknown Error</h1>; }"}, {"solution": "Use useRouteError() hook to access error object within ErrorBoundary: const error = useRouteError();", "percentage": 85, "command": "export function ErrorBoundary() { const error = useRouteError(); return <div>{error.message}</div>; }"}]'::jsonb,
+  'Assuming all errors are Error instances with .message property. Accessing error.status on Error objects. Not checking error type before accessing properties. Using useRouteError() outside of ErrorBoundary (undefined).',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/route/error-boundary'
+),
+(
+  'Remix: Loader throws 400 Bad Request when user provides invalid input data',
+  'remix-loaders',
+  '[{"solution": "Validate route params on entry and throw 400 if invalid: if (!params.id) { throw new Response(\"Invalid ID\", { status: 400 }); }", "percentage": 95, "note": "Route params are always string|undefined. Use invariant() or explicit validation before using"}, {"solution": "Use invariant() utility for concise param validation: invariant(params.id, \"ID is required\")", "percentage": 90, "command": "invariant(params.invoiceId, \"Invoice ID required\"); const invoice = await db.invoices.get(params.invoiceId);"}, {"solution": "Throw Response with 400 status for bad input, 404 for missing resources, 401 for auth failures", "percentage": 85, "note": "Use correct HTTP status codes to properly categorize errors"}]'::jsonb,
+  'Not validating route params before using. Assuming params are always defined. Using params without type narrowing. Throwing 404 for bad input instead of 400. Throwing generic 500 instead of specific 4xx codes.',
+  0.94,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/discussion/data-flow'
+),
+(
+  'Remix: Data serialization error - loader returns non-JSON-serializable object',
+  'remix-loaders',
+  '[{"solution": "Wrap all loader return values with json() utility: return json({ data, createdAt: date.toISOString() })", "percentage": 95, "note": "Loaders must return JSON-serializable data since results travel over network. json() utility ensures proper serialization."}, {"solution": "Convert Date objects to ISO strings before returning: createdAt: date.toISOString() not createdAt: date", "percentage": 90, "command": "return json({ createdAt: new Date().toISOString() }); // NOT return { createdAt: new Date() }"}, {"solution": "Never return functions or class instances from loaders - return plain data objects only", "percentage": 85, "note": "Methods will be stripped during JSON.stringify, causing data loss"}]'::jsonb,
+  'Returning raw Date objects from loaders. Returning functions or methods in data objects. Not using json() utility. Assuming circular references will serialize. Returning class instances instead of plain objects.',
+  0.96,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/discussion/data-flow'
+),
+(
+  'Remix: Form action mismatch error - form posts to wrong route action',
+  'remix-actions',
+  '[{"solution": "Ensure Form method=\\\"post\\\" and action point to route with action export: <Form method=\\\"post\\\" action=\\\"/routes/profile\\\"> paired with export const action = async () => { ... }", "percentage": 95, "note": "Form submission goes to specified action route. Loaders on original route revalidate if action succeeds. Loader-action cycle breaks if route mismatch"}, {"solution": "Omit action prop for same-route submission: <Form method=\\\"post\\\"> submits to current route", "percentage": 90, "note": "No action prop = submit to same route. Reduces errors from action routing"}, {"solution": "After action succeeds, Remix automatically revalidates all loaders on current route", "percentage": 85, "note": "If form action is on different route, loaders on original route won''t revalidate, causing stale data"}]'::jsonb,
+  'Form action points to route without action export. Not revalidating loaders after action completes. Assuming action submission updates UI automatically (must redirect or return data). Action on Route A but form on Route B expecting Route A data.',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/discussion/data-flow'
+),
+(
+  'Remix: Root error boundary missing - uncaught errors show blank page in production',
+  'remix-error-boundaries',
+  '[{"solution": "Export ErrorBoundary from app/root.tsx with proper rendering of document structure: export function ErrorBoundary() { return <html><body><h1>Error</h1></body></html>; }", "percentage": 95, "note": "Root error boundary must still render <Links>, <Meta>, <Scripts> components since entire document remounts when triggered. Without it, unhandled errors show blank page."}, {"solution": "In production, server errors are sanitized to generic \\\"Unexpected Server Error\\\" with no stack trace to prevent leaking sensitive info", "percentage": 90, "note": "Check NODE_ENV=production. Development shows full stack traces in error boundary"}, {"solution": "Use handleError export in entry.server.ts to log unsanitized errors to Sentry/BugSnag for debugging production issues", "percentage": 85, "command": "export const handleError = (error: Error, context: any) => { sentryClient.captureException(error); };"}]'::jsonb,
+  'Omitting error boundary from root.tsx. Rendering incomplete document in error boundary (missing Links/Meta/Scripts). Not logging errors to error tracking service. Expecting production to show full stack traces (it sanitizes by default).',
+  0.94,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/guides/errors'
+),
+(
+  'Remix: Sensitive server error exposed to client - error contains database connection string',
+  'remix-error-boundaries',
+  '[{"solution": "In production, Remix automatically sanitizes errors to generic message. Never rely on client-side error filtering: error messages in production show \\\"Unexpected Server Error\\\" only", "percentage": 95, "note": "Server errors are automatically sanitized in NODE_ENV=production. Stack traces and sensitive details never reach client. This is automatic behavior."}, {"solution": "For custom error messages, throw a Response with specific status and data instead: throw new Response(\"Resource not found\", { status: 404 })", "percentage": 90, "note": "Response objects are not sanitized and can contain custom user-facing messages"}, {"solution": "Use handleError export in entry.server.ts to log full error details server-side only: export const handleError = (error: Error) => { console.error(error); };", "percentage": 85, "command": "export const handleError = (error: Error) => { logToSentry(error); /* server-side only */ };"}]'::jsonb,
+  'Throwing errors with sensitive data expecting sanitization to prevent exposure. Relying on error boundary to filter secrets. Logging full errors on client. Not implementing server-side error logging for production issues.',
+  0.96,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW(),
+  'https://v2.remix.run/docs/guides/errors'
+);

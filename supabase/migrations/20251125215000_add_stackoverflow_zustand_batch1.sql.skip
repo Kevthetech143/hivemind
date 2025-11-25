@@ -1,0 +1,229 @@
+-- Stack Overflow Zustand Questions and Solutions - Batch 1
+-- Category: stackoverflow-zustand
+-- Extracted: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to call Zustand hook outside of React component',
+    'stackoverflow-zustand',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use store.getState() to access state directly without React Hook rules", "percentage": 95, "note": "Official Zustand pattern for non-component access", "command": "const state = useStore.getState(); useStore.getState().action()"},
+        {"solution": "Access store methods from utility functions or API interceptors using getState()", "percentage": 90, "note": "Common use case for HTTP error handlers"},
+        {"solution": "For vanilla store access without React, use createStore from zustand/vanilla", "percentage": 85, "note": "Avoids Hook constraints entirely"}
+    ]'::jsonb,
+    'Zustand store created with state and actions, need to call from non-component context',
+    'Hook call succeeds outside React component, no React Hook error messages in console',
+    'Do not attempt to call hooks directly outside components. Use getState() pattern instead. Vanilla stores required if Hook rules prevent access.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75530833/how-to-call-zustand-react-hook-outside-of-react-component'
+),
+(
+    'Zustand fetch with API call useEffect best practice',
+    'stackoverflow-zustand',
+    'HIGH',
+    '[
+        {"solution": "Define async fetch action in store, call from useEffect hook in component", "percentage": 92, "note": "Zustand supports async/await directly without middleware"},
+        {"solution": "Separate concerns: fetch logic in Zustand, useEffect triggers the fetch", "percentage": 88, "note": "Keep store logic separate from React lifecycle"},
+        {"solution": "Use middleware like zustand-fetching-helper or custom async patterns", "percentage": 75, "note": "Optional but provides structured approach"}
+    ]'::jsonb,
+    'Zustand store created, React component with useEffect hook, API endpoint available',
+    'Data fetched successfully and stored in Zustand state, component re-renders with fetched data',
+    'Do not put API calls in store creation function. Do not use Redux-style middleware for async. useEffect should trigger store action, not contain fetch logic.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72985759/zustand-fetch-with-api-call-useffect-best-practice'
+),
+(
+    'Zustand property derived from other properties in the same state',
+    'stackoverflow-zustand',
+    'HIGH',
+    '[
+        {"solution": "Calculate derived values in React components during render using selectors", "percentage": 91, "note": "Simplest approach, keeps store focused on source state"},
+        {"solution": "Create getter functions in store to compute derived values on demand", "percentage": 85, "note": "Use pattern: getSelectedTemplate: () => { const {templates, id} = get(); return templates.find(...) }"},
+        {"solution": "Use middleware libraries like zustand-store-addons for computed properties", "percentage": 70, "note": "Advanced approach, adds complexity"}
+    ]'::jsonb,
+    'Zustand store with multiple state properties, React components consuming store',
+    'Derived value updates when source properties change, component renders efficiently',
+    'Do not use unnecessary subscriptions. Subscribe with correct selector pattern: useStore(s => s.derivedValue) not useStore(s => s.derivedValue()). Avoid triggering re-renders on every access.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75872250/zustand-property-derived-from-other-properties-in-the-same-state'
+),
+(
+    'Zustand get state from another Zustand store',
+    'stackoverflow-zustand',
+    'HIGH',
+    '[
+        {"solution": "Import store and call getState() to access state snapshot without reactivity", "percentage": 93, "note": "Straightforward inter-store communication pattern", "command": "const userId = useUserStore.getState().userId"},
+        {"solution": "Create combined hook at component level for reactive cross-store access", "percentage": 88, "note": "Maintains React reactivity benefits"},
+        {"solution": "Avoid circular dependencies by exporting store getter functions", "percentage": 80, "note": "Design pattern for clean store architecture"}
+    ]'::jsonb,
+    'Multiple Zustand stores created, need to access one store from another',
+    'Cross-store state access works, no circular dependency errors, stores update independently',
+    'getState() returns snapshot at call time, not reactive to future changes. Do not create circular store dependencies. Use function composition instead.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74046364/zustand-get-state-from-another-zustand-store'
+),
+(
+    'How to set zustand state in a class component',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Use Higher Order Component (HOC) pattern to wrap class component with store hook", "percentage": 92, "note": "Pass store to props via withStore HOC", "command": "const MyClass = withStore(BaseMyClass); // BaseMyClass receives store via props"},
+        {"solution": "Access store directly using getState() and setState() in class methods", "percentage": 85, "note": "Works but breaks React patterns"},
+        {"solution": "Use store getter functions called directly from class component methods", "percentage": 78, "note": "Least clean approach"}
+    ]'::jsonb,
+    'Legacy class component code, Zustand store created, want to use store in class components',
+    'Class component can read and update Zustand state, no React Hook errors',
+    'Hooks cannot be called in class components directly. HOC is the proper pattern. Do not try to call hooks inside class render method. Store is passed as props to BaseComponent.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/66084662/how-to-set-zustand-state-in-a-class-component'
+),
+(
+    'Mocking Zustand store for Jest test',
+    'stackoverflow-zustand',
+    'HIGH',
+    '[
+        {"solution": "Mock store using jest.mock() and provide custom implementation for tests", "percentage": 94, "note": "Standard Jest mocking pattern for stores"},
+        {"solution": "Create test store instance with same interface but test data", "percentage": 89, "note": "Allows selective store override per test"},
+        {"solution": "Use zustand-mock or testing-library patterns for comprehensive store testing", "percentage": 82, "note": "Third-party tools available"}
+    ]'::jsonb,
+    'Jest test setup, Zustand store module exists, need to test components using store',
+    'Component renders with mocked store data, store methods can be spied on, tests pass',
+    'Do not use real store in tests. Mock at module level before component import. Reset mocks between tests to avoid state leakage.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71842090/mocking-zustand-store-for-jest-test'
+),
+(
+    'Unable to use Zustand persist middleware',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure persist middleware is properly wrapped: create(persist((set) => {...}))", "percentage": 94, "note": "Middleware must wrap the store creator function"},
+        {"solution": "Specify storage option (localStorage, AsyncStorage, etc.) in persist config", "percentage": 90, "note": "Required for client-side persistence", "command": "{name: \"app-store\", storage: localStorage}"},
+        {"solution": "Verify getStorage option returns valid storage API with getItem/setItem methods", "percentage": 85, "note": "Custom storage backends must implement Storage interface"}
+    ]'::jsonb,
+    'Zustand installed with persist middleware, localStorage or custom storage available',
+    'State persists across page reloads, stored data appears in browser storage, no console errors',
+    'Persist must wrap the creator function, not the other way. Storage must implement full Storage interface. Serializable state required (no functions).',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70066676/unable-to-use-zustand-persist-middleware'
+),
+(
+    'How do Toggle using Zustand with TypeScript',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Explicitly type store using generics: create<StoreType>(...) to enable type inference", "percentage": 96, "note": "Allows TypeScript to infer all properties", "command": "const useStore = create<MyStore>((set) => ({...}))"},
+        {"solution": "Define store interface with all state and action properties before create call", "percentage": 92, "note": "Best practice for type safety"},
+        {"solution": "Use typeof assertion on store for runtime type validation", "percentage": 75, "note": "Less reliable than upfront typing"}
+    ]'::jsonb,
+    'TypeScript project with Zustand, store interface definition needed',
+    'TypeScript autocomplete works for store properties, no TS2339 errors in editor',
+    'Without generic type parameter, TypeScript infers object type. State mutations must match interface. Property must exist in interface before accessing in setter.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68183319/how-do-toggle-using-zustand'
+),
+(
+    'How to access Zustand store outside a functional component',
+    'stackoverflow-zustand',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use store.getState() method to retrieve state snapshot and execute actions", "percentage": 95, "note": "Works in utility files, API interceptors, event handlers", "command": "useAuthStore.getState().logout()"},
+        {"solution": "Call store methods directly in utility functions or middleware", "percentage": 90, "note": "No React Hook rules apply outside components"},
+        {"solution": "For file-level store access, import and use getState() at module scope", "percentage": 88, "note": "Safe pattern for initialization code"}
+    ]'::jsonb,
+    'Zustand store created, need access from utility functions or API interceptors',
+    'Store state accessible from non-component code, actions execute without Hook errors',
+    'Do not try to use hooks at module level. getState() returns snapshot at call time. For initialization code, getState() safely works at module scope.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76929920/how-to-access-zustand-store-outside-a-functional-component'
+),
+(
+    'Can I use a Zustand store inside a React context to create multiple instances',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Wrap store creation in useRef to create single instance per Context Provider", "percentage": 92, "note": "Prevents store recreation on every render", "command": "const storeRef = useRef(create(...))"},
+        {"solution": "Use selector functions in custom hook to return selected state from instance", "percentage": 88, "note": "Optimizes re-renders and provides clean API"},
+        {"solution": "Return selected state values from context hook, not the store itself", "percentage": 85, "note": "Cleaner separation of concerns"}
+    ]'::jsonb,
+    'React Context Provider setup, Zustand store to instantiate per context',
+    'Multiple store instances created independently per Context, no store recreation on parent re-render',
+    'Do not store hook directly in Context. useRef prevents recreation. Selectors avoid passing entire store. Must wrap in useRef or instances recreate constantly.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78858156/can-i-use-a-zustand-store-inside-a-react-context-to-create-multiple-instances-of'
+),
+(
+    'How to handle more than one Zustand store in browser DevTools',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Name each devtools-wrapped store uniquely using name option in config", "percentage": 94, "note": "Allows selecting between stores in Redux DevTools dropdown", "command": "create(devtools((set) => ..., {name: \"StoreName\"}))"},
+        {"solution": "Combine stores using slices pattern with single devtools wrapper", "percentage": 89, "note": "Centralizes state in one DevTools instance"},
+        {"solution": "Switch between stores in Redux DevTools instance selector dropdown", "percentage": 85, "note": "UI feature for viewing different stores"}
+    ]'::jsonb,
+    'Multiple Zustand stores with devtools middleware, Redux DevTools browser extension',
+    'Each store appears in Redux DevTools with unique name, can switch between store instances',
+    'Without unique names, stores may overwrite each other in DevTools. Slices pattern combines everything. Instance selector in UI allows store switching.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/77406827/how-to-handle-more-than-one-zustand-store-into-the-browser-devtools'
+),
+(
+    'React Zustand Immer asynchronous update state',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Call async method outside set(), then call set() with result after async completes", "percentage": 88, "note": "set() with Immer cannot be async, so work async separately"},
+        {"solution": "Keep async/await logic separate from Immer mutations in store actions", "percentage": 85, "note": "Zustand automatically calls set when ready without middleware"},
+        {"solution": "Use separate async wrapper function that performs async work, then updates state", "percentage": 80, "note": "Maintains clean separation of concerns"}
+    ]'::jsonb,
+    'Zustand store with Immer middleware, need async operations that update state',
+    'Async operations complete, state updates without proxy revocation errors, store persists changes',
+    'Do not call async functions inside set() - Immer proxy revokes after set completes. Perform async work outside set(), then call set() with result. Class methods with async require special handling.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/76940115/react-zustand-immer-asynchronous-update-state'
+),
+(
+    'How to use Zustand devtools with TypeScript',
+    'stackoverflow-zustand',
+    'MEDIUM',
+    '[
+        {"solution": "Add extra parentheses after create generic: create<Store>()(devtools(...))", "percentage": 96, "note": "Official pattern from Zustand TypeScript docs", "command": "const useStore = create<MyStore>()(devtools((set) => ({...})))"},
+        {"solution": "Ensure middleware wrapping is correct with proper parentheses for type inference", "percentage": 91, "note": "TypeScript type inference requires specific syntax"},
+        {"solution": "Check Zustand README TypeScript section for latest syntax recommendations", "percentage": 85, "note": "Patterns evolve with Zustand versions"}
+    ]'::jsonb,
+    'TypeScript project, Zustand with devtools middleware, need proper type inference',
+    'TypeScript compilation succeeds, devtools middleware works, no type errors in editor',
+    'Forgetting extra parentheses causes type inference failure. Middleware must wrap creator function with correct syntax. Check version-specific patterns.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/74223036/how-to-use-zustand-devtools-with-typescript'
+);

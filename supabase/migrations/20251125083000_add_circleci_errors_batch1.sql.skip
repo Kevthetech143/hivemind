@@ -1,0 +1,229 @@
+-- Add CircleCI common errors and troubleshooting solutions - Batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'CircleCI configuration error: Invalid retention format does not match pattern',
+    'circleci',
+    'HIGH',
+    '[
+        {"solution": "Use retention values with days suffix only: 7d, 15d, 30d (1-30 days). Do not use hours (h) or weeks (w).", "percentage": 95, "note": "Retention key only accepts specific format"},
+        {"solution": "Ensure retention is a map with caches as string value: retention: { caches: \"7d\" }", "percentage": 90, "note": "Common mistake is using retention as direct string"},
+        {"solution": "Check that you are using quotes around the day value: retention: { caches: \"7d\" } not retention: { caches: 7d }", "percentage": 85, "note": "Must be a quoted string value"}
+    ]'::jsonb,
+    'CircleCI project with config.yml, Valid retention value between 1-30 days',
+    'Configuration validation passes, Pipeline builds successfully, Cache retention is applied correctly',
+    'Do not use hours (12h) or weeks (1w) - only days format (Xd). Do not use retention as direct string value. Always quote the day value in YAML.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/configuration-reference/'
+),
+(
+    'CircleCI config error: Multiple executor types specified in job',
+    'circleci',
+    'HIGH',
+    '[
+        {"solution": "Choose exactly one executor type per job: docker, machine, macos, or windows. Remove all others.", "percentage": 95, "note": "Only one executor type allowed"},
+        {"solution": "If needing multiple environments, create separate jobs with different executors and use workflow dependencies", "percentage": 85, "note": "Use workflows to manage multi-executor pipelines"},
+        {"solution": "Check your config.yml for duplicate executor keys - common when copy-pasting job definitions", "percentage": 80, "note": "YAML parsing will reject multiple executor declarations"}
+    ]'::jsonb,
+    'CircleCI config.yml file, Understanding of required executor type for your job',
+    'Config validation passes, Job executes on correct executor type, No configuration errors in pipeline',
+    'Do not specify docker, machine, macos, and windows all in same job. Each job needs exactly one executor. Review config for accidental duplication when copy-pasting.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/configuration-reference/'
+),
+(
+    'CircleCI cache error: Cache immutability - cache won''t update after key created',
+    'circleci',
+    'HIGH',
+    '[
+        {"solution": "Increment your cache key version prefix to invalidate old cache: change from v1-deps to v2-deps", "percentage": 95, "note": "Cache keys are immutable once written"},
+        {"solution": "Use checksums of lock files in cache key: v{{ checksum \"package-lock.json\" }}-deps", "percentage": 90, "note": "Automatically invalidates cache when dependencies change"},
+        {"solution": "Include timestamp or build ID in cache key for manual invalidation: v1-{{ epoch }}-deps", "percentage": 75, "note": "Regenerates fresh cache on each build if needed"}
+    ]'::jsonb,
+    'CircleCI project with cache configured, Access to modify config.yml',
+    'Cache is regenerated when needed, Dependencies are fresh, Build uses correct cache version',
+    'Cache is immutable - you cannot update or delete a specific cache. Always increment version prefix to invalidate. Changing just the key suffix is insufficient.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/caching/'
+),
+(
+    'CircleCI workspace error: Paths must be relative to workspace root, not absolute',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "All paths in persist_to_workspace must be relative to root directory specified: root: . then path: build (not /absolute/path)", "percentage": 95, "note": "Root becomes base for all relative paths"},
+        {"solution": "If persisting from subdirectory, adjust root to parent: root: /tmp/my-app then path: build", "percentage": 90, "note": "Workspace paths are always relative to root"},
+        {"solution": "Verify directory structure matches your root and path values during attach_workspace", "percentage": 85, "note": "Mismatch between persist and attach causes failures"}
+    ]'::jsonb,
+    'Workspace configured in workflow, Understanding of relative vs absolute paths, Job outputs to persist',
+    'Workspace persists successfully, Downstream jobs attach and use workspace data, Files present in expected locations',
+    'Do not use absolute paths in persist_to_workspace. All paths must be relative to the specified root. Common error is forgetting to adjust root when workspace is in subdirectory.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/configuration-reference/'
+),
+(
+    'CircleCI environment variable error: Name starts with digit instead of letter/underscore',
+    'circleci',
+    'HIGH',
+    '[
+        {"solution": "Rename environment variables to start with letter or underscore: 1_SECRET becomes SECRET_1 or _SECRET_1", "percentage": 95, "note": "First character must be alpha or underscore"},
+        {"solution": "Update all references to the variable throughout your config and code", "percentage": 90, "note": "Must be consistent across all jobs"},
+        {"solution": "Check variable definition in Project Settings → Environment Variables and Contexts", "percentage": 85, "note": "Validation happens at variable creation time"}
+    ]'::jsonb,
+    'CircleCI project with environment variables set, Valid variable naming convention understood',
+    'Variables are created successfully, Pipeline access them without naming errors, Config validation passes',
+    'Environment variable names must start with letter or underscore, never digit. 1_VAR, 2_SECRET are invalid. Use VAR_1, SECRET_2 instead.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/env-vars/'
+),
+(
+    'CircleCI secrets error: Secrets stored in config.yml get exposed in version control',
+    'circleci',
+    'VERY_HIGH',
+    '[
+        {"solution": "Remove all secrets from .circleci/config.yml immediately and store in Project Settings → Environment Variables", "percentage": 98, "note": "Config files are version controlled and visible to all repo access"},
+        {"solution": "Use Contexts for organization-wide secrets with access control restrictions", "percentage": 95, "note": "Contexts allow fine-grained permission management"},
+        {"solution": "Set secrets via CircleCI web app, not in code: Project Settings → Environment Variables", "percentage": 95, "note": "Web UI prevents secrets from being committed"},
+        {"solution": "If secret was exposed, rotate it immediately in your external service (API key, database password, etc.)", "percentage": 90, "note": "Assume compromised if committed to any branch"}
+    ]'::jsonb,
+    'Secrets to secure, CircleCI project access, Ability to update external service credentials',
+    'No secrets in config.yml, All secrets stored in CircleCI Project Settings, Git history cleaned of exposed secrets, External services rotated credentials',
+    'CRITICAL: Never store secrets in config.yml. Once committed to version control, assume compromised even if deleted later. Secrets masking in logs is supplemental, not primary protection.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/env-vars/'
+),
+(
+    'CircleCI workflow authorization error: User unauthorized to access restricted context',
+    'circleci',
+    'HIGH',
+    '[
+        {"solution": "Ensure user is organization member: Add user to CircleCI organization, not just GitHub/Bitbucket repo", "percentage": 95, "note": "Contexts require org membership"},
+        {"solution": "Check context security groups: Verify user is in required security group for restricted context", "percentage": 92, "note": "Restricted contexts require explicit group membership"},
+        {"solution": "If using expression restrictions, verify all referenced variables exist and have correct types in pipeline", "percentage": 85, "note": "Expression restrictions fail closed on missing variables"},
+        {"solution": "For approval workflows, ensure approver is in security group for restricted context they are approving", "percentage": 85, "note": "Approval job requires same permissions as downstream job"}
+    ]'::jsonb,
+    'CircleCI organization access, Restricted context configured, User authentication and authorization setup',
+    'Workflow runs successfully, User can access all contexts in job, No unauthorized workflow failures, Approval jobs execute without permission errors',
+    'Unauthorized errors occur when: user not org member, user not in required security group, expression restriction references non-existent variable, or approver lacks context permissions. Check organization membership first.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/contexts/'
+),
+(
+    'CircleCI SSH access error: Permission denied publickey when debugging job',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "Add SSH key to CircleCI User Settings → SSH Keys before attempting SSH rerun", "percentage": 95, "note": "SSH key must be configured in CircleCI account"},
+        {"solution": "Verify VCS authentication works: ssh git@github.com (should return ''successfully authenticated'')", "percentage": 90, "note": "SSH setup to Git provider must work first"},
+        {"solution": "Use ssh -v flag to debug which key is being offered: ssh -v -l circleci <ip> (identifies key offering issues)", "percentage": 85, "note": "Verbose output shows key negotiation process"},
+        {"solution": "Check SSH command is within 10-minute window after job completion and session duration limits (1h free, 2h paid)", "percentage": 80, "note": "SSH access expires after job completion"}
+    ]'::jsonb,
+    'Failed CircleCI job available for rerun, SSH key configured in User Settings, VCS SSH access working',
+    'SSH connection established successfully, Access to job environment, Can inspect log files and running processes via SSH',
+    'SSH access only available for 10 minutes after job completion. Interactive login shells behave differently than non-interactive CI steps. Commands that work in SSH may fail in pipeline.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/ssh-access-jobs/'
+),
+(
+    'CircleCI caching race condition: Multiple jobs writing to same cache key simultaneously',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "Use distinct cache keys per job: v1-deps-{{ .Environment.CIRCLE_JOB }}-deps instead of shared key", "percentage": 95, "note": "Job-specific keys prevent simultaneous writes"},
+        {"solution": "Add job dependencies to enforce sequential execution: requires: [job-a] before allowing cache writes", "percentage": 90, "note": "Sequential execution prevents race conditions"},
+        {"solution": "Use separate cache key prefixes per job type: backend-cache vs frontend-cache", "percentage": 85, "note": "Logical separation avoids conflicts in parallel workflows"}
+    ]'::jsonb,
+    'Parallel workflow with multiple jobs accessing cache, Cache key structure configurable',
+    'All jobs complete successfully, Cache contents consistent, No cache corruption from simultaneous writes, Deterministic workflow results',
+    'Race conditions occur when multiple parallel jobs save to same cache key. Results are unpredictable. Use job-specific keys or enforce sequential dependencies.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/caching/'
+),
+(
+    'CircleCI cache error: Cache key exceeds 900 character limit',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "Simplify cache key structure: replace long project names with abbreviations or checksums", "percentage": 95, "note": "900 character limit is strict"},
+        {"solution": "Use checksums instead of full paths: {{ checksum \"package-lock.json\" }} instead of listing all dependencies", "percentage": 90, "note": "Checksums are compact and deterministic"},
+        {"solution": "Remove unnecessary variables and environment data from key: focus on dependency markers only", "percentage": 85, "note": "Keep key minimal - only what affects cache validity"}
+    ]'::jsonb,
+    'CircleCI caching configured, Ability to modify cache key definition',
+    'Cache key is under 900 characters, Cache saves successfully, Builds retrieve cached data without key errors',
+    'Cache key character limit is 900 - longer keys are silently rejected. Test key length if cache not being used. Checksums are more efficient than verbose keys.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/caching/'
+),
+(
+    'CircleCI workflow error: Cannot rerun job older than 90 days',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "For jobs >90 days old, push a new commit or use trigger pipeline API instead of rerun", "percentage": 95, "note": "90-day limit applies to both rerun and execute actions"},
+        {"solution": "Trigger pipeline via CircleCI API v2 with new configuration for archived jobs", "percentage": 85, "note": "API triggers allow bypassing age limit"},
+        {"solution": "Archive old jobs separately if needed for audit: export logs and artifacts before 90-day mark", "percentage": 75, "note": "Plan for job retention before expiration"}
+    ]'::jsonb,
+    'Job that is 90+ days old, Understanding of CircleCI age limits, Access to push commits or API',
+    'Pipeline executes successfully, New build runs from current config, Job archive has logs and artifacts saved',
+    'Jobs and workflows expire after 90 days and cannot be rerun. Plan ahead for archival. Push new commit or use API trigger for fresh builds.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/workflows/'
+),
+(
+    'CircleCI Alpine Linux error: ash shell instead of bash with environment variables',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "Specify bash shell explicitly with shell and BASH_ENV: shell: /bin/sh -leo pipefail and set BASH_ENV: /etc/profile", "percentage": 95, "note": "Alpine uses ash by default, not bash"},
+        {"solution": "Install bash in Alpine container: apk add bash in first step, then use standard bash syntax", "percentage": 90, "note": "Bash-style features not available in ash without explicit install"},
+        {"solution": "Use POSIX shell syntax compatible with ash if bash unavailable: avoid bash-specific features like array expansion", "percentage": 80, "note": "Fallback for minimal containers"}
+    ]'::jsonb,
+    'Alpine Linux Docker image selected, CircleCI config.yml editable, Understanding of shell differences',
+    'Environment variables export correctly, Shell commands execute as expected, Build completes without shell syntax errors',
+    'Alpine uses ash not bash. Standard environment variable syntax fails. Specify BASH_ENV=/etc/profile and shell: /bin/sh -leo pipefail. Or install bash explicitly.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/env-vars/'
+),
+(
+    'CircleCI config error: Secrets masking ineffective for short values or boolean variables',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "Secrets masking only hides values >4 characters: use minimum 5-character secrets for masking to work", "percentage": 95, "note": "Short secrets cannot be reliably masked in logs"},
+        {"solution": "Boolean values (true/false) cannot be masked regardless of length: design secrets to be non-boolean strings", "percentage": 90, "note": "Common values are difficult to safely mask"},
+        {"solution": "Remember: masking prevents display in logs only, not access during SSH debug or in test artifacts. Treat logs as potentially exposed.", "percentage": 85, "note": "Masking is defense-in-depth, not primary protection"}
+    ]'::jsonb,
+    'Secrets stored in CircleCI Project Settings, Understanding of secrets masking limitations',
+    'Secrets >4 characters are masked in job logs, No short/boolean secrets exposed, Treat all logs as potentially visible',
+    'Secrets masking has limits: <4 characters and boolean values won''t be masked. Secrets still visible in SSH sessions and artifacts even if masked in logs.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://circleci.com/docs/env-vars/'
+);

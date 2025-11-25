@@ -1,0 +1,200 @@
+-- Add GitLab CI common errors and solutions from official documentation
+-- Source: https://docs.gitlab.com/ci/
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES
+(
+    'GitLab CI: Docker daemon connection error "Cannot connect to the Docker daemon at tcp://docker:2375"',
+    'gitlab-ci',
+    'HIGH',
+    '[
+        {"solution": "Update Docker-in-Docker to version 20.10.x or newer, as Docker v19.03+ automatically enables TLS by default", "percentage": 90, "note": "Most reliable fix for TLS compatibility"},
+        {"solution": "Reference the Docker executor setup guide for proper TLS configuration with DOCKER_TLS_CERTDIR", "percentage": 85, "command": "Set DOCKER_TLS_CERTDIR variable in runner config or job"},
+        {"solution": "Ensure runner has privileged mode enabled: set privileged = true in runner config.toml", "percentage": 80, "note": "Required for dind service to start properly"}
+    ]'::jsonb,
+    'GitLab Runner installed and configured, Docker-in-Docker service configured in CI/CD',
+    'Docker commands execute successfully, service hostname resolves to docker, TLS handshake completes',
+    'Do not use tcp://docker:2375 with Docker v19.03+ without TLS. Verify runner is in privileged mode. Check that dind service started without cgroup errors.',
+    0.90,
+    NOW(),
+    'https://docs.gitlab.com/ci/docker/docker_build_troubleshooting/'
+),
+(
+    'GitLab CI: Invalid YAML syntax with colons in script commands',
+    'gitlab-ci',
+    'HIGH',
+    '[
+        {"solution": "Wrap entire command containing colons in single quotes, converting existing single quotes to double quotes", "percentage": 95, "note": "Prevents YAML parser from interpreting colon as key-value separator", "command": "Wrap commands with colons in quotes"},
+        {"solution": "Use YAML literal block scalar (|) instead of folded scalar (>) to preserve formatting", "percentage": 85, "note": "Maintains exact whitespace and line breaks in multiline commands"},
+        {"solution": "Validate YAML syntax using GitLab pipeline editor or online YAML validators before committing", "percentage": 80, "note": "Catches syntax errors early"}
+    ]'::jsonb,
+    '.gitlab-ci.yml file accessible, GitLab Runner available',
+    'Pipeline configuration validates successfully, job executes script without syntax errors, API calls complete',
+    'Remember to quote strings but NOT variables in expressions. Use single quotes for entire command if it contains colons. Do not use unquoted strings in conditionals.',
+    0.92,
+    NOW(),
+    'https://docs.gitlab.com/ci/yaml/script_troubleshooting/'
+),
+(
+    'GitLab CI: Pipeline fails with "You are not allowed to download code from this project"',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Add administrator or user as direct project member with any role (Owner, Maintainer, Developer, etc.)", "percentage": 92, "note": "Even admins need explicit project membership to clone private repos"},
+        {"solution": "Impersonate an authorized project member via GitLab admin panel to run protected manual jobs", "percentage": 85, "note": "Temporary workaround for permission-based restrictions"},
+        {"solution": "Verify user account is not using inherited-only permissions from parent groups", "percentage": 75, "note": "Direct project membership always required"}
+    ]'::jsonb,
+    'GitLab instance with admin access, Private project created, Manual job configured',
+    'Job executes successfully, repository clones without authentication errors, pipeline completes',
+    'Direct project membership is mandatory even for administrators. Group membership alone is insufficient. Check both project members and inherited group memberships.',
+    0.90,
+    NOW(),
+    'https://docs.gitlab.com/ci/jobs/job_troubleshooting/'
+),
+(
+    'GitLab CI: Variable expression syntax error in if conditions',
+    'gitlab-ci',
+    'HIGH',
+    '[
+        {"solution": "Quote string literals but never quote variables: if: $ENVIRONMENT == \"production\"", "percentage": 95, "note": "Strings need quotes, variables should never be quoted"},
+        {"solution": "Use predefined variables without ${} syntax: if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH", "percentage": 92, "note": "Dollar sign prefix is sufficient, ${} syntax is invalid"},
+        {"solution": "Never use unquoted strings in comparisons: if: $ENVIRONMENT == production is invalid", "percentage": 90, "note": "Always quote string values on right side of comparison"}
+    ]'::jsonb,
+    '.gitlab-ci.yml with if conditions, GitLab CI/CD pipeline',
+    'Pipeline configuration validates without syntax errors, conditional expressions evaluate correctly, jobs execute as expected',
+    'Common mistakes: ${VARIABLE} syntax, quoted variables like \"$VAR\", unquoted string values. Use $VAR for variables and \"string\" for literals.',
+    0.93,
+    NOW(),
+    'https://docs.gitlab.com/ci/jobs/job_troubleshooting/'
+),
+(
+    'GitLab CI: Multiple unintended pipelines triggered when pushing to branch with merge request',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Implement workflow: rules at pipeline level to control when pipelines execute", "percentage": 90, "note": "Pipeline-level rules prevent duplicate pipeline creation"},
+        {"solution": "Rewrite job rules to use explicit if: conditions without ambiguous when: clauses", "percentage": 88, "note": "Clarifies intent and eliminates implicit trigger conditions"},
+        {"solution": "Configure rules to differentiate between merge request pipelines and branch push pipelines using $CI_PIPELINE_SOURCE", "percentage": 85, "command": "if: $CI_PIPELINE_SOURCE == \"merge_request_event\" || $CI_PIPELINE_SOURCE == \"push\""}
+    ]'::jsonb,
+    '.gitlab-ci.yml with rules or only/except configuration, Merge requests with open branches',
+    'Only one pipeline triggers per action, no duplicate pipelines in merge requests, job-level rules evaluate correctly',
+    'Using only/except without workflow: rules can cause multiple pipelines. Ensure rules have explicit if: conditions. Check $CI_PIPELINE_SOURCE to distinguish pipeline types.',
+    0.88,
+    NOW(),
+    'https://docs.gitlab.com/ci/jobs/job_troubleshooting/'
+),
+(
+    'GitLab CI: Job does not use updated configuration when rerunning pipeline',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Start a new pipeline instead of rerunning individual jobs, as configuration is fetched only at pipeline creation time", "percentage": 93, "note": "Only new pipelines read fresh configuration from repository"},
+        {"solution": "Delete failed pipeline and trigger new pipeline with updated .gitlab-ci.yml", "percentage": 90, "note": "Ensures all jobs execute with latest configuration"},
+        {"solution": "If immediate rerun needed for testing, make incremental commits to trigger fresh pipelines", "percentage": 75, "note": "Workaround for iterative configuration testing"}
+    ]'::jsonb,
+    '.gitlab-ci.yml modified, Pipeline created and executed',
+    'New pipeline created, jobs execute with updated configuration, configuration changes reflected in job behavior',
+    'Do not rely on rerunning jobs to pick up configuration changes. Configuration is snapshot at pipeline creation. Always start new pipeline for config updates.',
+    0.91,
+    NOW(),
+    'https://docs.gitlab.com/ci/jobs/job_troubleshooting/'
+),
+(
+    'GitLab CI: Rules with changes: always triggers in scheduled pipelines',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Avoid using changes: rule in scheduled pipelines, as all files appear changed when comparing against previous commit", "percentage": 92, "note": "Scheduled pipelines use HEAD~ for diff, treating all files as modified"},
+        {"solution": "Use merge request pipelines instead for accurate file change detection", "percentage": 88, "note": "MR pipelines provide reliable change detection across commits"},
+        {"solution": "Add explicit if: conditions alongside changes: rules to prevent unwanted scheduled pipeline execution", "percentage": 85, "command": "rules: [{if: $CI_PIPELINE_SOURCE == \"schedule\", when: never}, {changes: [path/**/*]}]"}
+    ]'::jsonb,
+    'Scheduled pipeline configured, changes: rule in .gitlab-ci.yml',
+    'Scheduled pipelines skip jobs with changes: rules, only merge request pipelines execute change-based jobs, explicit conditions respected',
+    'Do not assume changes: rule works reliably in scheduled pipelines. Always pair with if: conditions to prevent false triggers. Scheduled pipelines should use explicit event detection.',
+    0.87,
+    NOW(),
+    'https://docs.gitlab.com/ci/jobs/job_troubleshooting/'
+),
+(
+    'GitLab CI: Debug logging exposes secrets and sensitive variables',
+    'gitlab-ci',
+    'HIGH',
+    '[
+        {"solution": "Set CI_DEBUG_TRACE: \"true\" only when necessary for troubleshooting, then immediately delete logs after diagnosis", "percentage": 95, "note": "Debug output contains all variable values including masked variables shown as [MASKED]"},
+        {"solution": "Restrict job log access to trusted team members when debug logging is enabled", "percentage": 92, "note": "Control who can view exposed variables and secrets"},
+        {"solution": "Use limited debug alternatives: export individual variables selectively, avoid blanket debug mode", "percentage": 88, "note": "Reduce security exposure while troubleshooting specific issues"},
+        {"solution": "Never enable debug mode on jobs with sensitive data like API keys, tokens, or database credentials", "percentage": 90, "note": "Prevent accidental secret exposure in logs"}
+    ]'::jsonb,
+    'Access to job logs, CI/CD variables defined, Team members assigned to project',
+    'Debug logs can be safely viewed, sensitive variables are masked or hidden, logs are deleted after troubleshooting, no unauthorized access to debug output',
+    'Debug logging is a serious security risk. Masked variables still appear in debug output. Always delete debug logs before sharing. Restrict viewer permissions on sensitive jobs.',
+    0.94,
+    NOW(),
+    'https://docs.gitlab.com/ci/variables/variables_troubleshooting/'
+),
+(
+    'GitLab CI: "argument list too long" error with environment variables',
+    'gitlab-ci',
+    'LOW',
+    '[
+        {"solution": "Use File-type CI/CD variables for large values that exceed shell ARG_MAX limit", "percentage": 91, "note": "File variables store value in temporary file, passed as path not expansion"},
+        {"solution": "Utilize GitLab Secure Files feature for oversized single variables or certificates", "percentage": 88, "note": "Secure files bypass argument list length limitations"},
+        {"solution": "Reduce number of variables by combining related values into structured data or files", "percentage": 82, "note": "Minimize total environment variable count to stay below ARG_MAX"}
+    ]'::jsonb,
+    'Large CI/CD variables defined, Shell environment configured',
+    'Job executes without argument list overflow, all variables accessible, command completes successfully',
+    'Combined length of ALL variables must stay below system ARG_MAX limit (typically 128KB). File-type variables are more efficient for large values.',
+    0.89,
+    NOW(),
+    'https://docs.gitlab.com/ci/variables/variables_troubleshooting/'
+),
+(
+    'GitLab CI: "Insufficient permissions to set pipeline variables" in downstream pipelines',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Remove variable definitions from trigger job configuration, do not pass variables to downstream pipelines", "percentage": 93, "note": "Downstream pipelines inherit variables unless explicitly prevented"},
+        {"solution": "Prevent default variables from passing to child pipeline using trigger: variables: {}", "percentage": 90, "command": "trigger: {project: child-project, variables: {}}"},
+        {"solution": "Define variables directly in downstream pipeline .gitlab-ci.yml instead of passing from parent", "percentage": 85, "note": "Child pipeline maintains full control over its own variables"}
+    ]'::jsonb,
+    'Parent pipeline with trigger job, Downstream child pipeline configured',
+    'Trigger job completes successfully, downstream pipeline variables are set, no permission errors occur',
+    'Variables passed from parent to child pipelines may violate downstream project permissions. Explicitly control variable inheritance. Child pipelines should define their own variables.',
+    0.88,
+    NOW(),
+    'https://docs.gitlab.com/ci/variables/variables_troubleshooting/'
+),
+(
+    'GitLab CI: TERM=dumb causes incorrect output formatting in job logs',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Add TERM=ansi to script as first line to override GitLab Runner default dumb terminal", "percentage": 92, "note": "Runner sets TERM=dumb in non-interactive shells, breaking color/formatting", "command": "script: [TERM=ansi, <your_commands>]"},
+        {"solution": "Set TERM=ansi as CI/CD variable accessible to all jobs", "percentage": 90, "note": "Applies formatting fix globally without repeating in each script"},
+        {"solution": "Configure TERM in runner config.toml environment section for all jobs", "percentage": 85, "command": "environment = [\"TERM=ansi\"]"}
+    ]'::jsonb,
+    'Jobs with formatted output (colors, progress bars, tables), GitLab Runner configured',
+    'Job output displays correctly with colors and formatting, progress indicators render properly, log readability improved',
+    'GitLab Runner runs shells in non-interactive mode which sets TERM=dumb. Tools expecting interactive terminal will break formatting. Override with TERM=ansi.',
+    0.91,
+    NOW(),
+    'https://docs.gitlab.com/ci/yaml/script_troubleshooting/'
+),
+(
+    'GitLab CI: HTTP/2 "send again with decreased length" curl errors',
+    'gitlab-ci',
+    'LOW',
+    '[
+        {"solution": "Configure Git to use HTTP/1.1 instead of HTTP/2 via job pre_get_sources_script hook", "percentage": 89, "note": "Forces HTTP/1.1 protocol for more reliable fetch operations"},
+        {"solution": "Set GIT_HTTP_VERSION=HTTP/1.1 environment variable in runner config.toml", "percentage": 87, "command": "environment = [\"GIT_HTTP_VERSION=HTTP/1.1\"]"},
+        {"solution": "Update runner and Git to latest stable versions to resolve HTTP/2 transport issues", "percentage": 80, "note": "Newer versions have improved HTTP/2 handling"}
+    ]'::jsonb,
+    'GitLab Runner with git configured, HTTP/2-related curl errors occurring',
+    'Git fetch operations complete without HTTP/2 errors, source code cloned successfully, pipeline proceeds',
+    'HTTP/2 "send again with decreased length" indicates transport layer issue. HTTP/1.1 fallback is more reliable. Update dependencies if possible.',
+    0.85,
+    NOW(),
+    'https://docs.gitlab.com/ci/jobs/job_troubleshooting/'
+);

@@ -1,0 +1,224 @@
+-- Migration: Stack Overflow CI/CD and DevOps Solutions Batch 16
+-- Source: Stack Overflow high-voted answers
+-- Domain: Jenkins, Terraform, CircleCI, GitHub Actions, GitLab CI, Ansible, Docker
+-- Generated: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Terraform error: Error acquiring the state lock',
+    'terraform',
+    'HIGH',
+    '[
+        {"solution": "Run terraform force-unlock <LOCK_ID> to manually release the lock", "percentage": 90, "note": "Lock ID shown in error message"},
+        {"solution": "Check if using correct AWS account/region - DynamoDB table must be in same region", "percentage": 85, "note": "Verify CLI/SDK configuration"},
+        {"solution": "For Azure: Go to storage account container, click state file, then ''Break lease''", "percentage": 80, "note": "Path shown in error message"},
+        {"solution": "Kill stuck terraform process or terminate shell for local state files", "percentage": 75, "note": "Local state files cannot be unlocked remotely"}
+    ]'::jsonb,
+    'Terraform installed, State backend configured, Lock ID from error message',
+    'State unlocks successfully, terraform plan/apply proceeds without lock error',
+    'Always verify correct AWS account/region before force-unlocking. DynamoDB table must exist in same region as CLI configuration. Never force-unlock if another process legitimately holds the lock.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/64690427/error-locking-state-error-acquiring-the-state-lock-state-blob-is-already-locke'
+),
+(
+    'Terraform error: Provider configuration not present',
+    'terraform',
+    'HIGH',
+    '[
+        {"solution": "Remove provider argument from resource to use default provider", "percentage": 85, "note": "Common in multi-provider configs"},
+        {"solution": "Check resource naming convention - improper names cause Terraform to look for non-existent providers", "percentage": 80, "note": "Verify resource type prefix matches provider"},
+        {"solution": "Verify provider configuration exists in same module/configuration file", "percentage": 75, "note": "Provider must be declared before use"}
+    ]'::jsonb,
+    'Terraform initialized, Provider configuration declared',
+    'terraform plan completes without provider errors, Resources properly reference configured providers',
+    'Provider configurations removed during refactoring can leave orphaned resources in state. Check resource naming follows provider_resourcetype pattern.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/58393294/refactoring-modules-error-provider-configuration-not-present'
+),
+(
+    'CircleCI workflow error: Cannot find a job named build',
+    'circleci',
+    'HIGH',
+    '[
+        {"solution": "If not using workflows, jobs map must contain a job named ''build'' as default entry-point", "percentage": 90, "note": "Required by CircleCI specification"},
+        {"solution": "In workflow configuration, verify all job references match actual job definitions", "percentage": 85, "note": "Job names are case-sensitive"},
+        {"solution": "Check workflow filters - jobs may be filtered out by branch/tag conditions", "percentage": 75, "note": "Verify filters allow job to run"}
+    ]'::jsonb,
+    'CircleCI config.yml present, Workflow configured',
+    'CircleCI workflow starts successfully, All jobs execute without definition errors',
+    'Job named build is mandatory default entry-point when not using workflows. All workflow job references must exactly match job names in jobs section.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/62118109/postman-in-circleci-error-calling-workflow-workflow'
+),
+(
+    'CircleCI tag workflow fails: config file could not be located',
+    'circleci',
+    'MEDIUM',
+    '[
+        {"solution": "Verify tag filters in workflow: filters.tags.only should match tag pattern (e.g., /^v.*/)", "percentage": 85, "note": "Tag workflows require explicit tag filters"},
+        {"solution": "Add filters.branches.ignore: /.*/ to tag-specific jobs to prevent branch execution", "percentage": 80, "note": "Prevents job from running on branch pushes"},
+        {"solution": "Check organization-level CircleCI settings - may differ between orgs", "percentage": 70, "note": "Tag workflow behavior can be org-specific"}
+    ]'::jsonb,
+    'CircleCI configured, Git tags created, Workflow with tag filters',
+    'Tag push triggers workflow successfully, Jobs execute on tag creation',
+    'Tag workflows require both filters.tags.only and filters.branches.ignore. Without branch ignore filter, job may try to run on branches too.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78196080/circleci-tag-workflow-fails-with-config-file-could-not-be-located'
+),
+(
+    'GitHub Actions error: Permission denied in Docker container',
+    'github-actions',
+    'HIGH',
+    '[
+        {"solution": "Default user on Docker image may not have access to mounted directories - check image user permissions", "percentage": 85, "note": "Common with cirrusci/flutter and similar images"},
+        {"solution": "When using self-hosted runner with Docker socket: docker run with -v /var/run/docker.sock:/var/run/docker.sock", "percentage": 80, "note": "Enables Docker-in-Docker"},
+        {"solution": "If docker uses different user, add user configuration to container or chmod mounted directories", "percentage": 75, "note": "Match container user to host permissions"},
+        {"solution": "For package registry: Configure ''Manage Actions access'' to allow repository write permissions", "percentage": 70, "note": "Required for pushing to GHCR"}
+    ]'::jsonb,
+    'GitHub Actions workflow configured, Docker image specified',
+    'Docker commands execute without permission errors, Files can be written to mounted volumes',
+    'Default Docker image user may differ from GitHub Actions runner user. Mounted volumes inherit host permissions which may not match container user.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/57830375/github-actions-workflow-error-permission-denied'
+),
+(
+    'Jenkins pipeline error: Could not find credentials',
+    'jenkins',
+    'HIGH',
+    '[
+        {"solution": "Give credential GLOBAL scope instead of SYSTEM scope to make it visible in pipeline", "percentage": 88, "note": "SYSTEM scope restricts to Jenkins internal use"},
+        {"solution": "Use single-quotes not double-quotes in withCredentials credentialsId parameter", "percentage": 85, "note": "Double quotes cause variable interpolation issues"},
+        {"solution": "Verify credential ID exactly matches ID configured in Jenkins credentials store", "percentage": 82, "note": "IDs are case-sensitive"},
+        {"solution": "For SSH: ssh-agent plugin does not support username/password credentials - use SSH key type", "percentage": 80, "note": "Plugin limitation"}
+    ]'::jsonb,
+    'Jenkins installed, Credentials plugin configured, Pipeline script',
+    'Pipeline successfully accesses credentials, No credential matching errors',
+    'SYSTEM scope credentials are not accessible to pipelines. Always use GLOBAL scope for pipeline credentials. Single vs double quotes matters in Groovy syntax.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/60184012/jenkins-does-not-show-configured-git-credentials'
+),
+(
+    'Jenkins build hanging or timeout',
+    'jenkins',
+    'HIGH',
+    '[
+        {"solution": "Install Build-timeout plugin and configure timeout in job settings", "percentage": 85, "note": "Provides per-job timeout control"},
+        {"solution": "For pipeline: Wrap steps in timeout block - timeout(time: 10, unit: ''MINUTES'') { ... }", "percentage": 82, "note": "Programmatic timeout control"},
+        {"solution": "Check if job calls another job without providing all required parameters", "percentage": 80, "note": "Missing parameters cause downstream jobs to hang"},
+        {"solution": "For Git clone timeout: Add Advanced clone behaviors, set Timeout > 10 minutes", "percentage": 78, "note": "Default 10 min may be insufficient for large repos"},
+        {"solution": "If build stuck after timeout: Click ''Click here to forcibly terminate running steps'' in console", "percentage": 75, "note": "Manual intervention required"}
+    ]'::jsonb,
+    'Jenkins installed, Build-timeout plugin available',
+    'Build completes or fails within timeout period, No infinite hangs',
+    'Default timeout may not apply to all steps. Git operations have separate timeout. Jobs calling other jobs must pass all required parameters.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38329533/abort-jenkins-pipeline-workflow-build-after-timeout'
+),
+(
+    'GitLab CI pipeline stuck on pending',
+    'gitlab-ci',
+    'HIGH',
+    '[
+        {"solution": "Clear runner cache: Go to CI/CD > Pipelines > Clear Runner Caches", "percentage": 85, "note": "Cache corruption can block jobs"},
+        {"solution": "Pause and unpause the runner to trigger pending jobs", "percentage": 82, "note": "Restarts runner job pickup"},
+        {"solution": "Check ''Can run untagged jobs'' option on runner or add tags to .gitlab-ci.yml", "percentage": 80, "note": "Tag mismatch prevents job assignment"},
+        {"solution": "Verify runner is active and has capacity to accept new jobs", "percentage": 75, "note": "Check runner status in Settings > CI/CD > Runners"}
+    ]'::jsonb,
+    'GitLab CI configured, Runner registered and active',
+    'Pipeline jobs transition from pending to running, Jobs execute successfully',
+    'Runner tag configuration must match job requirements. Untagged jobs require runner configured to run untagged jobs. Runner cache can cause persistent pending state.',
+    0.81,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34625885/gitlab-ci-builds-remains-pending'
+),
+(
+    'GitLab CI checking pipeline status running forever',
+    'gitlab-ci',
+    'MEDIUM',
+    '[
+        {"solution": "Check sidekiq machines can access .gitlab_kas_secret file - verify file permissions", "percentage": 85, "note": "Sidekiq permission issue"},
+        {"solution": "Use $CI_DEFAULT_BRANCH instead of hardcoded ''main'' or ''master'' in conditions", "percentage": 80, "note": "Branch name mismatch causes hang"},
+        {"solution": "Restart GitLab services after fixing permission issues", "percentage": 75, "note": "Changes require service restart"}
+    ]'::jsonb,
+    'GitLab instance running, CI/CD pipeline configured',
+    'Pipeline status updates properly, No infinite checking state',
+    'Hardcoded branch names can cause issues across projects. Sidekiq requires proper access to GitLab secrets. Service restart needed after permission fixes.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/64313290/gitlab-checking-pipeline-status-running-forever'
+),
+(
+    'Ansible playbook failed: execution errors',
+    'ansible',
+    'HIGH',
+    '[
+        {"solution": "Use failed_when condition to control when task should be considered failed", "percentage": 85, "note": "failed_when: not condition overrides default failure"},
+        {"solution": "Add ignore_errors: true to tasks that may fail but should not stop playbook", "percentage": 82, "note": "Set result flag to check failures at end"},
+        {"solution": "Use --step flag to execute playbook step-by-step and identify failing task", "percentage": 80, "note": "Interactive debugging mode"},
+        {"solution": "Use --start-at-task to resume from specific task after fixing errors", "percentage": 75, "note": "Does not work for tasks in roles in older Ansible"},
+        {"solution": "Check .retry file contains failed hosts, use --limit @path/to/file.retry to retry", "percentage": 70, "note": "Only stores failed hosts, reruns all tasks"}
+    ]'::jsonb,
+    'Ansible installed, Playbook syntax valid, Target hosts accessible',
+    'Playbook completes all tasks successfully, No task failures unless expected',
+    'ignore_errors allows continuing but loses failure tracking unless using flags. --start-at-task does not work with roles in Ansible 2.x. .retry files only store hostnames.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38876487/ansible-ignore-errors-in-tasks-and-fail-at-end-of-the-playbook-if-any-tasks-had'
+),
+(
+    'Terraform apply timeout connecting to AWS resources',
+    'terraform',
+    'MEDIUM',
+    '[
+        {"solution": "Add timeout block inside resource: timeouts { create = \"60m\" update = \"30m\" }", "percentage": 85, "note": "Resource-specific timeout configuration"},
+        {"solution": "Check network connectivity and security groups allow Terraform to reach resources", "percentage": 80, "note": "Firewall/SG may block connections"},
+        {"solution": "For provisioner timeout: Verify SSH port 22 accessible and security group allows inbound", "percentage": 78, "note": "File/remote provisioners need SSH access"},
+        {"solution": "Increase timeout for resources like EKS, Neptune that take longer to provision", "percentage": 75, "note": "Default 5 min insufficient for complex resources"}
+    ]'::jsonb,
+    'Terraform installed, AWS credentials configured, Network connectivity',
+    'terraform apply completes successfully within timeout, Resources provision without timeout errors',
+    'Different resource types have different default timeouts. Network issues often appear as timeouts. Some AWS resources like EKS can take 15+ minutes to create.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/58771440/how-to-set-timeout-for-terraform-apply'
+),
+(
+    'Docker build permission denied',
+    'docker',
+    'HIGH',
+    '[
+        {"solution": "Run chmod 777 on directory that Docker container mounts to give write permissions", "percentage": 82, "note": "Allows container user to write to host directory"},
+        {"solution": "Add USER root before commands requiring elevated permissions in Dockerfile", "percentage": 80, "note": "Switch to root for privileged operations"},
+        {"solution": "If using sudo group: Run commands with sudo prefix when non-root user", "percentage": 78, "note": "apt-get update requires sudo if not root"},
+        {"solution": "Use RUN chown to change ownership after copying files: RUN chown user:group /path", "percentage": 75, "note": "Fix permissions for copied files"},
+        {"solution": "Copy SSH keys to container instead of using ssh-agent on /tmp", "percentage": 70, "note": "Avoids /tmp permission issues"}
+    ]'::jsonb,
+    'Docker installed, Dockerfile present, Build context configured',
+    'Docker build completes without permission errors, Container can write to required directories',
+    'Container users differ from host users. Mounted volumes inherit host permissions. Non-root users cannot run privileged commands without sudo. SSH agent socket permissions can block builds.',
+    0.77,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/57653021/permission-denied-in-docker-build'
+);

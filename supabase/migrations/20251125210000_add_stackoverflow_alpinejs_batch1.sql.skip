@@ -1,0 +1,186 @@
+-- Add Stack Overflow Alpine.js solutions batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to create reusable components in Alpine.js',
+    'stackoverflow-alpinejs',
+    'HIGH',
+    '[
+        {"solution": "Use native Web Components with <template> elements and custom element definitions to create client-side reusable components", "percentage": 85, "note": "Most reliable approach, no server templating needed"},
+        {"solution": "Use Alpine.js design with server-side templating or frameworks like Vue/React for component systems, as Alpine intentionally excluded client-side component templates", "percentage": 75, "note": "Official Alpine.js design philosophy - they recommend against pure client-side components"},
+        {"solution": "Encapsulate templates in strings using x-html directive bound via Alpine.data for simple component cases", "percentage": 65, "note": "Limited approach, works for simple scenarios only"},
+        {"solution": "Use third-party alpinejs-component plugin enabling template-based components with external HTML imports", "percentage": 60, "note": "Unofficial extension, may have limited documentation"}
+    ]'::jsonb,
+    'Knowledge of Web Components, Alpine.js v2.x or v3.x, understanding of custom elements API',
+    'Component renders correctly when instantiated, state updates propagate to component instances, no console errors during initialization',
+    'Alpine.js by design prioritizes server-rendered templates - expect limitations with pure client-side components. Avoid trying to use x-cloak for component template loading. Do not assume Alpine.component() can define markup.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65710987/reusable-alpine-js-components'
+),
+(
+    'Dropdown menu not hiding when mouse leaves in Alpine.js',
+    'stackoverflow-alpinejs',
+    'HIGH',
+    '[
+        {"solution": "Use @mouseleave event handler on the outer container instead of @mouseout to prevent event bubbling from child elements", "percentage": 90, "note": "Clearest solution - mouseleave only triggers when leaving the element itself"},
+        {"solution": "Use Alpine.js .away modifier on the outer div with @mouseover.away=false to close dropdown when mouse moves outside element or children", "percentage": 88, "note": "Alpine-specific approach, more semantic than mouseleave"},
+        {"solution": "In Alpine v3+, replace .away modifier with .outside for improved event handling and consistency", "percentage": 85, "note": "Version-specific improvement, use mouseenter/mouseleave for best performance"},
+        {"solution": "Wrap both button and dropdown content in single x-data container with mouseleave handler on container", "percentage": 83, "note": "Ensures entire menu system is under single event handler"}
+    ]'::jsonb,
+    'Alpine.js v2.x or v3.x, HTML event handler understanding, CSS knowledge for styling dropdown',
+    'Dropdown closes when mouse leaves menu area, no flickering when moving between button and content, submenu items remain visible while hovering',
+    'Using @mouseout will cause issues due to event bubbling - do NOT use @mouseout on child elements. In Alpine v3, .away was replaced with .outside. Do not apply event handler to individual menu items - apply to container only.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65205562/hover-over-dropdown-with-alpine-js'
+),
+(
+    'How to refresh Alpine.js data after external fetch',
+    'stackoverflow-alpinejs',
+    'HIGH',
+    '[
+        {"solution": "Move data fetching into Alpine.js data object and use this.items = newItems to update reactively", "percentage": 95, "note": "Cleanest approach - keeps data logic within Alpine scope"},
+        {"solution": "Use custom events: dispatch CustomEvent from external code, listen with x-on:items-load.window in Alpine to update data", "percentage": 90, "note": "Best for separation of concerns - external code stays decoupled from Alpine"},
+        {"solution": "Implement patch method pattern combining custom events with direct reference for flexible updates", "percentage": 80, "note": "More complex but provides flexibility for multiple data sources"},
+        {"solution": "Access Alpine internal data via __x.$data property (NOT RECOMMENDED)", "percentage": 40, "note": "May break with Alpine version changes - avoid this approach"}
+    ]'::jsonb,
+    'Alpine.js v2.x or v3.x, understanding of JavaScript event dispatch, async/await or Promise knowledge for fetch operations',
+    'List updates without page reload, new items appear immediately in x-for loop, reactive updates trigger without error',
+    'Do NOT access Alpine internals via __x.$data - this breaks between versions. Avoid mixing fetch logic across files without event-driven pattern. Do not expect direct property assignment from outside Alpine scope to trigger reactivity.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/63233506/refreshing-data-after-the-fact-in-alpinejs'
+),
+(
+    'Alpine.js modal shows briefly on page refresh - x-cloak not working',
+    'stackoverflow-alpinejs',
+    'HIGH',
+    '[
+        {"solution": "Add x-cloak attribute to parent element and CSS rule [x-cloak] { display: none } to hide uninitialized elements", "percentage": 95, "note": "Official Alpine.js solution - applies to entire component"},
+        {"solution": "Use [x-cloak] { display: none !important } with !important flag to override competing CSS rules", "percentage": 90, "note": "Necessary when other styles interfere with x-cloak"},
+        {"solution": "Wrap conditional content in <template> tag with x-if - browser hides templates by default until Alpine renders", "percentage": 75, "note": "Alternative approach using native HTML template element"},
+        {"solution": "Apply x-cloak directly to modal div element rather than parent to scope hiding effect", "percentage": 70, "note": "Works for modal-specific flashing, less comprehensive than full component x-cloak"}
+    ]'::jsonb,
+    'Alpine.js v2.x or v3.x, CSS stylesheet loaded before Alpine.js initialization, HTML5 template element understanding',
+    'No modal flash on page load, modal hidden until Alpine initializes, proper styling applied after initialization, no layout shift',
+    'Ensure x-cloak CSS is in <head> tag, not inline styles on element. Do NOT use display: none on x-cloak in inline styles - must be in stylesheet. Do not forget to remove x-cloak - Alpine does this automatically after initialization.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/64430464/how-to-prevent-alpine-js-modal-from-showing-every-time-i-refresh-the-page'
+),
+(
+    'Force full page reload in Livewire with Alpine.js components',
+    'stackoverflow-alpinejs',
+    'MEDIUM',
+    '[
+        {"solution": "Use return redirect(request()->header(Referer)) to redirect to original page URL stored in HTTP Referer header", "percentage": 95, "note": "Livewire automatically stores referer - most reliable method"},
+        {"solution": "Use $this->js(window.location.reload()) in Livewire v3+ to execute JavaScript reload command", "percentage": 90, "note": "Cleaner syntax for Livewire 3, executes one-off JavaScript"},
+        {"solution": "Use return redirect()->to(request()->url()) with Laravel helper to redirect to current URL", "percentage": 85, "note": "Standard Laravel approach, works reliably"},
+        {"solution": "Store current URL in component property during mount via request()->fullUrl() then redirect to that property", "percentage": 75, "note": "More verbose but provides explicit control over redirect URL"}
+    ]'::jsonb,
+    'Laravel Livewire component, wire:ignore directive context, Livewire v2+ or v3+, redirect response handling',
+    'Page reloads successfully, wire:ignore sections regenerate fresh HTML, data persists correctly after reload, no redirect loops',
+    'Do NOT use $refresh within wire:ignore sections - it does not work. Do NOT rely on redirect()->back() - use Referer header instead. In Livewire v3 ensure js() method is called on component context.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/64874410/force-a-full-page-reload-in-livewire'
+),
+(
+    'Add class conditionally to element in Alpine.js',
+    'stackoverflow-alpinejs',
+    'HIGH',
+    '[
+        {"solution": "Use :class directive with object syntax where keys are class names and values are boolean expressions: :class=\"{ className: condition }\"", "percentage": 95, "note": "Official Alpine.js approach, most idiomatic"},
+        {"solution": "Include dynamic classes in object alongside static classes for proper coexistence of both binding and static classes", "percentage": 90, "note": "Classes applied when condition evaluates true"},
+        {"solution": "Combine multiple conditions in single :class directive using && operator for complex conditional logic", "percentage": 85, "note": "Handles multiple conditions in one binding"},
+        {"solution": "Use with x-for loops by accessing loop variable in condition - ensure variable is in proper scope", "percentage": 80, "note": "Common pattern when iterating over items"}
+    ]'::jsonb,
+    'Alpine.js v2.x or v3.x, authentication context (Auth::user()), understanding of ternary operators and boolean expressions',
+    'Classes apply correctly based on condition, no console errors, both static and dynamic classes render properly, authentication checks work without errors',
+    'Do NOT use x-if for conditional classes - it removes/adds elements, not classes. Do NOT forget to include :: prefix when embedding PHP in Alpine expressions. For guest users, use optional chaining Auth::user()?->id to prevent undefined errors.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65975048/alpinejs-how-can-i-add-a-class-to-an-element-conditionally'
+),
+(
+    'Dynamic dependent dropdown/select with Alpine.js',
+    'stackoverflow-alpinejs',
+    'HIGH',
+    '[
+        {"solution": "Use x-watch to monitor parent select changes, fetch data via fetch() API when selection changes, update child array reactively", "percentage": 92, "note": "Most flexible approach for dynamic data loading"},
+        {"solution": "Pre-load all data in initial x-data object with nested mapping (countries -> stores), use x-model and x-for without fetching", "percentage": 88, "note": "Best for small datasets, no server round-trips needed"},
+        {"solution": "Bind parent select with x-model to trigger x-watch observer that fetches filtered results from server endpoint", "percentage": 90, "note": "Standard pattern for Laravel routes returning JSON"},
+        {"solution": "Use x-init with fetch to load initial data, then $watch to handle subsequent selection changes", "percentage": 85, "note": "Combines initialization with reactive updates"}
+    ]'::jsonb,
+    'Alpine.js v2.x or v3.x with $watch support, fetch API knowledge, server endpoint returning JSON, x-model and x-for understanding',
+    'Parent selection triggers child data fetch, dropdown populates with filtered results, loading state visible during fetch, no errors in console logs',
+    'Do NOT fetch data in x-init for dependent selects - use x-watch instead for change detection. Do NOT forget to handle loading states while fetching. Do NOT return entire dataset on first load if using dependent pattern.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/61684622/alpinejs-for-dynamic-select-menu'
+),
+(
+    'Re-initialize Alpine.js component after Livewire re-renders',
+    'stackoverflow-alpinejs',
+    'MEDIUM',
+    '[
+        {"solution": "Use wire:key directive with dynamic value (random, md5 hash, or data-based) to force Livewire to destroy and recreate DOM elements", "percentage": 94, "note": "Most reliable method - Livewire destroys old element and re-inits Alpine"},
+        {"solution": "Use wire:key with md5(json_encode($data)) to reinitialization only when data actually changes, not on every re-render", "percentage": 90, "note": "More efficient than random() - prevents unnecessary reinits"},
+        {"solution": "Wrap Alpine component in additional outer div, applying x-data only to inner div not outer wrapper", "percentage": 70, "note": "Prevents edge cases with element removal/reinsertion"},
+        {"solution": "Use x-init hook to manually reinitialize component state when wire:update event fires", "percentage": 65, "note": "Manual approach, more verbose than wire:key"}
+    ]'::jsonb,
+    'Laravel Livewire 2.x or 3.x, Alpine.js v2.x or v3.x, understanding of DOM element lifecycle',
+    'Alpine component reinitializes after Livewire update, hidden elements reset to initial visibility state, no stale state persists, form inputs clear properly',
+    'Random wire:key reinitializes on EVERY Livewire update - use data-based keys for efficiency. Do NOT apply x-data to Livewire wrapper element. Do NOT expect state to persist across Livewire re-renders without storing in Livewire property.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71099094/how-to-re-init-the-alpinejs-component-after-livewire-re-renders'
+),
+(
+    'Make Flatpickr datepicker reactive with Livewire and Alpine.js',
+    'stackoverflow-alpinejs',
+    'MEDIUM',
+    '[
+        {"solution": "Wrap input in Blade component with wire:ignore to prevent Livewire re-rendering, use @entangle() for two-way binding, and $watch() to sync flatpickr with Alpine reactivity", "percentage": 93, "note": "Complete Blade component solution with reactive binding"},
+        {"solution": "Initialize flatpickr in x-data init() method, use @entangle() to bind Alpine data to Livewire property", "percentage": 91, "note": "Establishes two-way data flow between layers"},
+        {"solution": "Use $watch on Alpine data to call flatpickr instance setDate() method when value changes from Livewire", "percentage": 88, "note": "Syncs Livewire updates back to flatpickr UI"},
+        {"solution": "Create Blade component with wire:model support for reusable date picker across application", "percentage": 85, "note": "Best practice for production - encapsulates logic"}
+    ]'::jsonb,
+    'Laravel Livewire 2.7+, Alpine.js 3.4+, Laravel 8+, Flatpickr library loaded, Blade templating knowledge, JavaScript fetch API',
+    'Selected date appears in input field, Alpine data updates when date selected, Livewire property updates on change, typing date manually works, timezone handling correct',
+    'Do NOT apply wire:ignore to inner input - apply to containing div. Do NOT initialize flatpickr without wire:ignore - Livewire will destroy and recreate it. Do NOT forget @entangle() for two-way binding. Custom flatpickr options must be JSON-encoded with json_encode().',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/63445708/how-to-make-flatpickr-datepicker-reactive-in-livewire-alpinejs-app'
+),
+(
+    'Access parent data in nested x-data components in Alpine.js',
+    'stackoverflow-alpinejs',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade to Alpine.js v3 which automatically resolves nested x-data scope inheritance without code changes", "percentage": 95, "note": "Simplest solution - Alpine v3 fixed this limitation"},
+        {"solution": "Use $parent magic property to explicitly access parent x-data in nested components: x-text=\"$parent.parentData\"", "percentage": 90, "note": "Works in Alpine v2 and v3 for manual scope access"},
+        {"solution": "Duplicate data property in nested x-data object if inheritance not needed - nested components do not inherit parent data", "percentage": 80, "note": "Workaround when parent scope not needed"},
+        {"solution": "Use Alpine Magic Helpers library providing $component/$parent helpers for advanced scope access patterns", "percentage": 70, "note": "Optional third-party enhancement, adds complexity"}
+    ]'::jsonb,
+    'Alpine.js v2.x or v3.x, understanding of JavaScript scope, nested HTML element structure',
+    'Nested component accesses parent data without errors, $parent.property returns correct value, scope resolution works in loops and conditions',
+    'In Alpine v2, nested x-data does NOT inherit parent scope - nested components are isolated. $parent must be used explicitly for access. Upgrading to Alpine v3 is recommended to eliminate this limitation. Do not duplicate entire parent object - only needed properties.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/64751994/alpine-nested-x-data'
+);

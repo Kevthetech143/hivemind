@@ -1,0 +1,181 @@
+-- Community contributions batch 2 (8 approved entries)
+-- Go/Golang, Automation, GUI/Browser, Supabase
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Go rate limiter concurrent map access race condition when multiple goroutines create limiters',
+    'golang-concurrency',
+    'HIGH',
+    '[
+        {
+            "solution": "Implement double-check locking pattern: RLock for read check, then Lock for write if needed, recheck after acquiring write lock",
+            "percentage": 95,
+            "command": "m.mu.RLock(); limiter, exists := m.limiters[userID]; m.mu.RUnlock(); if exists { return limiter }; m.mu.Lock(); defer m.mu.Unlock(); if limiter, exists := m.limiters[userID]; exists { return limiter }; /* create new */",
+            "note": "Prevents race where two goroutines both see missing limiter and both try to create it"
+        },
+        {
+            "solution": "Use sync.Map instead of map with mutex for better concurrent access performance",
+            "percentage": 80,
+            "note": "Built-in concurrent map, but harder to use with complex types"
+        }
+    ]'::jsonb,
+    'Go 1.18+, Concurrent access to shared map, Multiple goroutines creating entries',
+    'go run -race shows no race warnings, Multiple goroutines can safely access limiter map, Only one limiter created per key even under high concurrency',
+    'Using only RLock - allows race conditions during creation. Forgetting to recheck after acquiring write lock - still allows duplicates. Not using defer for Unlock - can deadlock on panic. Holding write lock during expensive operations like limiter creation.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'Go interface implementation error: cannot use type as interface value, method signature mismatch',
+    'golang-interfaces',
+    'HIGH',
+    '[
+        {
+            "solution": "Update interface definition to match actual implementation method signature",
+            "percentage": 95,
+            "command": "Check both interface and implementation signatures match exactly (parameter count, types, order)",
+            "note": "Interface in one file, implementation in another - easy to miss when refactoring"
+        },
+        {
+            "solution": "Use IDE ''Implement Interface'' feature to generate correct signatures",
+            "percentage": 85,
+            "note": "Prevents manual signature mismatch errors"
+        }
+    ]'::jsonb,
+    'Go 1.18+, Interface defined in one file, Implementation in another file',
+    'Code compiles without ''cannot use X as Y value'' error, go build succeeds, Interface methods match implementation exactly',
+    'Forgetting to update interface when adding parameters to implementation. Adding parameters in wrong order. Using different type names (e.g., ''string'' vs ''userID string''). Not checking ALL methods in interface.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'Go instance pool only spawns 1 instance instead of multiple under load',
+    'golang-concurrency',
+    'HIGH',
+    '[
+        {
+            "solution": "Change spawn condition from ''if pending >= 2'' to ''if pending >= 1'' in pool scale-up logic",
+            "percentage": 95,
+            "note": "Off-by-one error - with pending>=2, first request never triggers scale-up"
+        },
+        {
+            "solution": "Review threshold logic: pool should spawn when ANY request is pending and capacity available",
+            "percentage": 90,
+            "command": "if p.pending >= 1 && len(p.instances) < p.config.MaxInstances { p.scaleUp() }"
+        }
+    ]'::jsonb,
+    'Go 1.18+, Instance pooling implementation with pending request counter, MaxInstances configuration',
+    'Multiple instances spawn under concurrent load, Pool utilization increases beyond 1 instance, Logs show ''Spawning new instance (2/5)'', ''(3/5)'' etc',
+    'Don''t use pending >= MaxInstances as threshold (will never spawn). Don''t forget to decrement pending counter in defer statement. Race conditions if pending counter not protected by mutex.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'Need bidirectional messaging between Mac Claude and Linux VM Claude. tmux send-keys doesn''t reliably submit with Enter key from background script.',
+    'automation',
+    'MEDIUM',
+    '[
+        {
+            "solution": "Use expect script with interact for reliable Enter key submission to tmux sessions across machines.",
+            "percentage": 90,
+            "command": "#!/usr/bin/expect -f\\nset timeout -1\\nspawn tmux send-keys -t session \"message\"\\nsend \"\\r\"\\ninteract",
+            "note": "Bash script with tmux send-keys + Enter is unreliable for background automation. Expect''s interact ensures terminal state is correct for Enter submission. Works for Mac ↔ Linux VM bidirectional messaging."
+        }
+    ]'::jsonb,
+    'tmux installed on both machines, expect installed (brew install expect), SSH access between Mac and VM, Claude sessions running in named tmux sessions',
+    'Enter key reliably submits messages, Works from background/cron jobs, Bidirectional messaging functional (Mac → VM and VM → Mac), No manual intervention needed',
+    'Pure bash tmux send-keys with Enter doesn''t work reliably in background. Shell escape sequences can interfere. Expect''s interact handles terminal state properly for automation.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'Tier 3 API checkpoint fails and falls back to Tier 4 template. Large transcripts with many file reads exceed token limits.',
+    'automation',
+    'HIGH',
+    '[
+        {
+            "solution": "Use size-based message selection instead of fixed count. Set MAX_SIZE=100000 (100KB) and stop at either 50 messages OR 100KB, whichever comes first.",
+            "percentage": 95,
+            "command": "# In pre-compact.sh hook (lines 192-211)\\nMAX_SIZE=100000\\nwhile [ $count -lt 50 ] && [ $total_size -lt $MAX_SIZE ]; do\\n  # accumulate messages\\ndone",
+            "note": "100KB = ~25K tokens, provides safe margin for Haiku''s 200K context window. Prevents token overflow when individual messages contain large file reads (5-10KB each)."
+        }
+    ]'::jsonb,
+    'Pre-compact hook installed, Session transcript with large file reads, Tier 3 API checkpoint system',
+    'Tier 3 API succeeds (90% quality) instead of falling back to Tier 4 template (20%), Checkpoint cost ~$0.03, Selected messages under 100KB total',
+    'Always check aggregate size, not just message count. Large file reads in transcript make individual messages 5-10KB each. 50 message limit assumes ~2KB per message average.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'Tkinter GUI renders partially - buttons visible, counter/display text invisible or blank. API endpoints work but GUI shows blank gray space.',
+    'macos',
+    'HIGH',
+    '[
+        {
+            "solution": "Use Homebrew Python instead of system Python. System Python 3.9.6 uses deprecated Tcl/Tk 8.5 which has known macOS rendering bugs.",
+            "percentage": 95,
+            "command": "brew install python@3.13\\n/usr/local/bin/python3.13 your_app.py",
+            "note": "System Python (/usr/bin/python3) → Tcl/Tk 8.5 (broken). Homebrew Python → Tcl/Tk 8.6+ (working). Not a threading issue - pure rendering bug in old Tk version."
+        }
+    ]'::jsonb,
+    'macOS with system Python 3.9.6, Tkinter GUI application, Homebrew installed',
+    'GUI text/labels render correctly, All widgets visible (buttons + counter display), Application works without threading changes, Consistent rendering across restarts',
+    'Threading is NOT the issue (even thread-safe updates fail). Moving GUI to main thread doesn''t help. osascript launch doesn''t help. System Python''s Tcl/Tk 8.5 is fundamentally broken on modern macOS.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'Brave/Chrome browser showing pink boxes, UI freezing, computer overheating on AMD FirePro D700 GPU with macOS Sequoia',
+    'web-automation',
+    'MEDIUM',
+    '[
+        {
+            "solution": "Force OpenGL backend by modifying Brave''s Local State file. Chrome 125+ incompatible with OCLP FirePro patches on Ventura+/Sequoia.",
+            "percentage": 90,
+            "command": "import json\\nimport os\\nlocal_state = os.path.expanduser(''~/Library/Application Support/BraveSoftware/Brave-Browser/Local State'')\\nwith open(local_state) as f:\\n    data = json.load(f)\\ndata.setdefault(''browser'', {}).setdefault(''enabled_labs_experiments'', []).append(''use-angle@1'')\\nwith open(local_state, ''w'') as f:\\n    json.dump(data, f, indent=2)",
+            "note": "Chromium bug #1145. Affects AMD GCN GPUs. Adding use-angle@1 forces OpenGL backend, bypassing broken rendering pipeline."
+        }
+    ]'::jsonb,
+    'Mac Pro with AMD FirePro D700 (or similar GCN GPU), macOS Ventura+ or Sequoia, Brave/Chrome version 125+, OCLP patches installed',
+    'Pink boxes gone, GPU acceleration maintained, Browser responsive, Computer temperature normal, Permanent fix (persists across restarts)',
+    'Only affects AMD GCN GPUs with OCLP patches. Chrome 125+ introduced regression. Software rendering flag (--disable-gpu) works but loses acceleration. OpenGL backend maintains performance.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+),
+(
+    'How to deploy Supabase edge functions and database migrations using CLI',
+    'database',
+    'HIGH',
+    '[
+        {
+            "solution": "Use supabase link + supabase db push + supabase functions deploy to deploy migrations and functions",
+            "percentage": 95,
+            "command": "cd /path/to/backend && supabase link --project-ref YOUR_PROJECT_ID && supabase db push && supabase functions deploy search --project-ref YOUR_PROJECT_ID && supabase functions deploy ticket --project-ref YOUR_PROJECT_ID",
+            "note": "The --project-ref flag is required for function deployment. Use --dry-run with db push to preview migrations before applying."
+        }
+    ]'::jsonb,
+    'Supabase CLI installed (check with ''supabase --version''), Project ref ID from Supabase dashboard, Backend directory with supabase/migrations and supabase/functions folders',
+    'Migration shows in supabase_migrations.schema_migrations table, Functions visible at https://supabase.com/dashboard/project/YOUR_PROJECT_ID/functions, Direct curl test to function endpoint returns expected response',
+    'Forgetting to link project first (causes ''project not linked'' error), Using --project-ref with db push is optional but recommended for clarity, MCP tools are read-only - cannot deploy via mcp__supabase tools',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'community-contribution'
+);

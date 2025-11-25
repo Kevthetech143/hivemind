@@ -1,0 +1,225 @@
+-- Add Stack Overflow Pytest solutions batch 1 (12 highest-voted questions with accepted answers)
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'How to see normal stdout/stderr console print() output from code during a pytest run?',
+    'stackoverflow-pytest',
+    'HIGH',
+    '[
+        {"solution": "Run pytest with -s flag to disable output capturing: pytest -s", "percentage": 95, "note": "Most direct solution", "command": "pytest -s"},
+        {"solution": "Use --capture=no flag for explicit output capturing disabled: pytest --capture=no", "percentage": 90, "note": "Equivalent to -s"},
+        {"solution": "Use -rP flag to display captured output after test results in prettier format: pytest -rP", "percentage": 85, "note": "Keeps output organized"},
+        {"solution": "Configure addopts in pytest.ini: [pytest] addopts = -s", "percentage": 80, "note": "Permanent configuration"},
+        {"solution": "Use pytest --capture=tee-sys (v5.4.0+) for real-time output capturing", "percentage": 75, "note": "Captures and displays simultaneously"}
+    ]'::jsonb,
+    'pytest installed, Test file with print statements',
+    'Print statements appear in console output with test results',
+    'Using -s alone may interleave pytest output with print statements. PyCharm IDE users must add -s to Edit Configurations > Additional Parameters. pytest-xdist users should use sys.stderr.write() instead.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14405063/how-to-see-normal-stdout-stderr-console-print-output-from-code-during-a-pytest'
+),
+(
+    'How do I properly assert that an exception gets raised in pytest?',
+    'stackoverflow-pytest',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use pytest.raises() as a context manager: with pytest.raises(ExceptionType): code_that_raises()", "percentage": 95, "note": "Official recommended approach", "command": "with pytest.raises(ZeroDivisionError):newline    9 / 0"},
+        {"solution": "Capture exception info: with pytest.raises(Exception) as e_info: to access exception object", "percentage": 90, "note": "Access exception details after block"},
+        {"solution": "Use match parameter for exception message validation: pytest.raises(ValueError, match=r''must be digit+$'')", "percentage": 85, "note": "Regex pattern matching"},
+        {"solution": "Mark expected failures with @pytest.mark.xfail for documenting unfixed bugs", "percentage": 70, "note": "Different use case than assertions"}
+    ]'::jsonb,
+    'pytest installed, Understanding of context managers and expected exception type',
+    'Test passes silently when correct exception is raised, fails with "DID NOT RAISE" if no exception',
+    'Try/except with bare assert False lacks context and clarity. Do not use pytest.fail() for exception assertions. @pytest.mark.xfail marks tests as expected failures, not actual assertions.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/23337471/how-do-i-properly-assert-that-an-exception-gets-raised-in-pytest'
+),
+(
+    'Specify which pytest tests to run from a file',
+    'stackoverflow-pytest',
+    'HIGH',
+    '[
+        {"solution": "Use pytest @file.txt with node IDs (pytest 8.2+): pytest @foo.txt where foo.txt contains test node IDs", "percentage": 95, "note": "Most direct, requires pytest 8.2+", "command": "pytest @foo.txt"},
+        {"solution": "Use shell expansion with tr command to convert newline-separated paths to space-separated for pytest input", "percentage": 90, "note": "Works on all pytest versions"},
+        {"solution": "Use keyword expression matching: pytest -k ''test_001 or test_some_other_test''", "percentage": 75, "note": "Substring matching, not exact"},
+        {"solution": "Specify test node IDs directly: pytest tests_directory/foo.py::test_001 tests_directory/bar.py::test_some_other_test", "percentage": 85, "note": "Explicit but verbose"},
+        {"solution": "Implement pytest_collect_file() hook to parse custom test specification files (YAML, JSON, text)", "percentage": 70, "note": "For complex test selection logic"}
+    ]'::jsonb,
+    'pytest installed, Test files discoverable by pytest, For pytest 8.2+ feature: updated version',
+    'Run with verbose output: pytest -v @foo.txt to confirm selected tests execute with clear test names',
+    'Substring matching with -k (test_001 also matches test_0012). Duplicate test names run all matches. Very long test lists may exceed shell argument limits. Node ID format must be exact: module.py::test_name.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/36456920/specify-which-pytest-tests-to-run-from-a-file'
+),
+(
+    'What is conftest.py for in Pytest?',
+    'stackoverflow-pytest',
+    'VERY_HIGH',
+    '[
+        {"solution": "Define reusable fixtures in conftest.py that are automatically discovered by pytest without imports", "percentage": 95, "note": "Primary use case for conftest.py"},
+        {"solution": "Use conftest.py to import and register external pytest plugins via pytest_plugins variable", "percentage": 85, "note": "External plugin loading"},
+        {"solution": "Implement pytest hooks in conftest.py for setup/teardown and test collection customization", "percentage": 85, "note": "Hook implementation"},
+        {"solution": "Use nested conftest.py files for directory-scoped fixtures with child configs overriding parent ones", "percentage": 80, "note": "Fixture scope management"},
+        {"solution": "pytest auto-adds parent directory of conftest.py to sys.path for module discovery", "percentage": 90, "note": "Automatic path configuration"}
+    ]'::jsonb,
+    'pytest installed, Understanding of pytest fixtures, Knowledge of Python module structure',
+    'Fixtures accessible across test suite without imports, pytest -v shows discovered fixtures',
+    'Over-centralizing fixtures in root conftest.py causes unnecessary imports. Pytest auto-discovers all conftest.py files during collection. Parent hooks do not automatically apply to subdirectories. Place conftest.py at appropriate directory levels.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34466027/what-is-conftest-py-for-in-pytest'
+),
+(
+    'How do I print to console in pytest?',
+    'stackoverflow-pytest',
+    'HIGH',
+    '[
+        {"solution": "Use -s flag to disable output capturing: pytest -s", "percentage": 95, "note": "Primary solution", "command": "pytest -s"},
+        {"solution": "Use capsys fixture for selective output control: def test(capsys): with capsys.disabled(): print(''message'')", "percentage": 85, "note": "Fine-grained control"},
+        {"solution": "Configure in pytest.ini to disable capture by default: [pytest] addopts = -s", "percentage": 80, "note": "Permanent configuration"},
+        {"solution": "Use Python warnings instead of print: warnings.warn(UserWarning(''message''))", "percentage": 70, "note": "Alternative approach"}
+    ]'::jsonb,
+    'pytest installed, Test functions named with test_ prefix',
+    'Run pytest -s test_file.py and confirm print output appears in console before results summary',
+    'Print statements only appear in test output when tests FAIL unless -s flag is used. capsys fixture does not work with session-scoped fixtures. Function names must start with test_ or pytest won''t discover them. Default capture behavior hides stdout from passing tests.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/24617397/how-do-i-print-to-console-in-pytest'
+),
+(
+    'PATH issue with pytest ImportError: No module named',
+    'stackoverflow-pytest',
+    'HIGH',
+    '[
+        {"solution": "For pytest ≥7.0: Configure pythonpath in pyproject.toml: [tool.pytest.ini_options] pythonpath = [\".\"]", "percentage": 95, "note": "Modern approach for pytest 7+", "command": "[tool.pytest.ini_options]newlinepythonpath = [\".\"]"},
+        {"solution": "For pytest <7.0: Create empty conftest.py in repo root, pytest adds its parent to sys.path automatically", "percentage": 92, "note": "Works on all versions <7"},
+        {"solution": "Use python -m pytest instead of pytest directly, automatically adds current directory to PYTHONPATH", "percentage": 90, "note": "Alternative approach", "command": "python -m pytest"},
+        {"solution": "Configure in pytest.ini for pytest <7: [pytest] pythonpath = .", "percentage": 88, "note": "Explicit configuration"}
+    ]'::jsonb,
+    'pytest installed via pip or easy_install, Project with clear root directory containing application code',
+    'Tests execute successfully: pytest tests/ from repo root without import errors',
+    'Placing conftest.py in wrong directory (should be repo root, not src/). Adding __init__.py to test directories when not needed. Not recognizing OS-specific PATH behavior differences. pytest.ini vs pyproject.toml configuration inconsistencies.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10253826/path-issue-with-pytest-importerror-no-module-named'
+),
+(
+    'pytest: assert almost equal for floating-point comparisons',
+    'stackoverflow-pytest',
+    'MEDIUM',
+    '[
+        {"solution": "Use pytest.approx() function: assert 2.2 == pytest.approx(2.3, 0.1) for floating-point comparison", "percentage": 95, "note": "Recommended for pytest 3.0+", "command": "assert value == pytest.approx(expected_value, relative_tolerance)"},
+        {"solution": "pytest.approx() works bidirectionally: 2.2 == pytest.approx(2.3) and pytest.approx(2.3) == 2.2", "percentage": 90, "note": "Flexible comparison direction"},
+        {"solution": "Use absolute tolerance with abs parameter: pytest.approx(expected, abs=0.001)", "percentage": 85, "note": "For absolute tolerance instead of relative"},
+        {"solution": "pytest.approx() supports sequences and dictionaries: (1.32, 2.4) == pytest.approx((1.32, 2.4))", "percentage": 85, "note": "Works with complex types"}
+    ]'::jsonb,
+    'pytest version 3.0.0 or later (released 2016)',
+    'Test passes when values fall within tolerance bounds: assert 0.1 + 0.2 == pytest.approx(0.3)',
+    'Nested structures may struggle with pytest.approx, use numpy.assert_allclose for deeply nested lists. Second positional argument is relative tolerance, not absolute. Use abs= parameter for absolute tolerance. Outdated pytest versions require alternative approaches.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/8560131/pytest-assert-almost-equal'
+),
+(
+    'pytest cannot import module while python can',
+    'stackoverflow-pytest',
+    'HIGH',
+    '[
+        {"solution": "Remove __init__.py from tests folder (do NOT put __init__.py in test directories)", "percentage": 95, "note": "Most reliable solution", "command": "rm tests/__init__.py"},
+        {"solution": "Use python -m pytest instead of pytest command directly", "percentage": 90, "note": "Adds current directory to sys.path", "command": "python -m pytest"},
+        {"solution": "Remove __init__.py from project root if it exists, can interfere with pytest module discovery", "percentage": 85, "note": "Check root __init__.py"},
+        {"solution": "Ensure pytest is installed in virtualenv, not globally: pip install pytest in active virtualenv", "percentage": 80, "note": "Verify correct pytest installation"}
+    ]'::jsonb,
+    'Using virtualenv or conda environment, pytest installed and available, Proper module structure in source packages',
+    'pytest executes without ImportError, test collection completes successfully, individual tests execute',
+    'Having __init__.py in tests directory contradicts pytest best practices (no __init__.py needed in test dirs). Using globally-installed pytest with virtualenv packages causes conflicts. __init__.py in project root causes namespace conflicts. Virtualenv caching issues can persist.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/41748464/pytest-cannot-import-module-while-python-can'
+),
+(
+    'Logging within pytest tests',
+    'stackoverflow-pytest',
+    'MEDIUM',
+    '[
+        {"solution": "Use pytest''s live logging feature: set log_cli = true in pytest.ini or pyproject.toml", "percentage": 95, "note": "Pytest 3.3+ feature", "command": "[pytest]newlinelog_cli = 1newlinelog_cli_level = INFO"},
+        {"solution": "Configure logging from command-line: pytest -o log_cli=true --log-cli-level=DEBUG", "percentage": 90, "note": "No config file needed", "command": "pytest -o log_cli=true --log-cli-level=DEBUG"},
+        {"solution": "Format logs with: log_cli_format = %(asctime)s [%(levelname)8s] %(message)s in config", "percentage": 85, "note": "Customize log output format"},
+        {"solution": "Disable output capture with --capture=no flag if live logging not working", "percentage": 80, "note": "Fallback approach"},
+        {"solution": "Use --log-cli-level=DEBUG to override default warning level and show info/debug messages", "percentage": 85, "note": "Default level hides debug info"}
+    ]'::jsonb,
+    'pytest version 3.3 or later, Logger properly configured with logging.getLogger(), No special test code modifications required',
+    'Logs appear in real-time during test execution with timestamp, level, message, and source file location',
+    'Output capture interferes with logging, use --capture=no flag. Log level too high (default warning) hides info/debug messages. Parallel test execution with -n disables live logging. Use pyproject.toml over setup.cfg to avoid string interpolation issues.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4673373/logging-within-pytest-tests'
+),
+(
+    'How do I disable a test using pytest?',
+    'stackoverflow-pytest',
+    'MEDIUM',
+    '[
+        {"solution": "Use @pytest.mark.skip decorator with reason: @pytest.mark.skip(reason=\"no way of currently testing this\")", "percentage": 95, "note": "Recommended approach", "command": "@pytest.mark.skip(reason=\"reason for skipping\")"},
+        {"solution": "Use conditional skipping: @pytest.mark.skipif(sys.version_info < (3,3), reason=\"requires python3.3\")", "percentage": 90, "note": "For conditional disabling"},
+        {"solution": "Skip within test body: pytest.skip(''reason for skipping'') called inside test function", "percentage": 85, "note": "Imperative skipping approach"},
+        {"solution": "Use command-line -k flag without code changes: pytest test_script.py -k ''not test_func_one''", "percentage": 80, "note": "Runtime test selection"},
+        {"solution": "Use @pytest.mark.xfail to mark expected failures (runs but doesn''t fail build)", "percentage": 75, "note": "For tests expected to fail"}
+    ]'::jsonb,
+    'pytest installed, Test functions defined',
+    'Skipped test appears in pytest output summary as ''s'' (skipped), does not fail test suite, reason displayed',
+    'Forgetting to include reason parameter makes tests harder to maintain. @pytest.mark.xfail is for expected failures, not permanent disabling. Always document why a test is disabled. -k flag requires remembering all test names to exclude.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38442897/how-do-i-disable-a-test-using-pytest'
+),
+(
+    'How to pass a parameter to a fixture function in Pytest?',
+    'stackoverflow-pytest',
+    'MEDIUM',
+    '[
+        {"solution": "Use indirect parametrization: @pytest.mark.parametrize(''fixture_name'', [values], indirect=True) with request.param in fixture", "percentage": 95, "note": "Recommended indirect approach", "command": "@pytest.fixturenewlinedef tester(request):newline    return MyTester(request.param)newlinenewline@pytest.mark.parametrize(''tester'', [values], indirect=True)"},
+        {"solution": "Modern implicit parametrization (pytest 6.2+): parametrize fixture parameter name directly", "percentage": 90, "note": "Newer, cleaner syntax", "command": "@pytest.fixturenewlinedef tester(tester_arg):newline    return MyTester(tester_arg)"},
+        {"solution": "Access fixture request object: request.param provides parametrized value in fixture", "percentage": 85, "note": "Required for indirect parametrization"}
+    ]'::jsonb,
+    'pytest installed, Understanding of fixture scopes and parametrization, Knowledge of request object',
+    'Run pytest -v to confirm parameters passed correctly, fixtures initialize with expected values, test names include parameters',
+    'Forgetting indirect=True when using first approach breaks parametrization. Test names change to include parameters (test_tc1[param]). Scope mismatches between fixture and auto-generated parameter fixtures. Confusing when to use fixtures vs helper functions.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/18011902/how-to-pass-a-parameter-to-a-fixture-function-in-pytest'
+),
+(
+    'Printing test execution times and pinning down slow tests with pytest',
+    'stackoverflow-pytest',
+    'MEDIUM',
+    '[
+        {"solution": "Use --durations flag to show test execution times: pytest --durations=0 shows all test durations", "percentage": 95, "note": "Show all tests", "command": "pytest --durations=0"},
+        {"solution": "Limit slowest tests display: pytest --durations=N shows N slowest tests", "percentage": 92, "note": "Show top N slowest"},
+        {"solution": "Show all tests including very fast ones: pytest --durations=0 --durations-min=0", "percentage": 85, "note": "Override minimum duration threshold"},
+        {"solution": "pytest displays timing data at end of test suite summary showing slowest tests ranked by duration", "percentage": 90, "note": "Automatic ranking"}
+    ]'::jsonb,
+    'pytest installed, Standard pytest test structure, Tests executing',
+    'Execution times appear at end of test suite summary in ranked order by duration, slowest tests identified',
+    'Default minimum duration threshold is 0.005 seconds, very fast tests may be filtered out. Very large test suites with thousands of tests produce verbose timing output. External network resource access causes unpredictable timing variations making CI debugging difficult.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/27884404/printing-test-execution-times-and-pinning-down-slow-tests-with-py-test'
+);

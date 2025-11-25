@@ -1,0 +1,222 @@
+-- MySQL 5.7 to 8.0 Migration Guide - Breaking Changes & Compatibility Issues
+-- Extracted from: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'MySQL 8.0: Default authentication plugin changed to caching_sha2_password',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Update MySQL client libraries to version compatible with caching_sha2_password authentication", "percentage": 95, "note": "Required for pre-8.0 clients connecting to 8.0 servers"},
+        {"solution": "Reconfigure MySQL 8.0 server to use mysql_native_password: Set default_authentication_plugin=mysql_native_password in my.cnf", "percentage": 90, "note": "Temporary compatibility mode, not recommended long-term"},
+        {"solution": "Ensure secure connections (SSL/TLS) or RSA key pair support for caching_sha2_password authentication", "percentage": 85, "note": "caching_sha2_password requires encrypted connection or RSA key exchange"},
+        {"solution": "Update connection strings to explicitly set authentication plugin if needed", "percentage": 80, "command": "ALTER USER ''@''localhost'' IDENTIFIED WITH mysql_native_password BY ''password'';"}
+    ]'::jsonb,
+    'MySQL 8.0 server running, Access to my.cnf configuration file, Understanding of client library versions',
+    'Clients successfully authenticate and connect to database, No authentication errors in logs',
+    'Forgetting that pre-8.0 clients may not support caching_sha2_password. Not testing client connections before production upgrade. Mixing authentication methods across servers.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-authentication-changes'
+),
+(
+    'MySQL 8.0: Default character set changed from latin1 to utf8mb4',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Review and test applications with new utf8mb4 collation (utf8mb4_0900_ai_ci)", "percentage": 90, "note": "New objects use utf8mb4 by default, existing databases unchanged"},
+        {"solution": "Set character_set_server and collation_server in my.cnf to latin1 if legacy behavior required", "percentage": 85, "command": "character_set_server=latin1\ncollation_server=latin1_swedish_ci"},
+        {"solution": "Convert existing databases and tables to utf8mb4 using ALTER TABLE with CHARSET", "percentage": 80, "note": "Requires downtime proportional to table size"},
+        {"solution": "Update application string handling for 4-byte UTF-8 characters", "percentage": 75, "note": "utf8mb4 supports emoji and extended Unicode"}
+    ]'::jsonb,
+    'MySQL 8.0 server running, Backup of existing databases, Testing environment available',
+    'Applications handle UTF-8 characters correctly, No character encoding errors in logs',
+    'Assuming existing databases auto-convert (they do not). Not accounting for increased storage with utf8mb4 (4 bytes vs 3). Index size limits with utf8mb4 (767 byte limit on InnoDB).',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-character-set'
+),
+(
+    'MySQL 8.0: Partitioned tables using MyISAM or other unsupported engines fail',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Identify partitioned tables: SELECT * FROM INFORMATION_SCHEMA.PARTITIONS WHERE PARTITION_NAME IS NOT NULL", "percentage": 95, "note": "Required before upgrade to identify tables needing conversion"},
+        {"solution": "Convert MyISAM partitioned tables to InnoDB before upgrade: ALTER TABLE table_name ENGINE=InnoDB", "percentage": 92, "note": "InnoDB is only engine with native partitioning support in 8.0"},
+        {"solution": "For tables with custom partitions, remove partitioning: ALTER TABLE table_name REMOVE PARTITIONING", "percentage": 85, "note": "Combines partitions into single table, data preserved"},
+        {"solution": "Test partition queries after conversion to verify performance", "percentage": 80, "note": "Performance characteristics may change with InnoDB vs MyISAM"}
+    ]'::jsonb,
+    'MySQL 5.7 server running, Backup of databases with partitioned tables, Access to ALTER TABLE permissions',
+    'Partitioned tables successfully query, PARTITION clause works correctly, No partition-related errors',
+    'Not identifying partitioned tables before upgrade (upgrade will fail). Using unsupported storage engines. Not testing partition performance after conversion. Forgetting REMOVE PARTITIONING is permanent.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-partition'
+),
+(
+    'MySQL 8.0: NO_AUTO_CREATE_USER SQL mode removed, causes configuration errors',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Remove NO_AUTO_CREATE_USER from sql_mode setting in my.cnf or startup script", "percentage": 95, "note": "Required for 8.0 compatibility, SQL mode is now ignored"},
+        {"solution": "Verify current sql_mode: SELECT @@sql_mode", "percentage": 90, "command": "SELECT @@sql_mode;"},
+        {"solution": "Update sql_mode without NO_AUTO_CREATE_USER, keep other modes like STRICT_TRANS_TABLES", "percentage": 85, "command": "SET GLOBAL sql_mode = ''STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'';"},
+        {"solution": "Test application behavior after removing mode (auto-user-creation via GRANT is no longer blocked)", "percentage": 75, "note": "Applications relying on this restriction will behave differently"}
+    ]'::jsonb,
+    'MySQL 5.7 server with NO_AUTO_CREATE_USER in sql_mode, Access to configuration files',
+    'Server starts without warnings about unknown SQL mode, Applications handle user creation as expected',
+    'Leaving NO_AUTO_CREATE_USER in sql_mode causes warnings or errors. Not understanding that GRANT can now create users automatically. Not testing application user creation logic.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-sql-mode'
+),
+(
+    'MySQL 8.0: GROUP BY with ASC/DESC qualifiers no longer supported',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Remove ASC/DESC from GROUP BY clause: Change ''GROUP BY col ASC'' to ''GROUP BY col''", "percentage": 95, "note": "Syntax no longer allowed in 8.0"},
+        {"solution": "Use ORDER BY for sorting: ''SELECT col, COUNT(*) FROM table GROUP BY col ORDER BY col ASC''", "percentage": 92, "note": "Proper SQL practice anyway - use ORDER BY for result sorting"},
+        {"solution": "Search codebase for GROUP BY.*ASC or GROUP BY.*DESC patterns", "percentage": 90, "command": "grep -r \"GROUP BY.*ASC\\|GROUP BY.*DESC\" src/"},
+        {"solution": "Test all queries with GROUP BY during development environment setup", "percentage": 80, "note": "Catch incompatibilities before production upgrade"}
+    ]'::jsonb,
+    'MySQL 5.7 database with potential GROUP BY ASC/DESC usage, Application source code searchable',
+    'Queries execute without syntax errors, Results sorted correctly via ORDER BY',
+    'Not finding all GROUP BY ASC/DESC usage in legacy code. Confusing GROUP BY sorting with ORDER BY. Not testing query compatibility before upgrade.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-group-by'
+),
+(
+    'MySQL 8.0: InnoDB undo logs moved to separate tablespaces, requires slow shutdown',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Perform slow shutdown before upgrade: SET GLOBAL innodb_fast_shutdown=0 followed by SHUTDOWN", "percentage": 94, "note": "Purges undo log before shutdown, required for smooth upgrade"},
+        {"solution": "Increase innodb_undo_tablespaces minimum value to 2 in my.cnf: innodb_undo_tablespaces=2", "percentage": 92, "note": "Required in 8.0, minimum changed from 0 to 2"},
+        {"solution": "Configure innodb_directories if using undo tablespaces outside data directory", "percentage": 85, "command": "innodb_directories=/path/to/undo/dir"},
+        {"solution": "Monitor undo tablespace size during initial 8.0 startup", "percentage": 75, "note": "Undo logs are truncated by default in 8.0, causing initial performance impact"}
+    ]'::jsonb,
+    'MySQL 5.7 server running with InnoDB, Downtime available for slow shutdown, Sufficient disk space',
+    'InnoDB startup completes without undo log errors, Separate undo tablespaces created',
+    'Not performing slow shutdown (fast shutdown leaves undo logs in system tablespace). Not increasing innodb_undo_tablespaces value. Not allocating disk space for new undo tablespaces. Undo truncation causing unexpected performance impact initially.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-innodb-undo'
+),
+(
+    'MySQL 8.0: lower_case_table_names cannot change after initialization',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Set lower_case_table_names value before MySQL initialization in my.cnf", "percentage": 95, "note": "Value must be consistent across all environments"},
+        {"solution": "Verify lower_case_table_names value: SELECT @@lower_case_table_names", "percentage": 93, "command": "SELECT @@lower_case_table_names;"},
+        {"solution": "On Linux (case-sensitive), use lower_case_table_names=0 (default)", "percentage": 90, "note": "Allows mixed-case table names"},
+        {"solution": "On Windows/macOS (case-insensitive), use lower_case_table_names=1 or 2", "percentage": 85, "note": "Ensures consistency across platform differences"}
+    ]'::jsonb,
+    'MySQL 8.0 running, Access to configuration files, Understanding of file system case-sensitivity',
+    'All environments have matching lower_case_table_names setting, No case-related table errors',
+    'Setting different values across dev/staging/production. Trying to change value after database is initialized. Not accounting for OS file system differences.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-case-sensitivity'
+),
+(
+    'MySQL 8.0: PASSWORD() function and old_passwords variable removed',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace PASSWORD() function calls with VALUES clause in INSERT/UPDATE: Use hashed passwords instead", "percentage": 92, "note": "PASSWORD() never provided real security, hashed values recommended"},
+        {"solution": "Update authentication to use SET PASSWORD or ALTER USER for password changes", "percentage": 90, "command": "ALTER USER ''user''@''host'' IDENTIFIED BY ''password'';"},
+        {"solution": "Remove old_passwords variable from my.cnf if present", "percentage": 88, "note": "Only used with deprecated PASSWORD() function"},
+        {"solution": "Search application code for PASSWORD() usage: grep -r \"PASSWORD(\" src/", "percentage": 85, "command": "grep -r \"PASSWORD(\" src/ | grep -v \"PASSWORD RESET\""}
+    ]'::jsonb,
+    'MySQL 5.7 database using PASSWORD() function, Application source code accessible',
+    'Authentication works without PASSWORD() calls, No deprecated function warnings',
+    'Not finding all PASSWORD() function usage in SQL scripts. Confusing PASSWORD() with password hashing. Not testing authentication after removal.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-password-function'
+),
+(
+    'MySQL 8.0: Compatibility modes DB2, MAXDB, MSSQL, ORACLE, POSTGRESQL removed',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Remove compatibility mode from sql_mode setting: Remove values like DB2, MAXDB, MSSQL, ORACLE, POSTGRESQL", "percentage": 93, "note": "No longer supported in 8.0"},
+        {"solution": "Check sql_mode: SELECT @@sql_mode and look for removed modes", "percentage": 90, "command": "SELECT @@sql_mode;"},
+        {"solution": "Update my.cnf to remove compatibility modes", "percentage": 88, "note": "Test queries to ensure they work without these modes"},
+        {"solution": "Update SQL queries to use standard MySQL syntax if application relied on compatibility mode behaviors", "percentage": 75, "note": "Usually minimal impact as these were rarely used"}
+    ]'::jsonb,
+    'MySQL 5.7 using compatibility SQL mode, Configuration file access',
+    'Server starts without warnings about unknown SQL mode, Queries execute correctly',
+    'Not removing compatibility modes from sql_mode. Confusing SQL_MODE with MySQL version compatibility. Not testing query behavior.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-compatibility-modes'
+),
+(
+    'MySQL 8.0: Spatial functions without ST_ or MBR_ prefix removed',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace old spatial function names with ST_ prefix: Polygon() → ST_Polygon(), LineString() → ST_LineString()", "percentage": 94, "note": "Old function names deprecated and removed in 8.0"},
+        {"solution": "Update generated columns using spatial functions to use ST_ prefix", "percentage": 92, "note": "Generated columns cannot be created with deprecated functions"},
+        {"solution": "Search codebase for spatial function usage: grep -r \"Polygon\\|LineString\\|Point(\" src/", "percentage": 88, "command": "grep -r \"Polygon\\|LineString\" src/migrations/"},
+        {"solution": "Test geospatial queries after function rename to ensure same behavior", "percentage": 80, "note": "ST_ functions behave identically to old names"}
+    ]'::jsonb,
+    'MySQL 5.7 database using spatial functions, Geospatial query access',
+    'Spatial queries execute without deprecated function errors, Generated columns create successfully',
+    'Not finding all old spatial function names. Assuming ST_ functions behave differently (they do not). Not testing geospatial queries.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-spatial-functions'
+),
+(
+    'MySQL 8.0: Binary logging enabled by default, performance impact',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Review binary logging configuration (skip-log-bin if not needed for replication)", "percentage": 88, "note": "Enabled by default in 8.0, disabling improves performance for single-server setups"},
+        {"solution": "If replication required, ensure log-bin=mysql-bin is configured", "percentage": 92, "note": "Required for master-slave replication"},
+        {"solution": "Monitor binary log size and configure log rotation: SET GLOBAL binlog_expire_logs_auto_purge=1", "percentage": 85, "command": "SET GLOBAL binlog_expire_logs_auto_purge=1;"},
+        {"solution": "Disable binary logging for development/test servers if not needed", "percentage": 75, "command": "skip-log-bin"}
+    ]'::jsonb,
+    'MySQL 8.0 running, Understanding of replication requirements, Disk space for binary logs',
+    'Binary logs created if replication enabled, Performance meets baseline without logs if disabled, Disk usage stable',
+    'Not disabling binary logging in development causing unexpected disk usage. Not rotating binary logs causing disk to fill. Not considering replication impact.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-binary-logging'
+),
+(
+    'MySQL 8.0: Account management via GRANT for non-privilege modifications removed',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Use ALTER USER instead of GRANT for non-privilege account modifications", "percentage": 95, "note": "GRANT now only handles privileges, not password or account properties"},
+        {"solution": "Replace GRANT with ALTER USER for password changes: ALTER USER ''user''@''host'' IDENTIFIED BY ''password''", "percentage": 93, "command": "ALTER USER ''user''@''host'' IDENTIFIED BY ''password'';"},
+        {"solution": "Use ALTER USER for setting password expiration or account locking", "percentage": 90, "command": "ALTER USER ''user''@''host'' PASSWORD EXPIRE INTERVAL 90 DAY;"},
+        {"solution": "Update application code and automation scripts using GRANT for account management", "percentage": 85, "note": "Search and replace GRANT.*BY patterns"}
+    ]'::jsonb,
+    'MySQL 5.7 using GRANT for non-privilege account management, Access to scripts and application code',
+    'Account management works with ALTER USER, No unexpected privilege changes',
+    'Trying to use GRANT for password changes in 8.0. Not understanding GRANT is now privilege-only. Not updating automation scripts.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-account-management'
+);

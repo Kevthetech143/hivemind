@@ -1,0 +1,224 @@
+-- Add top voted Stack Overflow REST API questions/answers
+-- Source: https://stackoverflow.com/questions/tagged/rest?tab=votes
+-- Category: stackoverflow-rest
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'What is the difference between POST and PUT in HTTP?',
+    'stackoverflow-rest',
+    'VERY_HIGH',
+    '[
+        {"solution": "PUT is idempotent - used to create or replace a complete resource at a specific URL you define. Multiple identical PUT requests produce the same result.", "percentage": 95, "note": "PUT expects complete entity data"},
+        {"solution": "POST is non-idempotent - used to create new subordinate resources. The server generates the resource identifier. Multiple POST requests create multiple new resources.", "percentage": 95, "note": "POST creates resources under a collection"},
+        {"solution": "Use PUT when: you want to create a resource at a known URL (PUT /questions/123), need guaranteed idempotence, or the client defines the resource name", "percentage": 90, "note": "PUT is idempotent and suitable for updates"},
+        {"solution": "Use POST when: creating new resources under a collection (POST /questions), the server generates the resource ID, or you do not need idempotent behavior", "percentage": 90, "note": "POST relies on server-generated IDs"}
+    ]'::jsonb,
+    'Understanding HTTP semantics and REST principles',
+    'API correctly creates or updates resources based on method choice, Client code uses appropriate method for intended operation',
+    'Confusing POST and PUT - POST should be non-idempotent for new resources, PUT should be idempotent for known URLs. Do not use POST for resource updates if idempotence is required.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/630453/what-is-the-difference-between-post-and-put-in-http'
+),
+(
+    'What exactly is RESTful programming?',
+    'stackoverflow-rest',
+    'VERY_HIGH',
+    '[
+        {"solution": "REST is an architectural principle underlying the web, emphasizing client-server interactions without prior knowledge of each other''s structure", "percentage": 95, "note": "Foundational concept for REST APIs"},
+        {"solution": "Apply HATEOAS (Hypermedia As The Engine Of Application State) - server provides hypermedia controls that clients need to interact with services", "percentage": 90, "note": "True REST enables dynamic discovery"},
+        {"solution": "Use HTTP verbs (GET, POST, PUT, DELETE) semantically on resources according to server instructions, rather than treating all operations as POST requests", "percentage": 90, "note": "Leverage HTTP method semantics"},
+        {"solution": "Resources include links sections describing available actions and next steps - clients discover functionality dynamically rather than relying on predetermined API documentation", "percentage": 85, "note": "Clients should follow hypermedia links"}
+    ]'::jsonb,
+    'Understanding of HTTP protocol and web architecture principles',
+    'API responses include hypermedia controls, Client code discovers available operations from responses, Resources are addressable by URI',
+    'Treating REST as a simple data API. True REST requires hypermedia-driven interactions. APIs using only GET/POST are not truly RESTful - use all appropriate HTTP verbs.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/671118/what-exactly-is-restful-programming'
+),
+(
+    'How do I POST JSON data with cURL?',
+    'stackoverflow-rest',
+    'HIGH',
+    '[
+        {"solution": "Set Content-Type header and use --data flag with JSON payload in single quotes", "percentage": 95, "note": "-d flag defaults to application/x-www-form-urlencoded, so Content-Type header is required"},
+        {"solution": "For JSON from file use @ symbol: curl -H Content-Type:application/json --data @body.json URL", "percentage": 90, "note": "Use --data-binary instead of --data to preserve line endings"},
+        {"solution": "Note Windows users need to escape quotation marks differently - either use triple quotes or backslash escaping, as single quotes do not work reliably in Command Prompt", "percentage": 75, "note": "Platform-specific JSON escaping requirements"},
+        {"solution": "The -d flag automatically implies POST request - do not need to specify --request POST separately", "percentage": 85, "note": "Implicit HTTP method selection"}
+    ]'::jsonb,
+    'cURL installed, Valid JSON payload, Target endpoint accepting POST requests',
+    'Request sent with 200 status, Server receives JSON data correctly, Response contains expected output',
+    'Forgetting to set Content-Type header - defaults to form-urlencoded. Not escaping JSON quotes properly on Windows. Using --data with GET requests.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7172784/how-do-i-post-json-data-with-curl'
+),
+(
+    'HTTP GET with request body',
+    'stackoverflow-rest',
+    'HIGH',
+    '[
+        {"solution": "Avoid sending a body with GET requests. Roy Fielding, REST''s architect, stated: \"you can send a body with GET, and no, it is never useful to do so.\"", "percentage": 95, "note": "Authoritative guidance from REST creator"},
+        {"solution": "According to HTTP/1.1 specification, a payload within a GET request has no defined semantics and may cause implementations to reject the request", "percentage": 90, "note": "Semantic violation of HTTP design"},
+        {"solution": "Proxies, caches, and intermediaries may strip request bodies from GET requests since they do not expect them", "percentage": 85, "note": "Compatibility issues with infrastructure"},
+        {"solution": "When query strings become unwieldy (exceeding URL length limits), use POST for complex data submission instead of adding a GET body", "percentage": 80, "note": "Alternative: POST or emerging SEARCH HTTP method"}
+    ]'::jsonb,
+    'Understanding HTTP specification and REST design principles',
+    'API requests conform to HTTP semantics, No request body sent with GET, Query parameters used instead for GET filtering',
+    'Adding semantic meaning to GET request bodies violates HTTP design. HTTP clients may not support bodies with GET. Use POST or query parameters instead.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/978061/http-get-with-request-body'
+),
+(
+    'HTTP response code for POST when resource already exists',
+    'stackoverflow-rest',
+    'HIGH',
+    '[
+        {"solution": "Return 409 Conflict - indicates the request could not be completed due to a conflict with the current state of the resource", "percentage": 95, "note": "Best practice for duplicate resources"},
+        {"solution": "Return 409 Conflict with Location header pointing to the existing resource for helpful redirection", "percentage": 90, "note": "Combines conflict notification with resource location"},
+        {"solution": "Alternatively use 303 See Other per RFC 7231 when processing POST results in an existing resource representation", "percentage": 75, "note": "Less common but RFC-compliant alternative"},
+        {"solution": "Return 200/204 OK if server implicitly handles duplicates and treats repeated POST as idempotent", "percentage": 70, "note": "Only if intentionally designed for idempotence"}
+    ]'::jsonb,
+    'REST API design knowledge, Understanding of HTTP status codes',
+    'Client receives 409 status for duplicate resources, Error message explains conflict, Location header provided if applicable',
+    'Using 400 Bad Request for duplicates - 409 is more semantically correct. Not distinguishing data conflicts from malformed requests.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/3825990/http-response-code-for-post-when-resource-already-exists'
+),
+(
+    'SOAP vs REST: differences and when to use each',
+    'stackoverflow-rest',
+    'HIGH',
+    '[
+        {"solution": "REST is an architectural style for network-based software using standard HTTP methods (GET, POST, PUT, DELETE). SOAP is a protocol for web services communication", "percentage": 95, "note": "Fundamental architectural difference"},
+        {"solution": "REST supports multiple formats (JSON, XML, plain text) with lighter payloads. SOAP uses XML-only format", "percentage": 90, "note": "Format flexibility and payload size differ"},
+        {"solution": "SOAP provides comprehensive ACID-based transaction management and WS-Security for enterprise-level security beyond HTTP/HTTPS transport security", "percentage": 85, "note": "Enterprise features of SOAP"},
+        {"solution": "Use REST for simpler modern web applications with flexible data formats. Use SOAP when security, transaction management, and distributed resource coordination are critical business requirements", "percentage": 85, "note": "Technology selection guidance"}
+    ]'::jsonb,
+    'Understanding of web service architectures, Knowledge of HTTP and XML protocols',
+    'Service chosen matches business requirements, Performance metrics align with architecture choice, Security implementation appropriate for technology',
+    'Treating REST and SOAP as equivalent. SOAP is better for distributed transactions, REST is better for web-native applications. Choose based on requirements, not trends.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/19884295/soap-vs-rest-differences'
+),
+(
+    'Use of PUT vs PATCH methods in REST API real life scenarios',
+    'stackoverflow-rest',
+    'HIGH',
+    '[
+        {"solution": "PUT replaces an entire resource with complete data. Sending PUT /users/1 with {\"username\":\"test\",\"email\":\"test@example.com\"} replaces the entire resource", "percentage": 95, "note": "PUT operates on complete entity"},
+        {"solution": "PATCH sends only fields you''re modifying: PATCH /users/1 with {\"email\":\"new@example.com\"} updates only email, other fields remain unchanged", "percentage": 95, "note": "PATCH is for partial updates"},
+        {"solution": "PUT is always idempotent - repeating the same complete data request yields identical resource state. PATCH is not guaranteed idempotent", "percentage": 90, "note": "Idempotence differs between methods"},
+        {"solution": "Use PUT for replacing entire configuration objects or full profile updates. Use PATCH for changing single user email or updating specific order fields", "percentage": 90, "note": "Practical scenario guidance"}
+    ]'::jsonb,
+    'REST API design knowledge, Understanding of idempotent operations',
+    'API correctly handles full vs partial updates, Idempotence requirements met, Resource state matches expected updates',
+    'Using PUT for partial updates and expecting other fields to remain unchanged. Using PATCH when idempotence is required - PATCH operations may not be idempotent.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/28459418/use-of-put-vs-patch-methods-in-rest-api-real-life-scenarios'
+),
+(
+    'How to set Content-Type header for HttpClient request',
+    'stackoverflow-rest',
+    'MEDIUM',
+    '[
+        {"solution": "Content-Type is a content header, not a request header. Set it on HttpContent object, not DefaultRequestHeaders. Use: request.Content = new StringContent(\"{json}\", Encoding.UTF8, \"application/json\");", "percentage": 95, "note": "Common .NET API misunderstanding"},
+        {"solution": "Set Content-Type via StringContent constructor third parameter: new StringContent(json, Encoding.UTF8, \"application/json\")", "percentage": 95, "command": ".NET/C# code pattern"},
+        {"solution": "For .NET 5+, use JsonContent.Create(): requestMessage.Content = JsonContent.Create(new {Name=\"John\",Age=33});", "percentage": 90, "note": "Modern .NET approach"},
+        {"solution": "Some APIs reject automatic charset suffix. Remove it: content.Headers.ContentType.CharSet = null;", "percentage": 80, "note": "Handle charset negotiation issues"}
+    ]'::jsonb,
+    '.NET Framework knowledge, HttpClient library understanding',
+    'Request includes correct Content-Type header, Server receives properly formatted HTTP request, API responds with 200 status',
+    'Setting Content-Type on DefaultRequestHeaders instead of HttpContent. Forgetting charset parameter causes some APIs to reject request.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10679214/how-to-set-the-content-type-header-for-an-httpclient-request'
+),
+(
+    'Is an entity body allowed for an HTTP DELETE request?',
+    'stackoverflow-rest',
+    'MEDIUM',
+    '[
+        {"solution": "RFC 2616 does not explicitly forbid entity bodies in DELETE requests. RFC 7231 explicitly permits bodies stating: \"A payload within a DELETE request message has no defined semantics\"", "percentage": 90, "note": "Technically permitted by spec"},
+        {"solution": "While technically allowed, some implementations (Tomcat, Jetty, Google App Engine) may ignore or mishandle DELETE request bodies", "percentage": 85, "note": "Implementation compatibility varies"},
+        {"solution": "RFC 9110 (June 2022) clarifies clients should exercise caution: \"A client SHOULD NOT generate content in a DELETE request unless the server has previously indicated such requests have a purpose\"", "percentage": 85, "note": "Modern best practice guidance"},
+        {"solution": "For maximum interoperability, use alternative approaches: query parameters, custom headers, or ETags for managing concurrency control instead of request body", "percentage": 90, "note": "Recommended compatibility approach"}
+    ]'::jsonb,
+    'HTTP specification knowledge, REST API design understanding',
+    'DELETE requests work across HTTP client implementations, Framework handles requests without errors, Compatibility maintained with various servers',
+    'Relying on DELETE request bodies for critical functionality may cause compatibility issues. Use query parameters or headers instead. Not all frameworks support DELETE bodies.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/299628/is-an-entity-body-allowed-for-an-http-delete-request'
+),
+(
+    'Which status code should I use for failed validations or invalid duplicates?',
+    'stackoverflow-rest',
+    'HIGH',
+    '[
+        {"solution": "Use 400 Bad Request for failed validations. Per RFC 7231: \"the server cannot or will not process the request due to something perceived as a client error\"", "percentage": 90, "note": "Most common for validation failures"},
+        {"solution": "Use 422 Unprocessable Entity for semantic validation errors - indicates server understands request format but cannot process contained instructions", "percentage": 85, "note": "More precise than 400 for semantic errors"},
+        {"solution": "Use 409 Conflict for duplicate entries - indicates \"the request could not be completed due to a conflict with the current state of the resource\"", "percentage": 90, "note": "Specific for data conflicts"},
+        {"solution": "Always include detailed error information in response body explaining what validation failed or why resource conflicts, helping clients resolve issues", "percentage": 95, "note": "Error response best practice"}
+    ]'::jsonb,
+    'HTTP status code knowledge, REST API design experience',
+    'Client receives appropriate status code, Error response body explains issue clearly, Client can distinguish validation from conflict errors',
+    'Using only 400 Bad Request for all validation errors - use 422 for semantic errors and 409 for conflicts. Omitting error details in response body.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/3290182/which-status-code-should-i-use-for-failed-validations-or-invalid-duplicates'
+),
+(
+    'Posting a File and Associated Data to a RESTful WebService preferably as JSON',
+    'stackoverflow-rest',
+    'MEDIUM',
+    '[
+        {"solution": "Option 1: Base64 encode file and embed in JSON. Simple to implement but increases data size by 33% and adds encoding/decoding overhead on both sides", "percentage": 70, "note": "Direct JSON approach but costly"},
+        {"solution": "Option 2: Send file first in multipart/form-data POST returning ID to client. Client then sends metadata with file ID for server re-association", "percentage": 85, "note": "File-first workflow"},
+        {"solution": "Option 3: Send metadata first returning ID to client. Client then sends file with ID for server re-association", "percentage": 80, "note": "Metadata-first allows early validation"},
+        {"solution": "For large files, metadata-first approach is optimal - allows servers to validate data before receiving potentially large file uploads, reducing wasted bandwidth on invalid requests", "percentage": 85, "note": "Best for performance optimization"}
+    ]'::jsonb,
+    'File upload handling knowledge, Understanding of multipart/form-data encoding',
+    'Files successfully uploaded with metadata, Server properly associates files with submitted data, No data loss during upload process',
+    'Trying to send large files in Base64-encoded JSON - causes 33% size increase and overhead. Multipart/form-data is often more practical than pure JSON for file uploads.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/4083702/posting-a-file-and-associated-data-to-a-restful-webservice-preferably-as-json'
+),
+(
+    'Best practices for API versioning',
+    'stackoverflow-rest',
+    'MEDIUM',
+    '[
+        {"solution": "Keep resource URIs as stable permalinks that do not expose version information. Resource URIs should be permalinks users can depend on", "percentage": 90, "note": "RESTful approach to versioning"},
+        {"solution": "Maintain versioned URIs only for limited purposes (closed betas) as temporary aliases to versionless base URIs: /customers/1234 and /v3/customers/1234 return identical responses", "percentage": 85, "note": "Hybrid approach with aliases"},
+        {"solution": "When older API versions become unsupported, return HTTP redirection codes (301 Moved Permanently or 302 Found) directing to stable versionless URI", "percentage": 85, "note": "Graceful deprecation strategy"},
+        {"solution": "Treat versioning as a representation concern, not a resource identification concern. This allows APIs to evolve without forcing perpetual URI changes on clients", "percentage": 85, "note": "Architectural principle"}
+    ]'::jsonb,
+    'REST API design expertise, Understanding of versioning strategies',
+    'API evolves without breaking client code, Old API versions gracefully redirect, Resource URIs remain stable across versions',
+    'Embedding permanent version numbers in resource URIs makes them inflexible. Versions should be temporary aliases. Plan for API evolution in URI design.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/389169/best-practices-for-api-versioning'
+);

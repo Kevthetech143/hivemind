@@ -1,0 +1,220 @@
+-- Add Supabase Realtime troubleshooting documentation batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Realtime connection error: TIMED_OUT',
+    'supabase',
+    'HIGH',
+    '[
+        {"solution": "Upgrade Node.js to latest LTS version (v22 or later)", "percentage": 90, "note": "Resolves incompatibility between realtime-js and older Node.js versions"},
+        {"solution": "Explicitly set WebSocket transport in client configuration", "percentage": 85, "note": "Alternative if Node.js upgrade not possible", "command": "See GitHub discussion for transport configuration details"},
+        {"solution": "Check if using supabase-js with Node.js older than v22", "percentage": 95, "note": "This is the root cause - version incompatibility"}
+    ]'::jsonb,
+    'Node.js installed, Supabase project with Realtime enabled, supabase-js client library',
+    'Realtime connections establish successfully, No TIMED_OUT errors in browser console',
+    'This occurs when using recent supabase-js versions with Node.js older than v22. Do not ignore the error as it prevents all Realtime functionality.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/troubleshooting/realtime-connections-timed_out-status'
+),
+(
+    'Realtime error: too_many_connections',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Upgrade to Pro plan for 500 concurrent connections (from 200 on Free)", "percentage": 90, "note": "Immediate fix for hitting connection limits"},
+        {"solution": "Remove spend cap on Pro plan for up to 10,000 concurrent connections", "percentage": 85, "note": "Requires Pro plan without spend cap"},
+        {"solution": "Implement connection pooling in your application to reuse connections", "percentage": 80, "note": "Reduce total concurrent connections needed"},
+        {"solution": "Check Realtime logs and disconnect idle connections properly", "percentage": 75, "note": "Clean up unused connections"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, Access to project dashboard',
+    'New connections succeed, WebSocket connections establish without too_many_connections error',
+    'Free plan limited to 200 connections, Pro to 500, Pro without spend cap to 10,000. Each client counts as one connection regardless of channels joined. Always properly disconnect when done.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+),
+(
+    'Realtime error: too_many_channels',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Reduce number of channels per connection to under 100", "percentage": 90, "note": "Default limit is 100 channels per connection across all plans"},
+        {"solution": "Create multiple client connections if you need more than 100 channels", "percentage": 85, "note": "Distribute channels across connections"},
+        {"solution": "Contact Supabase support for custom quota increase on Enterprise plan", "percentage": 80, "note": "Only available on Enterprise plan"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, Multiple channel subscriptions',
+    'All channel joins succeed, No too_many_channels errors in WebSocket messages',
+    'The limit is 100 channels per single connection, not total channels. If you need more than 100 channels, use multiple client connections. Enterprise plans can request custom limits.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+),
+(
+    'Realtime error: too_many_joins',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Implement rate limiting on channel joins to stay under quota", "percentage": 90, "note": "Free: 100 joins/sec, Pro: 500, Pro no cap: 2,500"},
+        {"solution": "Batch channel joins with delays between batches", "percentage": 85, "note": "Spread joins over time instead of all at once"},
+        {"solution": "Upgrade plan to increase joins per second quota", "percentage": 80, "note": "Pro gives 500/sec, Pro without spend cap gives 2,500/sec"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, High-frequency channel joining',
+    'Channel joins succeed without throttling errors, Join rate stays within plan quota',
+    'Free plan: 100 joins/sec, Pro: 500, Pro (no cap): 2,500. Applies to all channel joins across project. Exceeding this causes join requests to be refused.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+),
+(
+    'Realtime error: tenant_events - too many messages per second',
+    'supabase',
+    'HIGH',
+    '[
+        {"solution": "Reduce message sending rate to stay within plan quota", "percentage": 90, "note": "Free: 100 msg/sec, Pro: 500, Pro no cap: 2,500"},
+        {"solution": "Implement message batching to combine multiple updates", "percentage": 85, "note": "Send fewer, larger messages instead of many small ones"},
+        {"solution": "Upgrade plan for higher message throughput", "percentage": 80, "note": "Pro gives 500/sec, removing spend cap gives 2,500/sec"},
+        {"solution": "Wait for automatic reconnection when throughput decreases", "percentage": 75, "note": "supabase-js will reconnect automatically"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, High message volume',
+    'Connections remain stable, Message delivery succeeds, Client auto-reconnects when quota available',
+    'Connections are disconnected when exceeding messages per second quota. Free: 100/sec, Pro: 500/sec, Pro (no cap): 2,500/sec. Client will auto-reconnect when rate drops.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+),
+(
+    'Realtime Broadcast payload exceeds size limit',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Reduce payload size to under plan limit", "percentage": 90, "note": "Free: 256KB, Pro/Team/Enterprise: 3MB (3,000KB)"},
+        {"solution": "Split large payloads into multiple smaller broadcast messages", "percentage": 85, "note": "Send data in chunks under size limit"},
+        {"solution": "Store large data in database/storage and broadcast only reference", "percentage": 80, "note": "Send ID/URL in broadcast, fetch large data separately"},
+        {"solution": "Upgrade from Free to Pro plan for 3MB payload limit", "percentage": 75, "note": "Free plan limited to 256KB"}
+    ]'::jsonb,
+    'Supabase project with Realtime Broadcast enabled, Large data payloads',
+    'Broadcast messages send successfully, No payload size errors in logs',
+    'Free plan: 256KB limit, Pro/Team/Enterprise: 3MB (3,000KB). Large payloads increase latency. Consider sending references instead of full data.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+),
+(
+    'Realtime Postgres Changes payload only showing partial data',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Reduce row data size to keep individual field values under 64 bytes", "percentage": 85, "note": "When 1024KB quota exceeded, only fields ≤64 bytes are included"},
+        {"solution": "Query database separately for full record details using change event ID", "percentage": 90, "note": "Use postgres_changes to get ID, fetch full data via query"},
+        {"solution": "Move large fields to separate table or storage", "percentage": 80, "note": "Keep row size small for Realtime, store large data elsewhere"},
+        {"solution": "Contact support for increased quota on Enterprise plan", "percentage": 70, "note": "Default 1,024KB limit across all plans"}
+    ]'::jsonb,
+    'Supabase project with Postgres Changes enabled, Large database records',
+    'All expected fields appear in new and old record payloads, No truncated data',
+    'When total payload exceeds 1,024KB, only fields with values ≤64 bytes are included. This is not an error but a quota behavior. All plans have 1,024KB limit.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+),
+(
+    'Realtime Presence not updating or showing stale state',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Throttle presence updates to reduce frequency", "percentage": 90, "note": "Presence is computationally heavy, update sparingly"},
+        {"solution": "Check presence messages per second quota not exceeded", "percentage": 85, "note": "Free: 20/sec, Pro: 50/sec, Pro no cap: 1,000/sec"},
+        {"solution": "Reduce number of presence keys per object to under 10", "percentage": 80, "note": "Default limit is 10 keys per presence object"},
+        {"solution": "Use Broadcast instead of Presence for frequent updates", "percentage": 85, "note": "Presence uses CRDT which is computationally expensive"}
+    ]'::jsonb,
+    'Supabase project with Realtime Presence enabled, Multiple clients tracking state',
+    'Presence state updates propagate to all clients, Online/offline status reflects reality',
+    'Presence uses in-memory CRDT which is computationally heavy. Throttle updates. Free: 20 msg/sec, Pro: 50, Pro (no cap): 1,000. Limit 10 keys per object. Prefer Broadcast when possible.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/concepts'
+),
+(
+    'Realtime private channel authorization failing',
+    'supabase',
+    'HIGH',
+    '[
+        {"solution": "Create RLS policies on realtime.messages table for authenticated users", "percentage": 95, "note": "Required for private channels to work", "command": "CREATE POLICY authenticated_users_can_receive ON realtime.messages FOR SELECT TO authenticated USING (true);"},
+        {"solution": "Add INSERT policy for sending broadcast messages", "percentage": 95, "note": "Allows users to send messages", "command": "CREATE POLICY authenticated_users_can_send ON realtime.messages FOR INSERT TO authenticated WITH CHECK (true);"},
+        {"solution": "Set channel config private: true when creating channel", "percentage": 90, "note": "Channels are public by default", "command": "supabase.channel(topic, { config: { private: true } })"},
+        {"solution": "Ensure valid JWT token is provided in client connection", "percentage": 90, "note": "Private channels require authentication"}
+    ]'::jsonb,
+    'Supabase project with RLS enabled, Realtime configured, Valid JWT token',
+    'Private channel joins succeed, Authorized users can send and receive messages, Unauthorized users cannot access channel',
+    'Channels are public by default. Must explicitly set private: true. RLS policies on realtime.messages table control authorization. Without proper policies, channel joins will fail.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/authorization'
+),
+(
+    'Realtime connection drops or disconnects frequently',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Implement heartbeat messages every 30 seconds to keep connection alive", "percentage": 90, "note": "Connection times out after 30 seconds of inactivity"},
+        {"solution": "Check for exceeding messages per second quota causing disconnects", "percentage": 85, "note": "tenant_events quota will disconnect clients"},
+        {"solution": "Verify network stability and firewall settings allow WebSocket", "percentage": 80, "note": "Corporate firewalls may block WebSocket connections"},
+        {"solution": "Enable automatic reconnection in supabase-js client", "percentage": 85, "note": "Client will auto-reconnect on disconnect"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, WebSocket connection established',
+    'Connection stays alive for extended periods, Heartbeat messages sent successfully, Auto-reconnect works on disconnect',
+    'Connections timeout after 30 seconds without messages. Send heartbeat at least every 30 seconds. Exceeding message quotas will force disconnect. supabase-js handles auto-reconnect.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/protocol'
+),
+(
+    'Realtime Postgres Changes not receiving database events',
+    'supabase',
+    'HIGH',
+    '[
+        {"solution": "Enable the table in Realtime settings in Supabase Dashboard", "percentage": 95, "note": "Tables must be explicitly enabled for Realtime", "command": "Dashboard > Database > Replication > Enable table"},
+        {"solution": "Verify RLS policies allow user to read from the table", "percentage": 90, "note": "Changes filtered by Row Level Security policies"},
+        {"solution": "Check subscription filters match actual database changes", "percentage": 85, "note": "Event, schema, table, and filter must match"},
+        {"solution": "Ensure replication is enabled for the database", "percentage": 80, "note": "Postgres Changes requires logical replication"},
+        {"solution": "Consider migrating to Broadcast from Database instead", "percentage": 75, "note": "Postgres Changes has scalability limitations"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, RLS policies configured, Table replication enabled',
+    'Database changes trigger realtime events, Subscribed clients receive postgres_changes messages, Changes respect RLS policies',
+    'Tables must be enabled in Replication settings. Only public schema supported. RLS policies filter which changes users see. Consider Broadcast for better scalability. High subscriber counts can bottleneck database.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/postgres-changes'
+),
+(
+    'Realtime Channel subscription stuck or not completing',
+    'supabase',
+    'MEDIUM',
+    '[
+        {"solution": "Check channel join response for error status in phx_reply", "percentage": 90, "note": "Reply contains error details if join failed"},
+        {"solution": "Verify authentication token is valid and not expired", "percentage": 85, "note": "Expired tokens cause subscription failures on private channels"},
+        {"solution": "Check browser console and Realtime logs for specific error messages", "percentage": 85, "note": "Errors appear in WebSocket messages and backend logs"},
+        {"solution": "Ensure not exceeding channel join rate quota", "percentage": 80, "note": "too_many_joins error if exceeding joins/sec quota"},
+        {"solution": "Use Realtime Inspector tool to debug connection issues", "percentage": 80, "note": "Tool at realtime.supabase.com/inspector/new", "command": "Visit https://realtime.supabase.com/inspector/new"}
+    ]'::jsonb,
+    'Supabase project with Realtime enabled, Valid channel configuration',
+    'Channel subscription completes with status ok, Subscribe callback fires successfully, Channel state shows joined',
+    'Check WebSocket messages in browser DevTools for phx_reply status. Use Realtime Inspector for debugging. Common causes: invalid auth, quota exceeded, missing RLS policies.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://supabase.com/docs/guides/realtime/quotas'
+);

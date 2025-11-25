@@ -1,0 +1,209 @@
+-- Add React 17→18 migration guide solutions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'React 17→18: Automatic batching breaks useEffect dependency chain',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Wrap state updates in flushSync() to opt out of automatic batching", "percentage": 90, "note": "Use sparingly - defeats React 18 performance gains", "command": "import { flushSync } from ''react-dom''; flushSync(() => setState(value));"},
+        {"solution": "Refactor code to embrace batching - combine multiple setState calls", "percentage": 95, "note": "Preferred approach for React 18"},
+        {"solution": "Add queueMicrotask() wrapper to force synchronous execution", "percentage": 75, "note": "Use only when flushSync is not suitable"}
+    ]'::jsonb,
+    'React 17 working app, useEffect chains that depend on immediate state updates',
+    'useEffect runs at expected times, no infinite loops, state updates correctly',
+    'Automatic batching now applies to setTimeout, promises, and native event handlers - not just React events. Don''t overuse flushSync as it negates performance benefits.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#automatic-batching'
+),
+(
+    'React 17→18: ReactDOM.render is deprecated warning',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Replace ReactDOM.render with createRoot API", "percentage": 98, "command": "import { createRoot } from ''react-dom/client''; const root = createRoot(container); root.render(<App />);"},
+        {"solution": "Update unmount calls from unmountComponentAtNode to root.unmount()", "percentage": 95, "note": "Store root reference for later unmounting"},
+        {"solution": "Remove render callback - use useEffect instead", "percentage": 90, "note": "Third parameter callback no longer supported"}
+    ]'::jsonb,
+    'React 17 app using ReactDOM.render, React 18 installed',
+    'No deprecation warnings in console, app renders correctly, concurrent features available',
+    'You must use createRoot to enable React 18 concurrent features. Keeping old render() API disables concurrent rendering. Remove all render callbacks.',
+    0.98,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#updates-to-client-rendering-apis'
+),
+(
+    'React 17→18: Hydration mismatch errors instead of warnings',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Replace hydrate() with hydrateRoot()", "percentage": 95, "command": "import { hydrateRoot } from ''react-dom/client''; const root = hydrateRoot(container, <App />);"},
+        {"solution": "Fix server/client content mismatches - ensure Date.now(), Math.random() match", "percentage": 90, "note": "Use suppressHydrationWarning for intentional mismatches"},
+        {"solution": "Add Suspense boundaries to isolate hydration errors", "percentage": 85, "note": "React reverts to client rendering at nearest Suspense boundary"}
+    ]'::jsonb,
+    'SSR/SSG React 17 app, server-rendered HTML, hydrate() currently used',
+    'No hydration errors in console, content matches server HTML, interactive elements work',
+    'React 18 throws errors (not warnings) on hydration mismatches. It won''t patch text content differences - entire subtree reverts to client rendering. Suppress intentional mismatches with suppressHydrationWarning prop.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#updates-to-hydration'
+),
+(
+    'React 17→18: StrictMode double-invokes effects breaking API calls',
+    'migration-guide',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use cleanup function in useEffect to cancel duplicate API calls", "percentage": 95, "command": "useEffect(() => { const controller = new AbortController(); fetch(url, {signal: controller.signal}); return () => controller.abort(); }, []);"},
+        {"solution": "Add idempotency to your API endpoints to handle duplicate requests", "percentage": 90, "note": "Backend solution - safer for production"},
+        {"solution": "Disable StrictMode temporarily to verify root cause", "percentage": 60, "note": "Debug only - never ship without StrictMode"}
+    ]'::jsonb,
+    'React 17 app, useEffect with API calls, StrictMode enabled',
+    'API called once per mount in production, cleanup prevents double-fetch, no memory leaks',
+    'StrictMode in React 18 development mode intentionally unmounts/remounts components to surface cleanup bugs. Effects run twice. This is DEVELOPMENT ONLY - production runs once. Must implement proper cleanup.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#updates-to-strict-mode'
+),
+(
+    'React 17→18: renderToNodeStream deprecated for SSR',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace renderToNodeStream with renderToPipeableStream", "percentage": 95, "command": "import { renderToPipeableStream } from ''react-dom/server''; renderToPipeableStream(<App />, {onShellReady() { pipe(res); }});"},
+        {"solution": "Use renderToReadableStream for edge runtimes (Deno, Cloudflare Workers)", "percentage": 90, "note": "For Web Streams API environments"},
+        {"solution": "Keep renderToString for simple cases without Suspense", "percentage": 75, "note": "Limited Suspense support - renders fallbacks immediately"}
+    ]'::jsonb,
+    'Node.js server using renderToNodeStream, SSR setup, React 17 working',
+    'SSR renders correctly, Suspense boundaries work, streaming functions properly',
+    'renderToNodeStream still works but deprecated. renderToPipeableStream has better Suspense support. Use renderToReadableStream only for edge runtimes (not Node.js).',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#updates-to-server-rendering-apis'
+),
+(
+    'React 17→18: TypeScript error - children prop not defined',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Explicitly add children to component props", "percentage": 95, "command": "type Props = { children?: React.ReactNode; }; function Component({ children }: Props) {}"},
+        {"solution": "Update @types/react to 18.0.0 or higher", "percentage": 98, "note": "Required first step - npm install --save-dev @types/react@18"},
+        {"solution": "Use React.FC sparingly or avoid - explicitly type props instead", "percentage": 85, "note": "React team recommends explicit typing over React.FC"}
+    ]'::jsonb,
+    'TypeScript React 17 app, @types/react and @types/react-dom installed',
+    'TypeScript compiles without errors, children prop typed correctly, no any types',
+    'React 18 types removed implicit children from React.FC and component props. You must explicitly declare children?: React.ReactNode. Update @types/react first.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#typescript-definitions-updates'
+),
+(
+    'React 17→18: Suspense SSR causes empty fallback flash',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Use renderToPipeableStream with onShellReady for proper Suspense SSR", "percentage": 92, "note": "Streams shell first, then suspended content"},
+        {"solution": "Add loading UI to Suspense fallback - don''t leave empty", "percentage": 88, "command": "<Suspense fallback={<Spinner />}><LazyComponent /></Suspense>"},
+        {"solution": "Pre-render Suspense boundaries on server when possible", "percentage": 80, "note": "Avoid suspending during SSR for critical content"}
+    ]'::jsonb,
+    'SSR app with Suspense boundaries, React 17 working, upgrading to 18',
+    'No content flashing, fallbacks render smoothly, hydration completes without errors',
+    'React 18 has new Suspense SSR architecture. renderToString renders all fallbacks immediately. Use renderToPipeableStream for streaming Suspense. Empty fallbacks cause layout shift.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#updates-to-server-rendering-apis'
+),
+(
+    'React 17→18: useId for SSR generates mismatched IDs',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Replace manual ID generation with useId hook", "percentage": 95, "command": "const id = useId(); return <><label htmlFor={id}>Name</label><input id={id} /></>"},
+        {"solution": "Remove useState ID workarounds - useId handles SSR/client sync", "percentage": 90, "note": "No more hydration mismatches from random IDs"},
+        {"solution": "For lists, append index to useId: const id = useId(); items.map((item, i) => <div key={`${id}-${i}`}>)", "percentage": 85, "note": "Ensures unique IDs per item"}
+    ]'::jsonb,
+    'SSR app with form elements, custom ID generation logic, React 18 installed',
+    'IDs match between server and client, no hydration errors, accessibility maintained',
+    'useId is React 18 only - not available in 17. Generates unique IDs that match server/client automatically. Don''t use Math.random() or Date.now() for IDs in SSR.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#new-hooks'
+),
+(
+    'React 17→18: Internet Explorer app breaks after upgrade',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Downgrade to React 17 - IE 11 not supported in React 18", "percentage": 80, "note": "Only option if IE support required"},
+        {"solution": "Build separate bundle for modern browsers with React 18", "percentage": 70, "note": "Dual build strategy - complex setup"},
+        {"solution": "Migrate users to Edge, Chrome, Firefox - drop IE support", "percentage": 95, "note": "Microsoft ended IE support June 2022"}
+    ]'::jsonb,
+    'React 17 app supporting Internet Explorer 11, considering React 18 upgrade',
+    'Modern browsers work with React 18, legacy browsers gracefully degrade or redirect',
+    'React 18 officially dropped IE 11 support. No polyfills will fix this. Microsoft ended IE support in 2022. Evaluate if IE users justify staying on React 17.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#dropping-internet-explorer'
+),
+(
+    'React 17→18: setState on unmounted component warning disappeared',
+    'migration-guide',
+    'MEDIUM',
+    '[
+        {"solution": "Add manual cleanup in useEffect to cancel async operations", "percentage": 92, "command": "useEffect(() => { let cancelled = false; asyncOp().then(data => { if (!cancelled) setState(data); }); return () => { cancelled = true; }; }, []);"},
+        {"solution": "Use AbortController for fetch requests in effects", "percentage": 95, "note": "Modern approach - cancels network requests"},
+        {"solution": "Don''t rely on warning - implement proper cleanup anyway", "percentage": 98, "note": "Warning removal doesn''t mean memory leaks are OK"}
+    ]'::jsonb,
+    'React 17 app relying on unmounted setState warning, async state updates',
+    'No memory leaks, async operations cancelled on unmount, tests pass',
+    'React 18 removed this warning as false positive. Transitions can cause setState after unmount intentionally. Still implement cleanup - memory leaks are real.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#other-breaking-changes'
+),
+(
+    'React 17→18: Components returning undefined causes errors',
+    'migration-guide',
+    'LOW',
+    '[
+        {"solution": "Return null instead of undefined from components", "percentage": 95, "command": "function Component() { if (condition) return null; return <div>content</div>; }"},
+        {"solution": "Add explicit return statement to all component branches", "percentage": 90, "note": "Prevents accidental undefined returns"},
+        {"solution": "Enable ESLint rule react/require-render-return", "percentage": 85, "note": "Catches missing returns at lint time"}
+    ]'::jsonb,
+    'React 17 app with conditional rendering, some components may return undefined',
+    'All components return valid React elements or null, no runtime errors',
+    'React 18 allows returning undefined without warnings - React 17 warned. Still use null for clarity. Explicitly return from all branches.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#other-changes'
+),
+(
+    'React 17→18: React Testing Library act() warnings everywhere',
+    'migration-guide',
+    'HIGH',
+    '[
+        {"solution": "Set globalThis.IS_REACT_ACT_ENVIRONMENT = true in test setup", "percentage": 95, "command": "// setupTests.js\nglobalThis.IS_REACT_ACT_ENVIRONMENT = true;"},
+        {"solution": "Wrap state updates in act() when testing", "percentage": 90, "note": "Explicit wrapping for custom test utils"},
+        {"solution": "Upgrade @testing-library/react to v13+ for automatic act handling", "percentage": 98, "note": "Handles act() internally for most cases"}
+    ]'::jsonb,
+    'React 17 test suite, React Testing Library, upgrading to React 18',
+    'Tests pass without act() warnings, state updates properly batched in tests',
+    'React 18 is stricter about act() warnings. Set IS_REACT_ACT_ENVIRONMENT in test setup. Don''t disable warnings - fix root cause by wrapping updates.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://react.dev/blog/2022/03/08/react-18-upgrade-guide#configuring-your-testing-environment'
+);

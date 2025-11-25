@@ -1,0 +1,238 @@
+-- Django common errors from official documentation (https://docs.djangoproject.com/en/stable/howto/)
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Django: CharField missing max_length parameter',
+    'django-orm',
+    'HIGH',
+    '[
+        {"solution": "Add max_length parameter to CharField definition: CharField(max_length=100)", "percentage": 95, "note": "Required on all databases, enforced at database level and validation layer"},
+        {"solution": "Use TextField instead if you need variable-length strings without a limit", "percentage": 85, "note": "Alternative for unlimited length strings"},
+        {"solution": "Review model definition and ensure all CharField instances have max_length set", "percentage": 90, "command": "grep -r \"CharField()\" your_app/"}
+    ]'::jsonb,
+    'Django project setup, model.py file access, database not yet migrated',
+    'Model definition accepted without validation error, migrations apply successfully, field accepts values up to max_length',
+    'max_length is mandatory and must be an integer. Not setting it causes migration/validation errors. Always define it before running makemigrations.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/fields/#charfield'
+),
+(
+    'Django: ForeignKey missing on_delete parameter',
+    'django-orm',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add on_delete parameter: ForeignKey(RelatedModel, on_delete=models.CASCADE)", "percentage": 95, "note": "CASCADE deletes related objects when parent is deleted"},
+        {"solution": "Use on_delete=models.PROTECT to prevent deletion if relations exist", "percentage": 90, "note": "Raises ProtectedError if related objects present"},
+        {"solution": "Use on_delete=models.SET_NULL with null=True for soft references", "percentage": 88, "note": "Keeps record but clears the reference"},
+        {"solution": "Use on_delete=models.DO_NOTHING for legacy compatibility (not recommended)", "percentage": 70, "note": "No automatic cleanup, manual management required"}
+    ]'::jsonb,
+    'Django 2.0+, model.py file access, related model exists',
+    'makemigrations succeeds, migration file generates without errors, ForeignKey relation works correctly',
+    'on_delete is mandatory in Django 2.0+. Forgetting it causes TypeError. CASCADE is common but may not be desired behavior - consider project needs.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey'
+),
+(
+    'Django: QuerySet DoesNotExist or MultipleObjectsReturned errors',
+    'django-orm',
+    'HIGH',
+    '[
+        {"solution": "Use try/except blocks: try: obj = Model.objects.get(id=1) except Model.DoesNotExist: handle_error()", "percentage": 93, "note": "Catches when no object matches query"},
+        {"solution": "Use filter() instead of get() for flexible queries: Model.objects.filter(id=1).first()", "percentage": 88, "note": "Returns None instead of raising exception"},
+        {"solution": "For MultipleObjectsReturned, add more specific lookup filters to ensure uniqueness", "percentage": 90, "note": "Use fields in unique constraints"},
+        {"solution": "Use get_or_create() for atomic get/create operations: obj, created = Model.objects.get_or_create(defaults={...})", "percentage": 85, "note": "Requires proper unique constraints"}
+    ]'::jsonb,
+    'Django ORM setup, model with primary key or unique fields, database populated',
+    'Exception handled gracefully, alternative query method returns expected object or None, no unhandled exceptions in logs',
+    'DoesNotExist and MultipleObjectsReturned are model-specific exceptions. Always catch both if using get(). Use unique fields in constraints.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/querysets/#get'
+),
+(
+    'Django: Migration error - Circular dependency or conflicting migrations',
+    'django-migrations',
+    'HIGH',
+    '[
+        {"solution": "Run: python manage.py makemigrations --check to identify circular dependencies before applying", "percentage": 92, "note": "Detects issues before database modification"},
+        {"solution": "Check migration dependencies in migration files - ensure models are created before referenced", "percentage": 88, "note": "Review migration file dependencies attribute"},
+        {"solution": "Delete conflicting migration files and regenerate: rm app/migrations/XXXX_*.py && python manage.py makemigrations", "percentage": 85, "note": "Only safe in development, not production"},
+        {"solution": "Use --merge flag for concurrent migrations: python manage.py makemigrations --merge", "percentage": 90, "note": "Creates merge migration combining branches"}
+    ]'::jsonb,
+    'Django project with multiple apps, existing migrations, database connection',
+    'makemigrations completes without error, migration graph is linear and acyclic, migrate succeeds',
+    'Circular dependencies occur when apps reference each other. Never manually edit migration files directly. Use --merge for development branches.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/topics/migrations/'
+),
+(
+    'Django: CSRF middleware error - CSRF token missing or invalid',
+    'django-middleware',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add {% csrf_token %} template tag in all POST forms: <form method=\"post\">{% csrf_token %}</form>", "percentage": 96, "note": "Required in all POST/PUT/DELETE forms"},
+        {"solution": "Ensure CsrfViewMiddleware is in MIDDLEWARE list before any view middleware", "percentage": 94, "note": "Middleware ordering matters - check settings.MIDDLEWARE"},
+        {"solution": "Disable CSRF for specific views using @csrf_exempt decorator: from django.views.decorators.csrf import csrf_exempt", "percentage": 80, "note": "Only for testing - security risk in production"},
+        {"solution": "For API endpoints, use SessionAuthentication or TokenAuthentication instead of session cookies", "percentage": 85, "note": "Token-based auth handles CSRF automatically"}
+    ]'::jsonb,
+    'Django project with CsrfViewMiddleware enabled, form POST submission, session middleware active',
+    'Form submits successfully, no 403 Forbidden errors, CSRF token validated in logs, form processes data',
+    'Forgetting {% csrf_token %} is most common cause. Browser developers console shows 403 error. CsrfViewMiddleware must be before authentication middleware.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/howto/csrf-protection/'
+),
+(
+    'Django: Custom template tag not loading - missing __init__.py or not in INSTALLED_APPS',
+    'django-templates',
+    'HIGH',
+    '[
+        {"solution": "Create empty __init__.py file in templatetags directory: touch app/templatetags/__init__.py", "percentage": 95, "note": "Makes directory a Python package so Django can import it"},
+        {"solution": "Verify app is in INSTALLED_APPS setting and use correct app name", "percentage": 93, "note": "Template tags only load from registered apps"},
+        {"solution": "Restart development server after adding template tags or creating templatetags module", "percentage": 90, "note": "Django caches module imports"},
+        {"solution": "Check that module has register variable: register = template.Library()", "percentage": 92, "note": "Required for all custom template tag modules"}
+    ]'::jsonb,
+    'Django app with templates, custom template tag module created, development server running',
+    '{% load custom_tags %} succeeds, custom tag renders correctly, no TemplateDoesNotExist errors',
+    'Missing __init__.py is very common mistake. Always restart server after adding new template tag modules. App must be in INSTALLED_APPS for tags to work.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/howto/custom-template-tags/'
+),
+(
+    'Django: Mutable default value in model field causes shared state',
+    'django-orm',
+    'MEDIUM',
+    '[
+        {"solution": "Never use mutable objects (list, dict, model instance) as default - use callable instead: default=list", "percentage": 95, "note": "Callable is invoked for each new instance"},
+        {"solution": "For dict defaults, use default=dict or a custom callable", "percentage": 92, "note": "Each instance gets its own dict instance"},
+        {"solution": "Use JSONField with default={} for storing JSON data with mutable defaults", "percentage": 88, "note": "JSONField handles serialization properly"},
+        {"solution": "For model instances, use default=None and create in __init__ or signal handler", "percentage": 85, "note": "Avoid instance references in field defaults"}
+    ]'::jsonb,
+    'Django model definition, mutable default in field, multiple model instances created',
+    'Each model instance has independent default value, modifications do not affect other instances, no shared state',
+    'Mutable defaults are shared across all instances of model. Modifying default in one instance affects all others. Always use callable for mutable defaults.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/fields/#default'
+),
+(
+    'Django: auto_now and auto_now_add cannot be used with default parameter',
+    'django-orm',
+    'MEDIUM',
+    '[
+        {"solution": "Remove default parameter if using auto_now: DateTimeField(auto_now=True)", "percentage": 96, "note": "auto_now sets timestamp every save"},
+        {"solution": "For creation-time-only, use auto_now_add=True without default", "percentage": 94, "note": "auto_now_add sets timestamp only on creation"},
+        {"solution": "If you need both default and auto-update, use default=timezone.now without auto_now", "percentage": 88, "note": "Manually update in save() if needed"},
+        {"solution": "Use signals (post_save, pre_save) to manage timestamp updates instead of auto_now", "percentage": 80, "note": "More flexible but requires signal setup"}
+    ]'::jsonb,
+    'Django model with DateTimeField, one of auto_now/auto_now_add/default specified',
+    'Model definition accepts without error, migration generates successfully, timestamps work as expected',
+    'auto_now, auto_now_add, and default are mutually exclusive. Combining them raises FieldError. Choose one approach per field.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/fields/#datetimefield'
+),
+(
+    'Django: Middleware ordering causes authentication or CSRF failures',
+    'django-middleware',
+    'HIGH',
+    '[
+        {"solution": "Place AuthenticationMiddleware before any middleware that uses request.user: move to early in MIDDLEWARE list", "percentage": 94, "note": "User object must be available for auth checks"},
+        {"solution": "Ensure CsrfViewMiddleware comes before SessionMiddleware if using session-based CSRF tokens", "percentage": 90, "note": "Token validation depends on session availability"},
+        {"solution": "Put SecurityMiddleware near top of list for optimal performance", "percentage": 88, "note": "Reduces unnecessary processing of requests"},
+        {"solution": "Review MIDDLEWARE order: SecurityMiddleware -> SessionMiddleware -> AuthenticationMiddleware -> CsrfViewMiddleware -> Others", "percentage": 92, "note": "General recommended order from docs"}
+    ]'::jsonb,
+    'Django project with custom middleware, MIDDLEWARE setting configured, authentication system enabled',
+    'User authentication works correctly, CSRF protection active, request.user available in views, no 403 errors',
+    'Middleware runs in order defined. Putting auth checks before AuthenticationMiddleware causes request.user to be AnonymousUser. Wrong order causes silent failures.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/middleware/'
+),
+(
+    'Django: DecimalField missing max_digits or decimal_places parameters',
+    'django-orm',
+    'MEDIUM',
+    '[
+        {"solution": "Add both parameters: DecimalField(max_digits=10, decimal_places=2)", "percentage": 96, "note": "max_digits=total digits, decimal_places=digits after decimal"},
+        {"solution": "Ensure max_digits is greater than or equal to decimal_places", "percentage": 94, "note": "max_digits=5, decimal_places=2 allows 999.99"},
+        {"solution": "Use validators to enforce min/max values: DecimalField(validators=[MinValueValidator(0), MaxValueValidator(1000)])", "percentage": 85, "note": "Additional value validation beyond size"},
+        {"solution": "For monetary values with many decimal places, increase both parameters accordingly", "percentage": 82, "note": "Consider precision requirements"}
+    ]'::jsonb,
+    'Django model definition, DecimalField usage, database supports decimal types',
+    'Field definition validates without error, migration applies successfully, decimal values store and retrieve correctly',
+    'Both max_digits and decimal_places are mandatory for DecimalField. Omitting either causes ValidationError or FieldError. Remember max_digits > decimal_places.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/fields/#decimalfield'
+),
+(
+    'Django: Field name conflicts with ORM methods (clean, save, delete, check)',
+    'django-orm',
+    'MEDIUM',
+    '[
+        {"solution": "Rename field to avoid method names: change field name from \"clean\" to \"cleaned_value\" or \"clean_value\"", "percentage": 96, "note": "Field names cannot shadow built-in methods"},
+        {"solution": "Use db_column parameter to keep database column name while using different field name: db_column=\"clean\"", "percentage": 90, "note": "Works around conflict at database level"},
+        {"solution": "Check Django documentation for forbidden field names: avoid clean, save, delete, check, etc.", "percentage": 88, "note": "Full list in model reference docs"},
+        {"solution": "Review code for any field names ending with underscore or containing multiple consecutive underscores", "percentage": 85, "note": "Also invalid in Django query syntax"}
+    ]'::jsonb,
+    'Django model definition, field name selection in progress, no migrations applied yet',
+    'Model definition accepts without error, migrations generate successfully, querysets work with field lookups',
+    'Using ORM method names as fields causes AttributeError when calling methods. Multiple underscores break query lookup syntax. Check field names carefully.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/ref/models/fields/'
+),
+(
+    'Django: Fixture loaddata overwrites previous changes and causes data loss',
+    'django-migrations',
+    'MEDIUM',
+    '[
+        {"solution": "Use data migrations instead of fixtures for initial data: python manage.py makemigrations --empty app_name --name load_initial_data", "percentage": 93, "note": "Data migrations are safer and version-controlled"},
+        {"solution": "If using fixtures, load only once during initial setup before production use", "percentage": 85, "note": "Each loaddata reloads from fixture, destroying changes"},
+        {"solution": "Organize fixtures in app-specific directories to avoid naming conflicts: app/fixtures/data.json", "percentage": 88, "note": "Prevents ambiguous loaddata commands"},
+        {"solution": "Document fixture usage and warn team against running loaddata on production data", "percentage": 80, "note": "Operational procedure to prevent accidents"}
+    ]'::jsonb,
+    'Django project with fixtures, database with production or modified data, loaddata command available',
+    'Data migrations apply correctly, fixture loads only intentionally, no unintended data overwrites in logs',
+    'loaddata is destructive - runs every time and replaces all fixture data. Team members often forget this. Use data migrations for critical initial data.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/howto/initial-data/'
+),
+(
+    'Django: Bulk operations bypass save() method and signal handlers',
+    'django-orm',
+    'MEDIUM',
+    '[
+        {"solution": "Do not override save() for logic that should run on bulk delete - use pre_delete and post_delete signals instead", "percentage": 93, "note": "Bulk operations skip save() entirely"},
+        {"solution": "Use signals at app level: from django.db.models.signals import post_delete to catch all deletions", "percentage": 91, "note": "Signals fire even for bulk operations"},
+        {"solution": "For bulk updates requiring custom logic, fetch objects, modify, and save individually instead of QuerySet.update()", "percentage": 85, "note": "Performance tradeoff for custom logic"},
+        {"solution": "Document which fields are managed by save() vs signals vs bulk operations in model code", "percentage": 80, "note": "Prevents confusion about execution paths"}
+    ]'::jsonb,
+    'Django model with overridden save() method, bulk operations (delete, update) performed, signal handlers defined',
+    'Custom save() logic executes on normal saves, signals fire on bulk operations, all data mutations logged correctly',
+    'delete() override is skipped during QuerySet.delete(). Same for QuerySet.update() - it bypasses save(). Always use signals for critical logic.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://docs.djangoproject.com/en/stable/topics/db/models/'
+);

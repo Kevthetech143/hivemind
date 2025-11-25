@@ -1,0 +1,210 @@
+-- Add Vite troubleshooting solutions batch 1
+-- Source: https://vite.dev/guide/troubleshooting
+-- Extracted: 2025-11-24
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Vite CORS error: Access to script blocked by CORS policy with file protocol',
+    'vite',
+    'HIGH',
+    '[
+        {"solution": "Use HTTP protocol instead of file:// - run npx vite preview to serve built files", "percentage": 95, "note": "Official recommended approach", "command": "npx vite preview"},
+        {"solution": "Access HTML through local server rather than opening file directly", "percentage": 90, "note": "Browser security requires HTTP for module scripts"}
+    ]'::jsonb,
+    'Vite project built successfully, dist folder exists',
+    'Page loads without CORS errors, Scripts execute successfully, No console errors',
+    'Do not open HTML files directly with file:// protocol. Must use HTTP server. npx vite preview is built-in solution.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite case sensitivity error: ENOENT no such file or directory',
+    'vite',
+    'MEDIUM',
+    '[
+        {"solution": "Match import statement casing exactly to actual filename - check all imports for case mismatches", "percentage": 90, "note": "Most common on Windows/macOS dev, Linux prod"},
+        {"solution": "Rename files to match import statements consistently", "percentage": 85, "note": "Standardize on lowercase or PascalCase"},
+        {"solution": "Use case-sensitive file search to find mismatches: grep -r for imports vs ls -R for files", "percentage": 80, "command": "grep -r \"import.*from\" src/ | grep -i filename"}
+    ]'::jsonb,
+    'Project works on dev machine (Windows/macOS), Fails on Linux build server or deployment',
+    'Build succeeds on case-sensitive filesystem, All modules resolve correctly, No ENOENT errors',
+    'Case-insensitive filesystems (Windows/macOS) hide this bug during development. Always test builds on Linux or use case-sensitive mode. Import "./Foo.js" will fail if actual file is "foo.js".',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite error: Failed to fetch dynamically imported module',
+    'vite',
+    'VERY_HIGH',
+    '[
+        {"solution": "Keep old build chunks during deployment - use rolling deployment strategy to maintain version overlap", "percentage": 85, "note": "Prevents version skew between cached HTML and new chunks"},
+        {"solution": "Implement graceful error handling - catch dynamic import failures and reload page", "percentage": 80, "note": "Fallback for users with stale cache", "command": "import(module).catch(() => window.location.reload())"},
+        {"solution": "Use service worker to prefetch and cache assets before navigation", "percentage": 75, "note": "Prevents cache mismatches"},
+        {"solution": "Change chunk naming via build.rollupOptions.output.chunkFileNames to avoid ad-blocker patterns", "percentage": 70, "note": "Some extensions block requests with certain patterns"}
+    ]'::jsonb,
+    'Vite app deployed to production, Users have previously visited site',
+    'Dynamic imports succeed, No fetch errors in console, Users can navigate without page reload',
+    'Browser caches old HTML that references deleted chunks from new builds. No automatic retry for dynamic imports. Ad-blockers may interfere with chunk loading.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite error: This package is ESM only but it was tried to load by require',
+    'vite',
+    'HIGH',
+    '[
+        {"solution": "Add \"type\": \"module\" to package.json to enable ESM in Node.js", "percentage": 90, "note": "Enables import/export syntax in config files"},
+        {"solution": "Rename vite.config.js to vite.config.mjs for explicit ESM mode", "percentage": 88, "note": "Works without package.json change"},
+        {"solution": "Rename vite.config.ts to vite.config.mts for TypeScript ESM config", "percentage": 85, "note": "TypeScript variant of .mjs"}
+    ]'::jsonb,
+    'Vite project with config file, Node.js installed, Attempting to use ESM-only package',
+    'Vite config loads successfully, No require() errors, Dev server starts without errors',
+    'Cannot use require() with ESM-only packages. Config file must use ES modules. Adding "type": "module" affects all .js files in project - use .cjs extension for CommonJS files if needed.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite HMR not working: file changes detected but no hot reload',
+    'vite',
+    'HIGH',
+    '[
+        {"solution": "Fix import casing to match actual filename exactly - check for case mismatches", "percentage": 90, "note": "Common: importing ./Foo.js when file is ./foo.js"},
+        {"solution": "Verify import path matches file path character-by-character including case", "percentage": 85, "note": "Case-sensitive even on Windows/macOS for HMR"}
+    ]'::jsonb,
+    'Vite dev server running, File watcher detecting changes, HMR previously worked',
+    'File changes trigger HMR updates, Browser updates without full reload, Console shows HMR update messages',
+    'HMR requires exact path match including case. Even on case-insensitive filesystems, import "./Foo.js" breaks HMR if file is "foo.js". Vite detects change but cannot apply HMR.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite not detecting file changes: modifications do not trigger reload',
+    'vite',
+    'MEDIUM',
+    '[
+        {"solution": "Configure server.watch option in vite.config for WSL2 compatibility", "percentage": 85, "note": "WSL2 file watching requires special configuration"},
+        {"solution": "Add usePolling: true to server.watch config for network drives or VMs", "percentage": 80, "note": "Slower but works on problematic filesystems", "command": "server: { watch: { usePolling: true } }"},
+        {"solution": "Check file watcher limits on Linux - increase fs.inotify.max_user_watches", "percentage": 75, "command": "echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p"}
+    ]'::jsonb,
+    'Vite dev server running, Files are being modified, File system supports watching',
+    'File changes trigger dev server updates, Console logs show file change detection, Browser reloads or HMR applies',
+    'WSL2 has known file watching issues. Network drives and VMs may need polling. Default inotify watches may be insufficient for large projects. Polling impacts performance.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite full page reload instead of HMR: hot module replacement not applying',
+    'vite',
+    'MEDIUM',
+    '[
+        {"solution": "Run vite --debug hmr to identify which modules lack HMR handling", "percentage": 85, "note": "Shows why HMR is not applied", "command": "vite --debug hmr"},
+        {"solution": "Check for circular dependencies causing execution order issues - break the cycle", "percentage": 80, "note": "Circular imports prevent HMR from working correctly"},
+        {"solution": "Implement import.meta.hot.accept() in modules that need HMR", "percentage": 75, "note": "Manual HMR API for custom handling"}
+    ]'::jsonb,
+    'Vite dev server running with HMR enabled, Making file changes, Expecting HMR but getting full reload',
+    'File changes apply via HMR without page reload, State is preserved during updates, Console shows [vite] hot updated messages',
+    'Not all modules support HMR - Vite falls back to full reload when HMR cannot be applied. Circular dependencies break HMR execution order. Plugins must handle HMR explicitly.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite build fails with module not found after working in dev',
+    'vite',
+    'MEDIUM',
+    '[
+        {"solution": "Check import path casing matches actual file casing exactly", "percentage": 90, "note": "Dev works on case-insensitive OS, build fails on case-sensitive"},
+        {"solution": "Verify all dynamic imports use correct relative or absolute paths", "percentage": 85, "note": "Dynamic imports may resolve differently in build"},
+        {"solution": "Ensure all dependencies are listed in package.json - check for missing peer dependencies", "percentage": 80, "command": "npm ls or pnpm list to check dependency tree"}
+    ]'::jsonb,
+    'Dev server works correctly, Build process runs, Project has all dependencies installed',
+    'Build completes successfully, All modules resolve correctly, Output files contain all required code',
+    'Build uses different module resolution than dev server. Case sensitivity matters in build. Dynamic imports must be resolvable at build time.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite preview server not serving files correctly after build',
+    'vite',
+    'LOW',
+    '[
+        {"solution": "Run vite build before vite preview to ensure fresh build exists", "percentage": 95, "command": "npm run build && npx vite preview"},
+        {"solution": "Check dist folder exists and contains built files", "percentage": 90, "note": "Preview serves from build.outDir (default: dist)"},
+        {"solution": "Configure build.outDir if using custom output directory", "percentage": 85, "note": "Preview must serve from same directory as build output"}
+    ]'::jsonb,
+    'Vite project configured, Build process available, Preview server installed',
+    'Preview server serves built files correctly, Assets load without errors, Application runs as expected',
+    'vite preview serves the built output, not source files. Must run build first. Does not rebuild automatically when files change.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite slow HMR updates in large project',
+    'vite',
+    'LOW',
+    '[
+        {"solution": "Reduce HMR boundary size by splitting large modules into smaller ones", "percentage": 85, "note": "Smaller modules update faster"},
+        {"solution": "Use dynamic imports to code-split large dependencies", "percentage": 80, "note": "Isolates changes to smaller chunks"},
+        {"solution": "Configure server.hmr.overlay: false to disable error overlay rendering", "percentage": 70, "note": "Overlay rendering can slow updates"}
+    ]'::jsonb,
+    'Large Vite project with many modules, HMR working but slow, Development workflow affected',
+    'HMR updates complete within 1-2 seconds, Development feedback loop is fast, No performance bottlenecks',
+    'Large module graphs slow HMR propagation. Circular dependencies compound the issue. File watcher overhead increases with project size.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite cannot resolve module: relative imports not working',
+    'vite',
+    'MEDIUM',
+    '[
+        {"solution": "Add file extension to relative imports - use ./module.js not ./module", "percentage": 90, "note": "ESM requires explicit extensions"},
+        {"solution": "Configure resolve.extensions in vite.config to add default extensions", "percentage": 85, "note": "Allows extension-less imports", "command": "resolve: { extensions: [\".js\", \".ts\", \".jsx\", \".tsx\"] }"},
+        {"solution": "Use path aliases via resolve.alias for cleaner imports", "percentage": 80, "note": "Avoid deep relative paths like ../../../"}
+    ]'::jsonb,
+    'Vite project with ES modules, Import statements in code, Module files exist',
+    'All imports resolve successfully, Dev server starts without errors, Build completes successfully',
+    'Vite follows ESM spec strictly. Browser ESM requires explicit file extensions for relative imports. Node.js legacy allows extension-less imports but Vite may not.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+),
+(
+    'Vite network requests failing in preview mode',
+    'vite',
+    'LOW',
+    '[
+        {"solution": "Configure preview.port to use different port if 4173 is blocked", "percentage": 85, "command": "vite preview --port 3000"},
+        {"solution": "Set preview.host to 0.0.0.0 to allow network access", "percentage": 80, "note": "Enables access from other devices on network", "command": "vite preview --host"},
+        {"solution": "Check firewall rules allow connections to preview port", "percentage": 75, "note": "Corporate networks may block non-standard ports"}
+    ]'::jsonb,
+    'Vite build completed, Preview server running, Network connectivity available',
+    'Preview server accessible from network, Other devices can connect, No connection refused errors',
+    'Preview server defaults to localhost only. Must explicitly enable network access with --host. Port 4173 may be blocked by firewalls.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://vite.dev/guide/troubleshooting'
+);

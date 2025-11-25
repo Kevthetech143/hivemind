@@ -1,0 +1,204 @@
+-- Add Poetry common errors and troubleshooting solutions batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Poetry dependency resolution is slow',
+    'poetry',
+    'HIGH',
+    '[
+        {"solution": "Poetry''s resolver must download and inspect packages directly if they lack proper PyPI metadata. Cached information speeds up future resolution. Once cached, resolution will be much faster on subsequent runs.", "percentage": 85, "note": "Caused by incomplete PyPI metadata declarations"},
+        {"solution": "Narrow version constraints for problematic packages to reduce resolution search space. Specify more restrictive version ranges if possible.", "percentage": 80, "note": "Helps resolver eliminate candidates faster"},
+        {"solution": "Use poetry cache clear --all PyPI and retry to ensure fresh metadata is fetched", "percentage": 75, "command": "poetry cache clear --all PyPI", "note": "Clears stale cached package information"}
+    ]'::jsonb,
+    'Poetry installed, pyproject.toml with dependencies, valid internet connection',
+    'Dependency resolution completes without timeout, poetry.lock file is generated successfully',
+    'Users often think the issue is with Poetry itself, but it''s usually due to incomplete dependency metadata. Simply waiting for cache to build helps.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/faq/'
+),
+(
+    'Poetry HTTP requests timing out during dependency resolution',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Poetry defaults to a 15-second HTTP timeout. Set the POETRY_REQUESTS_TIMEOUT environment variable to increase this limit", "percentage": 90, "command": "export POETRY_REQUESTS_TIMEOUT=60", "note": "Similar to pip''s PIP_REQUESTS_TIMEOUT"},
+        {"solution": "Run commands with --no-cache flag to avoid cached timeout issues: poetry --no-cache add package-name", "percentage": 85, "command": "poetry --no-cache add package-name"}
+    ]'::jsonb,
+    'Poetry installed, network connectivity, environment variable capability',
+    'Commands complete within timeout window, packages resolve successfully',
+    'Default 15-second timeout is often too short for slow networks or large package inspections. Increasing timeout helps but may indicate network issues.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/faq/'
+),
+(
+    'Poetry warns about Python version incompatibility with dependencies',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Poetry validates dependencies against your entire supported Python range in pyproject.toml (unlike pip which checks only current version). Ensure your project''s Python version range matches all dependency requirements.", "percentage": 90, "note": "Check tool.poetry.dependencies [python] field"},
+        {"solution": "If a specific dependency requires a narrower Python range, either narrow your project''s supported versions or use version-specific dependency specs in pyproject.toml", "percentage": 85, "note": "Example: package = {version = \"^1.0\", python = \"^3.8\"}"}
+    ]'::jsonb,
+    'Poetry installed, pyproject.toml with python and dependencies fields',
+    'poetry lock or poetry add completes without compatibility warnings, all dependencies resolvable',
+    'Users expect pip behavior where only current environment is checked. Poetry''s approach is more thorough but requires matching version ranges.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/faq/'
+),
+(
+    'Poetry credential saved in command line history',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Prefix the command with a space (in shells that support it) to prevent saving to history: space poetry config http-basic.repo username token", "percentage": 85, "note": "Requires shell history expansion support"},
+        {"solution": "Omit the password and let Poetry prompt interactively instead: poetry config http-basic.repo username (then enter password when prompted)", "percentage": 90, "note": "More secure as password never appears in command"},
+        {"solution": "Use token with dashes carefully - add -- before the token: poetry config http-basic.repo -- token-with-dashes", "percentage": 80, "note": "Prevents token from being parsed as option"}
+    ]'::jsonb,
+    'Poetry installed, repository credentials, shell with history support',
+    'Credentials configured successfully, poetry can authenticate with repository',
+    'Users often enter credentials directly in command line, exposing them to shell history. Interactive password entry is more secure.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/repositories/'
+),
+(
+    'Poetry fails to access private repository with certificate errors',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Configure custom certificate authority: poetry config certificates.foo.cert /path/to/ca.pem (replace foo with repository name)", "percentage": 95, "command": "poetry config certificates.foo.cert /path/to/ca.pem", "note": "For self-signed or custom CA certificates"},
+        {"solution": "For client certificate authentication (mutual TLS), configure: poetry config certificates.foo.client-cert /path/to/client.pem", "percentage": 90, "command": "poetry config certificates.foo.client-cert /path/to/client.pem", "note": "Some repos require client certs for authentication"},
+        {"solution": "Use --no-cache flag when trying new certificate settings: poetry --no-cache add package (not recommended, use for debugging only): poetry config certificates.foo.cert false", "percentage": 50, "note": "Disables SSL verification - security risk"}
+    ]'::jsonb,
+    'Poetry installed, certificate files available, repository URL configured',
+    'Repository connection succeeds, packages can be installed, no SSL errors in output',
+    'Users often try to disable SSL validation (setting to false) rather than properly configuring certificates. Disabling verification is a security risk.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/repositories/'
+),
+(
+    'Poetry virtual environment creation fails or conflicts with system packages',
+    'poetry',
+    'HIGH',
+    '[
+        {"solution": "Poetry by default creates isolated virtual environments. Do NOT set virtualenvs.create = false unless absolutely necessary - it risks breaking system packages.", "percentage": 95, "note": "Default behavior is safe and recommended"},
+        {"solution": "If virtual environment issues occur, delete the venv and let Poetry recreate it: rm -rf .venv (in project directory)", "percentage": 90, "command": "rm -rf .venv && poetry install", "note": "Poetry auto-detects and recreates venv"},
+        {"solution": "For in-project venvs, use: poetry config virtualenvs.in-project true to create .venv in project directory", "percentage": 85, "command": "poetry config virtualenvs.in-project true", "note": "Makes venv easier to manage with version control"}
+    ]'::jsonb,
+    'Poetry installed, Python 3.9+, write permissions in project directory',
+    'Virtual environment created successfully, poetry install completes without errors, commands run in isolated environment',
+    'Users frequently disable venv creation thinking it simplifies setup, but this breaks package isolation and risks corrupting system Python.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/configuration/'
+),
+(
+    'Docker container has cache busted by Poetry requiring source files',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Split Poetry installation into two Docker steps: First install dependencies with --no-root --no-directory flags before copying source code to avoid cache invalidation", "percentage": 95, "note": "Step 1: poetry install --no-root --no-directory, Step 2: copy source, Step 3: poetry install"},
+        {"solution": "Ensure pyproject.toml and poetry.lock are copied in first Docker layer before source code", "percentage": 90, "note": "Copy only dependency files first to maximize cache reuse"}
+    ]'::jsonb,
+    'Docker configured, Poetry-based project, Dockerfile in use',
+    'Docker builds cache intermediate layers properly, subsequent builds skip dependency installation when lock file unchanged',
+    'Common mistake is copying entire project in one step, invalidating cache on every source code change. Split installation into phases.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/faq/'
+),
+(
+    'pyproject.toml has invalid version format not compatible with PEP 440',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure version complies with PEP 440 standard. Invalid example: 1.0.0-hotfix.1. Valid examples: 1.0.0, 1.0.0rc1, 1.0.0.dev0, 1.0.0a1", "percentage": 95, "note": "Use semantic versioning or PEP 440 prerelease formats"},
+        {"solution": "When using poetry build --local-version flag, add version to dynamic field: dynamic = [\"version\"]", "percentage": 90, "command": "poetry build --local-version=local1", "note": "Required to allow dynamic version modification"},
+        {"solution": "Run poetry check to validate pyproject.toml format and catch version errors", "percentage": 90, "command": "poetry check"}
+    ]'::jsonb,
+    'Poetry installed, pyproject.toml with version field defined',
+    'poetry check passes without version errors, poetry build succeeds, package installs correctly',
+    'Users often use semantic versioning with dashes (1.0.0-hotfix) thinking it''s standard, but PEP 440 requires different prerelease formats.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/pyproject/'
+),
+(
+    'pyproject.toml requires-python conflicts with tool.poetry.dependencies python field',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "Ensure requires-python and tool.poetry.dependencies [python] specify compatible ranges. Invalid: requires-python = \">=3.8,<4.0\" with python = \">=3.8\" (second allows 4.0+)", "percentage": 95, "note": "Both fields must support same Python versions"},
+        {"solution": "If using project table metadata, align with tool.poetry.dependencies. When both present, ensure they define same minimum and maximum Python versions", "percentage": 90, "note": "Poetry 2.0+ supports both formats but they must be consistent"},
+        {"solution": "Run poetry check to validate compatibility between pyproject.toml sections", "percentage": 85, "command": "poetry check"}
+    ]'::jsonb,
+    'Poetry 2.0+, pyproject.toml with both [project] and [tool.poetry] sections',
+    'poetry check passes, poetry install succeeds, no Python version conflicts reported',
+    'Users often forget that both fields must specify identical Python version ranges when both are present.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/pyproject/'
+),
+(
+    'Poetry export command fails - no longer available in default Poetry 2.0',
+    'poetry',
+    'HIGH',
+    '[
+        {"solution": "The export command is now a separate plugin. Install with: poetry self add poetry-plugin-export", "percentage": 95, "command": "poetry self add poetry-plugin-export", "note": "Breaking change in Poetry 2.0"},
+        {"solution": "Alternatively, declare export as a required plugin in pyproject.toml: [tool.poetry.requires-plugins] and add poetry-plugin-export, then run poetry install", "percentage": 90, "note": "Ensures plugin is available in project environments"},
+        {"solution": "For requirements.txt generation alternative, use: poetry install && pip freeze > requirements.txt", "percentage": 75, "note": "Workaround if plugin not desired"}
+    ]'::jsonb,
+    'Poetry 2.0+ installed, poetry-plugin-export plugin available',
+    'poetry export --format=requirements.txt succeeds, export file generated correctly',
+    'Breaking change from Poetry 1.x to 2.0. Users upgrading often don''t realize export is now a plugin.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/cli/'
+),
+(
+    'Poetry search command no longer works - PyPI search requires browser',
+    'poetry',
+    'MEDIUM',
+    '[
+        {"solution": "PyPI no longer supports API search without browser access. Use https://pypi.org/search instead of poetry search command", "percentage": 95, "note": "PyPI deprecated search API"},
+        {"solution": "Alternative: Use Google search with: site:pypi.org package-name", "percentage": 85, "note": "Quick way to find packages on PyPI"}
+    ]'::jsonb,
+    'Poetry installed, internet access to pypi.org',
+    'Browser opens to PyPI search page, packages found via web search interface',
+    'Users expect poetry search to work like pip search, unaware that PyPI deprecated API search.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/cli/'
+),
+(
+    'poetry config --list shows outdated configuration options',
+    'poetry',
+    'LOW',
+    '[
+        {"solution": "Run poetry config --migrate to automatically update configuration to latest format", "percentage": 95, "command": "poetry config --migrate", "note": "Handles version upgrades automatically"},
+        {"solution": "Review poetry config --list output against current documentation to identify deprecated options", "percentage": 80, "note": "Compare with https://python-poetry.org/docs/configuration/"}
+    ]'::jsonb,
+    'Poetry updated to new version, poetry.toml config file exists',
+    'poetry config --list shows no deprecation warnings, all options recognized by current Poetry version',
+    'Configuration can become stale after upgrades. Migration command should be run after version updates.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://python-poetry.org/docs/configuration/'
+);

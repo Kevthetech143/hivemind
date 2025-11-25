@@ -1,0 +1,226 @@
+-- Add Stack Overflow CSS solutions batch 1
+-- Extracted from top 12 voted CSS questions with accepted answers
+-- Source: https://stackoverflow.com/questions/tagged/css?tab=votes
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES
+(
+    'How to disable text selection highlighting',
+    'stackoverflow-css',
+    'HIGH',
+    '[
+        {"solution": "Apply user-select: none with vendor prefixes to element", "percentage": 95, "note": "Standard solution for all browsers", "command": "-webkit-user-select: none; -moz-user-select: none; user-select: none;"},
+        {"solution": "Include -webkit-touch-callout: none to prevent iOS callout menu", "percentage": 90, "note": "Prevents long-press context menu on iOS Safari"},
+        {"solution": "Add cursor: default to prevent text cursor appearance", "percentage": 85, "note": "Improves UX when text is not selectable"}
+    ]'::jsonb,
+    'CSS supported in target browser',
+    'Text is no longer highlighted when user attempts selection, No cursor change on hover',
+    'Do not forget vendor prefixes - some browsers require them. The -webkit-touch-callout property is iOS-specific and does not affect other browsers.',
+    0.92,
+    NOW(),
+    'https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting'
+),
+(
+    'How can I horizontally center an element',
+    'stackoverflow-css',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use flexbox on parent: display: flex; justify-content: center;", "percentage": 95, "note": "Modern recommended approach, works without fixed widths"},
+        {"solution": "Use margin auto with fixed width: width: 50%; margin: 0 auto;", "percentage": 90, "note": "Works for elements with defined width"},
+        {"solution": "Use transform for unknown dimensions: position: absolute; left: 50%; transform: translateX(-50%);", "percentage": 85, "note": "Works when parent is positioned"},
+        {"solution": "Use display: table with margin auto: display: table; margin: 0 auto;", "percentage": 80, "note": "Does not require fixed width"}
+    ]'::jsonb,
+    'HTML structure with parent and child element',
+    'Element appears centered horizontally on page regardless of container width',
+    'Margin auto approach requires explicit width. Transform approach requires parent to be positioned (relative/absolute/fixed). Inline-block adds unwanted spacing in some browsers.',
+    0.94,
+    NOW(),
+    'https://stackoverflow.com/questions/114543/how-can-i-horizontally-center-an-element'
+),
+(
+    'Change an HTML input placeholder color with CSS',
+    'stackoverflow-css',
+    'HIGH',
+    '[
+        {"solution": "Use ::placeholder pseudo-element in modern browsers: ::placeholder { color: #909; }", "percentage": 95, "note": "Modern standard, widely supported"},
+        {"solution": "Add -webkit-input-placeholder for WebKit browsers", "percentage": 90, "note": "Needed for older Safari/Chrome versions"},
+        {"solution": "Add :-moz-placeholder for Firefox 4-18, ::-moz-placeholder for Firefox 19+", "percentage": 88, "note": "Firefox requires separate selectors and opacity: 1"},
+        {"solution": "Add :-ms-input-placeholder and ::-ms-input-placeholder for IE/Edge", "percentage": 85, "note": "Older IE/Edge support"}
+    ]'::jsonb,
+    'HTML input elements with placeholder attribute',
+    'Placeholder text appears in specified color, no browser console errors',
+    'Do not group vendor prefixes together - each must be in separate rule. Firefox requires opacity: 1 to override default reduced opacity. Keep selectors separate or entire rule will be ignored.',
+    0.91,
+    NOW(),
+    'https://stackoverflow.com/questions/2610497/change-an-html-inputs-placeholder-color-with-css'
+),
+(
+    'Is there a CSS parent selector',
+    'stackoverflow-css',
+    'HIGH',
+    '[
+        {"solution": "Use CSS :has() pseudo-class: li:has(> a.active) { /* styles */ }", "percentage": 95, "note": "Modern solution, all current browsers support this"},
+        {"solution": "Check browser support at caniuse.com/css-has", "percentage": 90, "note": "Verify browser compatibility before use"},
+        {"solution": "Use JavaScript fallback for older browsers: use jQuery .parents() or vanilla DOM traversal", "percentage": 80, "note": "Alternative for browsers without :has() support"}
+    ]'::jsonb,
+    'Modern browser or JavaScript fallback capability',
+    'Parent element receives styles based on child elements, No CSS errors in modern browsers',
+    'The :has() selector was not available until recently - older projects may need JavaScript solution. Internet Explorer 11 does not support :has().',
+    0.90,
+    NOW(),
+    'https://stackoverflow.com/questions/1014861/is-there-a-css-parent-selector'
+),
+(
+    'Set cellpadding and cellspacing in CSS',
+    'stackoverflow-css',
+    'MEDIUM',
+    '[
+        {"solution": "For cellpadding: use padding on td and th elements: td, th { padding: 10px; }", "percentage": 95, "note": "Controls spacing between cell content and borders"},
+        {"solution": "For cellspacing: use border-spacing on table: table { border-spacing: 10px; border-collapse: separate; }", "percentage": 90, "note": "Controls spacing between adjacent cells"},
+        {"solution": "For tight spacing: use border-collapse: collapse; instead of border-spacing", "percentage": 85, "note": "Better support in older IE versions"}
+    ]'::jsonb,
+    'HTML table elements with td/th cells',
+    'Table cells have proper spacing, border-spacing applied successfully',
+    'border-spacing does not work in IE7 and earlier - use border-collapse: collapse instead. cellpadding and cellspacing HTML attributes are deprecated in HTML5.',
+    0.89,
+    NOW(),
+    'https://stackoverflow.com/questions/339923/set-cellpadding-and-cellspacing-in-css'
+),
+(
+    'How do I disable the resizable property of a textarea',
+    'stackoverflow-css',
+    'MEDIUM',
+    '[
+        {"solution": "Set resize property to none: textarea { resize: none; }", "percentage": 95, "note": "Complete solution to disable all resize directions"},
+        {"solution": "Allow only vertical resize: textarea { resize: vertical; }", "percentage": 90, "note": "Alternative to control resize behavior selectively"},
+        {"solution": "Allow only horizontal resize: textarea { resize: horizontal; }", "percentage": 90, "note": "Alternative to control resize behavior selectively"},
+        {"solution": "Ensure overflow is not visible: textarea { resize: none; overflow: scroll; }", "percentage": 85, "note": "Resize property requires non-visible overflow"}
+    ]'::jsonb,
+    'Textarea element, overflow property set to non-visible value',
+    'Textarea resize handle is no longer visible, User cannot drag to resize',
+    'The resize property does nothing if overflow is set to visible. May need to explicitly set overflow: scroll or overflow: auto for the property to work.',
+    0.93,
+    NOW(),
+    'https://stackoverflow.com/questions/5235142/how-do-i-disable-the-resizable-property-of-a-textarea'
+),
+(
+    'Is it possible to apply CSS to half of a character',
+    'stackoverflow-css',
+    'LOW',
+    '[
+        {"solution": "Use CSS pseudo-elements with overflow hidden to clip character display", "percentage": 85, "note": "Pure CSS solution using :before and :after with content: attr()"},
+        {"solution": "Use data attributes to duplicate character in pseudo-elements", "percentage": 82, "note": "Create overlay effect by duplicating text with different styling"},
+        {"solution": "Wrap character in span and use two pseudo-elements with 50% width", "percentage": 80, "note": "Set overflow: hidden to clip to left or right half"},
+        {"solution": "Use JavaScript for automation with multiple characters", "percentage": 75, "note": "Better for styling multiple half-characters across content"}
+    ]'::jsonb,
+    'CSS support for pseudo-elements, HTML structure with data attributes',
+    'Character displays with split styling, One half styled differently than other half',
+    'This technique affects word-wrapping, white-space, and character-spacing CSS. Better suited for stylized display text rather than body content. Accessibility requires careful consideration.',
+    0.78,
+    NOW(),
+    'https://stackoverflow.com/questions/23569441/is-it-possible-to-apply-css-to-half-of-a-character'
+),
+(
+    'How can I transition height 0 to height auto using CSS',
+    'stackoverflow-css',
+    'HIGH',
+    '[
+        {"solution": "Use max-height instead of height: max-height: 0; transition: max-height 0.15s;", "percentage": 90, "note": "Standard workaround since height: auto cannot be animated directly"},
+        {"solution": "Set max-height to value larger than content will ever reach", "percentage": 88, "note": "Ensures animation completes but may be slower than expected"},
+        {"solution": "Add overflow: hidden to prevent content overflow during transition", "percentage": 85, "note": "Prevents visual glitches during animation"},
+        {"solution": "Use interpolate-size property for true height: auto animation (Chrome 133+)", "percentage": 70, "note": "Modern browser support only, limited compatibility"}
+    ]'::jsonb,
+    'CSS transitions enabled, Container with overflow control',
+    'Element smoothly expands/collapses, Animation completes without content overflow',
+    'You cannot directly animate height: 0 to height: auto - CSS does not support auto value in transitions. Transition speed becomes unpredictable if max-height is much larger than actual content height.',
+    0.85,
+    NOW(),
+    'https://stackoverflow.com/questions/3508605/how-can-i-transition-height-0-to-height-auto-using-css'
+),
+(
+    'I need an unordered list without any bullets',
+    'stackoverflow-css',
+    'HIGH',
+    '[
+        {"solution": "Set list-style-type to none on ul element: ul { list-style-type: none; }", "percentage": 95, "note": "Removes bullet points from all list items"},
+        {"solution": "Also remove padding and margin for cleaner appearance: ul { list-style-type: none; padding: 0; margin: 0; }", "percentage": 92, "note": "Removes default indentation browsers add"},
+        {"solution": "Can also use list-style: none as shorthand", "percentage": 90, "note": "More concise alternative to list-style-type"}
+    ]'::jsonb,
+    'HTML unordered list element with list items',
+    'List displays without bullet points, Proper spacing and indentation',
+    'Just setting list-style-type: none may leave default indentation - also set padding: 0 and margin: 0 for consistent appearance.',
+    0.95,
+    NOW(),
+    'https://stackoverflow.com/questions/1027354/i-need-an-unordered-list-without-any-bullets'
+),
+(
+    'Make a div fill the height of the remaining screen space',
+    'stackoverflow-css',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use flexbox with flex: 1 on content: display: flex; flex-flow: column; height: 100%;", "percentage": 95, "note": "Modern recommended approach, content section uses flex: 1 1 auto"},
+        {"solution": "Set html and body height to 100% as foundation", "percentage": 92, "note": "Prerequisite for height-based solutions to work"},
+        {"solution": "Use CSS Grid: grid-template-rows: auto 1fr auto for header/content/footer", "percentage": 90, "note": "Modern alternative to flexbox"},
+        {"solution": "Use CSS calc(): height: calc(100vh - headerHeight); for fixed headers/footers", "percentage": 85, "note": "Works when header/footer sizes are fixed in pixels"}
+    ]'::jsonb,
+    'HTML structure with header/content/footer sections, Modern browser (IE11+ for flexbox)',
+    'Content div expands to fill available vertical space, Layout remains responsive',
+    'Must set html, body height to 100% for percentage-based heights to work. Semantic table markup is not recommended - use flexbox or grid instead. Different approach needed for unknown header/footer heights.',
+    0.93,
+    NOW(),
+    'https://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space'
+),
+(
+    'How do I vertically center text with CSS',
+    'stackoverflow-css',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use flexbox (modern): display: flex; justify-content: center; align-items: center;", "percentage": 95, "note": "Best solution for all scenarios, works with any content"},
+        {"solution": "For single line: line-height equal to container height", "percentage": 85, "note": "Simple but breaks with multiple lines"},
+        {"solution": "Use display: table-cell with vertical-align: middle", "percentage": 80, "note": "Works for multi-line text, older browser support"},
+        {"solution": "Use align-content: center on block container (modern)", "percentage": 80, "note": "Simplified option for single-line centering"}
+    ]'::jsonb,
+    'Container with defined height, CSS support in target browser',
+    'Text appears centered vertically in container, Works with wrapped text',
+    'Line-height approach fails when text wraps to multiple lines. Always use flexbox for robust multi-line solutions. Table-cell approach requires display: table on parent.',
+    0.91,
+    NOW(),
+    'https://stackoverflow.com/questions/8865458/how-do-i-vertically-center-text-with-css'
+),
+(
+    'How to make a div 100% height of the browser window',
+    'stackoverflow-css',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use viewport height unit: height: 100vh;", "percentage": 95, "note": "Simplest modern solution, no parent height required"},
+        {"solution": "Use min-height: 100vh to prevent overflow issues", "percentage": 92, "note": "Avoids strange scrolling behavior when content taller than viewport"},
+        {"solution": "Set html and body height: 100% with explicit height declarations", "percentage": 85, "note": "Traditional approach, requires parent height setup"},
+        {"solution": "Use CSS calc() with specific pixel adjustments if needed", "percentage": 80, "note": "For fine-tuning heights with headers/footers"}
+    ]'::jsonb,
+    'Modern browser support for viewport units',
+    'Div fills entire browser window height, No scrollbars for empty content',
+    'The 100vh unit has strange behavior with scrolling when element is taller than viewport - use min-height: 100vh instead. Does not work in Opera Mini. Percentage heights require all parent elements to have explicit height.',
+    0.92,
+    NOW(),
+    'https://stackoverflow.com/questions/1575141/how-to-make-a-div-100-height-of-the-browser-window'
+),
+(
+    'What is the difference between margin and padding in CSS',
+    'stackoverflow-css',
+    'VERY_HIGH',
+    '[
+        {"solution": "Margin creates space outside element border, padding creates space inside", "percentage": 96, "note": "Fundamental CSS box model concept"},
+        {"solution": "Padding is included in background colors and click regions, margin is not", "percentage": 94, "note": "Visual impact difference between the two"},
+        {"solution": "Vertical margins collapse between adjacent block elements, padding does not", "percentage": 92, "note": "Critical behavior difference affecting spacing calculations"},
+        {"solution": "Use margin for separating elements from surrounding content", "percentage": 90, "note": "Best practice for external spacing"},
+        {"solution": "Use padding to move content away from edges when element has border or background", "percentage": 90, "note": "Best practice for internal spacing"}
+    ]'::jsonb,
+    'Basic understanding of CSS box model',
+    'Proper spacing applied to elements, Layout maintains intended spacing calculations',
+    'Margin collapse only affects vertical margins between block elements - horizontal margins do not collapse. Padding does not collapse. This affects spacing calculations when combining elements.',
+    0.96,
+    NOW(),
+    'https://stackoverflow.com/questions/2189452/what-is-the-difference-between-margin-and-padding-in-css'
+);

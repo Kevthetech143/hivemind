@@ -1,0 +1,222 @@
+-- Redis documentation mining batch 1: Connection, data type, and memory errors
+-- Mined from official Redis documentation at redis.io
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Redis connection error: Connection refused',
+    'redis',
+    'VERY_HIGH',
+    '[
+        {"solution": "Verify Redis server is running using redis-cli ping command", "percentage": 95, "note": "Most common cause is server not running", "command": "redis-cli ping"},
+        {"solution": "Check Redis is listening on correct host and port in redis.conf", "percentage": 90, "note": "Default is 127.0.0.1:6379"},
+        {"solution": "Verify firewall allows connections on Redis port", "percentage": 85, "note": "Check iptables or cloud security groups"},
+        {"solution": "Implement retry logic with exponential backoff in client", "percentage": 80, "note": "Temporary network issues may resolve"}
+    ]'::jsonb,
+    'Redis server installed, Network connectivity, Correct host/port configuration',
+    'redis-cli ping returns PONG, Client successfully connects and executes commands',
+    'Do not assume default port 6379 - always verify configuration. Client libraries often implement automatic retry, check client docs. Connection pool exhaustion can appear as connection refused.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/develop/clients/error-handling/'
+),
+(
+    'Redis WRONGTYPE Operation against a key holding the wrong kind of value',
+    'redis',
+    'HIGH',
+    '[
+        {"solution": "Check key data type using TYPE command before operation", "percentage": 95, "note": "Prevents type mismatches", "command": "TYPE keyname"},
+        {"solution": "Delete existing key and recreate with correct data type", "percentage": 90, "note": "Only if data loss is acceptable", "command": "DEL keyname"},
+        {"solution": "Use different key name for different data structure", "percentage": 85, "note": "Best practice for avoiding conflicts"},
+        {"solution": "Review code logic to ensure operations match intended data types", "percentage": 80, "note": "Usually indicates programming error"}
+    ]'::jsonb,
+    'Existing Redis key, Knowledge of intended data structure',
+    'TYPE command returns expected data type, Operations execute without WRONGTYPE error',
+    'This error indicates a programming bug, not a runtime condition - fix code rather than handle at runtime. String keys cannot be used with list/hash/set operations. Always use TYPE to verify before operations on unknown keys.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/develop/clients/error-handling/'
+),
+(
+    'Redis OOM command not allowed when used memory > maxmemory',
+    'redis',
+    'HIGH',
+    '[
+        {"solution": "Increase maxmemory limit in redis.conf", "percentage": 90, "note": "Check available system RAM first", "command": "redis-cli CONFIG SET maxmemory 2gb"},
+        {"solution": "Configure eviction policy to remove old keys: maxmemory-policy allkeys-lru", "percentage": 88, "note": "Removes least recently used keys", "command": "redis-cli CONFIG SET maxmemory-policy allkeys-lru"},
+        {"solution": "Set TTL on keys to enable automatic expiration", "percentage": 85, "note": "Required for volatile-* eviction policies", "command": "SET key value EX 3600"},
+        {"solution": "Flush cache if data is not critical", "percentage": 75, "note": "Deletes ALL data - use with caution", "command": "redis-cli FLUSHALL"}
+    ]'::jsonb,
+    'Redis server access, Understanding of memory requirements, Knowledge of data retention policies',
+    'INFO memory shows used_memory below maxmemory, Write commands execute successfully, No OOM errors in logs',
+    'Default eviction policy volatile-lru only removes keys with TTL set. Without TTL keys, OOM will occur. allkeys-* policies work on all keys. Flushing cache is temporary fix - address root cause. Monitor memory usage with INFO memory command.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/develop/clients/error-handling/'
+),
+(
+    'Redis LOADING Redis is loading the dataset in memory',
+    'redis',
+    'MEDIUM',
+    '[
+        {"solution": "Implement retry logic with exponential backoff", "percentage": 95, "note": "Error is temporary during startup", "command": "Retry after 1s, 2s, 4s, 8s intervals"},
+        {"solution": "Monitor loading progress using INFO command", "percentage": 90, "note": "Check loading field - 1 means loading, 0 means complete", "command": "redis-cli INFO | grep loading"},
+        {"solution": "Wait for Redis to finish loading before connecting application", "percentage": 85, "note": "Add health check in deployment scripts"},
+        {"solution": "For large datasets, increase loading_start_threshold timeout", "percentage": 75, "note": "Prevents premature timeout during restore"}
+    ]'::jsonb,
+    'Redis instance starting up or performing full resynchronization, Client with retry capability',
+    'INFO loading returns 0, Commands execute without LOADING error, Application successfully connects',
+    'This is always a temporary condition - never ignore or fail fast. Occurs at master startup and slave full resync. Large datasets take longer to load. Client should always retry with backoff.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/develop/clients/error-handling/'
+),
+(
+    'Redis NOAUTH Authentication required',
+    'redis',
+    'HIGH',
+    '[
+        {"solution": "Authenticate using AUTH command before other commands", "percentage": 95, "note": "Required when requirepass is set", "command": "redis-cli -a yourpassword"},
+        {"solution": "Configure client connection with password parameter", "percentage": 93, "note": "Pass password in connection string or config"},
+        {"solution": "Use ACL authentication for Redis 6.0+", "percentage": 85, "note": "More granular permissions", "command": "AUTH username password"},
+        {"solution": "Disable authentication by removing requirepass from config", "percentage": 60, "note": "NOT recommended for production - security risk"}
+    ]'::jsonb,
+    'Redis password or ACL credentials, Redis server with authentication enabled',
+    'Commands execute without NOAUTH error, Connection established successfully, AUTH command returns OK',
+    'Never disable authentication in production. Password must be provided before ANY command execution. Use ACL for multi-user access in Redis 6.0+. Connection string format: redis://:password@host:port',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/develop/clients/error-handling/'
+),
+(
+    'Redis READONLY You cannot write against a read only replica',
+    'redis',
+    'HIGH',
+    '[
+        {"solution": "Connect to master/primary endpoint instead of replica", "percentage": 95, "note": "Write operations only allowed on master"},
+        {"solution": "Update application connection string to use primary endpoint", "percentage": 90, "note": "Check cluster configuration for correct endpoint"},
+        {"solution": "Use READWRITE command if using replica intentionally", "percentage": 70, "note": "Only works in specific Redis Cluster scenarios", "command": "READWRITE"},
+        {"solution": "If using Sentinel, ensure client library supports master discovery", "percentage": 85, "note": "Client should auto-detect master node"}
+    ]'::jsonb,
+    'Redis replication setup knowledge, Access to both master and replica endpoints, Understanding of read/write split',
+    'Write commands execute successfully, Connection to master confirmed, No READONLY errors in application logs',
+    'Replicas are read-only by default - this is intentional design. DNS caching can route to old primary after failover. Always use primary endpoint for writes. Sentinel-aware clients handle master discovery automatically.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/commands/readonly/'
+),
+(
+    'Redis TimeoutError: Operation exceeded timeout threshold',
+    'redis',
+    'MEDIUM',
+    '[
+        {"solution": "Increase client timeout configuration", "percentage": 85, "note": "Check if operations legitimately need more time"},
+        {"solution": "Optimize slow commands using SLOWLOG GET", "percentage": 90, "note": "Identify and optimize O(N) operations", "command": "redis-cli SLOWLOG GET 10"},
+        {"solution": "Implement retry logic with exponential backoff", "percentage": 88, "note": "Network issues may be temporary"},
+        {"solution": "Scale Redis with read replicas to reduce load", "percentage": 75, "note": "Distribute read operations across replicas"}
+    ]'::jsonb,
+    'Redis server access, Client library configuration, Network stability',
+    'Commands complete within timeout, SLOWLOG shows no problematic commands, Network latency is acceptable',
+    'Default timeouts vary by client library - check documentation. Timeouts on simple operations indicate network or server issues. Use SLOWLOG to identify bottleneck commands. Connection pool timeouts differ from command timeouts.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/develop/clients/error-handling/'
+),
+(
+    'Redis MOVED error in cluster mode',
+    'redis',
+    'MEDIUM',
+    '[
+        {"solution": "Use cluster-aware client with automatic redirection support", "percentage": 95, "note": "Clients handle MOVED automatically"},
+        {"solution": "Enable cluster mode in redis-cli with -c flag", "percentage": 93, "note": "Follows redirects automatically", "command": "redis-cli -c"},
+        {"solution": "Update client connection to correct node based on MOVED response", "percentage": 85, "note": "Manual handling if client does not support cluster"},
+        {"solution": "Refresh cluster topology in client connection pool", "percentage": 80, "note": "Cluster configuration may have changed"}
+    ]'::jsonb,
+    'Redis Cluster setup, Cluster-aware client library, Understanding of hash slots',
+    'Queries execute without MOVED errors, Client follows redirects automatically, Correct node handles each key',
+    'MOVED is normal in cluster mode - not an error but a redirection. Always use -c flag with redis-cli in cluster. Hash slots determine which node owns a key. Cluster topology changes require client update.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/'
+),
+(
+    'Redis CROSSSLOT Keys in request do not hash to the same slot',
+    'redis',
+    'HIGH',
+    '[
+        {"solution": "Use hash tags to force keys into same slot: {user123}:profile and {user123}:settings", "percentage": 95, "note": "Only text within {} is hashed"},
+        {"solution": "Redesign to use single-key operations instead of multi-key", "percentage": 88, "note": "Avoid MGET/MSET on different slots"},
+        {"solution": "Use Lua scripts with hash tags for atomic multi-key operations", "percentage": 85, "note": "Script executes on single node"},
+        {"solution": "Issue separate commands for keys in different slots", "percentage": 80, "note": "Loses atomicity but works in cluster"}
+    ]'::jsonb,
+    'Redis Cluster environment, Understanding of hash slots and hash tags, Multi-key operation requirements',
+    'Multi-key commands execute without CROSSSLOT error, Hash tags correctly group related keys, Transactions complete successfully',
+    'All keys in multi-key ops must hash to same slot even if same node. Check is strict - keys must hash identically. Hash tags {} force slot assignment. Transactions/Lua scripts require same-slot keys in cluster mode.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/'
+),
+(
+    'Redis BUSYKEY Target key name already exists',
+    'redis',
+    'MEDIUM',
+    '[
+        {"solution": "Use REPLACE option with RESTORE command", "percentage": 95, "note": "Overwrites existing key", "command": "RESTORE key ttl value REPLACE"},
+        {"solution": "Delete existing key before RESTORE operation", "percentage": 90, "note": "Ensures clean restore", "command": "DEL key"},
+        {"solution": "Check if key exists using EXISTS before RESTORE", "percentage": 85, "note": "Conditional logic to avoid error", "command": "EXISTS key"},
+        {"solution": "Use different key name to avoid conflict", "percentage": 75, "note": "Preserves both old and new data"}
+    ]'::jsonb,
+    'Serialized value from DUMP command, Target Redis instance access, Understanding of RESTORE parameters',
+    'RESTORE command completes successfully, Key contains expected restored data, No BUSYKEY errors',
+    'REPLACE modifier available since Redis 3.0.0. BUSYKEY is intentional safety - prevents accidental overwrites. RESTORE is commonly used with MIGRATE for moving keys. Always verify target before restore in production.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/commands/restore'
+),
+(
+    'Redis CLUSTERDOWN The cluster is down',
+    'redis',
+    'MEDIUM',
+    '[
+        {"solution": "Set cluster-require-full-coverage to no in redis.conf", "percentage": 85, "note": "Allows partial cluster operation", "command": "redis-cli CONFIG SET cluster-require-full-coverage no"},
+        {"solution": "Restore failed nodes to cover all 16384 hash slots", "percentage": 90, "note": "Full coverage restores cluster automatically"},
+        {"solution": "Manually assign uncovered slots to available nodes", "percentage": 80, "note": "Use CLUSTER commands to reassign slots"},
+        {"solution": "Check cluster status and node health", "percentage": 88, "note": "Identify which nodes are down", "command": "redis-cli CLUSTER INFO"}
+    ]'::jsonb,
+    'Redis Cluster setup, Access to cluster configuration, Understanding of hash slot coverage',
+    'CLUSTER INFO shows cluster_state:ok, All 16384 slots are covered, Commands execute without CLUSTERDOWN error',
+    'Default behavior stops all operations if any slots uncovered - this is safety feature. Setting cluster-require-full-coverage to no allows partial operation. All 16384 slots must be assigned. Cluster becomes available automatically when coverage restored.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/'
+),
+(
+    'Redis EXECABORT Transaction discarded because of previous errors',
+    'redis',
+    'HIGH',
+    '[
+        {"solution": "Run commands outside MULTI block to see actual error message", "percentage": 95, "note": "MULTI suppresses detailed errors"},
+        {"solution": "Fix syntax errors in queued commands", "percentage": 93, "note": "Check command arguments and format"},
+        {"solution": "Ensure at least one command between MULTI and EXEC", "percentage": 85, "note": "Empty transactions cause EXECABORT"},
+        {"solution": "Check maxmemory limits if getting memory errors", "percentage": 80, "note": "OOM during transaction causes EXECABORT", "command": "redis-cli INFO memory"}
+    ]'::jsonb,
+    'Understanding of Redis transactions, Ability to debug command syntax, Access to Redis logs',
+    'Transaction executes without EXECABORT, EXEC returns array of results, All queued commands complete successfully',
+    'Transaction marked as dirty on first error - subsequent EXEC always fails. Syntax errors detected before queueing. Empty MULTI/EXEC block fails. Run without MULTI to debug. All commands in transaction must be valid.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://redis.io/blog/on-types-and-transactions/'
+);

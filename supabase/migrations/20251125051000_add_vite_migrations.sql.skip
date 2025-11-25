@@ -1,0 +1,231 @@
+-- Vite migration guides: Major breaking changes for v3→v4 and v4→v5
+-- Extracted from https://vite.dev/guide/migration.html and archived versions
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'Vite 3→4: Rollup 3 upgrade requires rollupOptions migration',
+    'vite-migration',
+    'HIGH',
+    '[
+        {"solution": "Review custom rollupOptions in vite.config.js against Rollup 3 changelog", "percentage": 90, "note": "Rollup 3 is mostly compatible with v2, but config changes may be needed"},
+        {"solution": "Update any custom Rollup plugins to be compatible with Rollup 3 API", "percentage": 85, "note": "Consult Rollup plugin migration guide for breaking changes"},
+        {"solution": "Test build output thoroughly as asset handling internals changed", "percentage": 80, "note": "Run full test suite and verify production builds match expectations"}
+    ]'::jsonb,
+    'Vite 3.x project, rollupOptions configured in vite.config.js',
+    'vite build completes without errors, Build output contains expected assets',
+    'Do not assume Rollup 2 config is valid for Rollup 3. Test production builds after upgrading.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://v4.vite.dev/guide/migration.html#rollup-3'
+),
+(
+    'Vite 3→4: CSS imports require ?inline query to prevent double-loading',
+    'vite-migration',
+    'HIGH',
+    '[
+        {"solution": "Add ?inline query to CSS imports: import style from \"./global.css?inline\"", "percentage": 95, "note": "Prevents double-loading and CSS conflicts"},
+        {"solution": "If ?inline not needed, import as side-effect: import \"./global.css\"", "percentage": 90, "note": "Use this for global styles that don''t need to be accessed"},
+        {"solution": "Remove old CSS-as-string imports that relied on Vite 3 behavior", "percentage": 85, "command": "Search for CSS imports in source files"}
+    ]'::jsonb,
+    'Vite 3.x project with CSS imports as strings, vite v4 installed',
+    'CSS loads once in dev and production, No console warnings about duplicate styles, HMR works correctly',
+    'Failing to add ?inline causes CSS to be injected twice. Check browser DevTools Network tab for duplicate style tags.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://v4.vite.dev/guide/migration.html#css-import-as-a-string'
+),
+(
+    'Vite 3→4: process.env.NODE_ENV no longer overridden if already defined',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Remove any NODE_ENV set before vite commands: do not use NODE_ENV=production vite build", "percentage": 92, "note": "Vite handles NODE_ENV automatically now"},
+        {"solution": "Use --mode flag instead: vite build --mode production", "percentage": 90, "note": "Explicitly set mode if custom environments needed"},
+        {"solution": "For custom environments, ensure process.env.NODE_ENV is set after Vite config loads", "percentage": 75, "note": "Advanced use case, generally not needed"}
+    ]'::jsonb,
+    'Vite 3.x build scripts using NODE_ENV env var',
+    'vite dev and vite build use correct NODE_ENV, Environment-specific code executes properly, Build outputs match NODE_ENV mode',
+    'Pre-setting NODE_ENV may cause unexpected behavior. Let Vite manage it via --mode flag.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://v4.vite.dev/guide/migration.html#build-and-environment-changes'
+),
+(
+    'Vite 3→4: hot.decline() API removed, use hot.invalidate() instead',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Replace hot.decline() with hot.invalidate() in HMR callbacks", "percentage": 95, "note": "hot.invalidate() properly triggers module re-evaluation"},
+        {"solution": "Review all if(import.meta.hot) blocks and update deprecated API calls", "percentage": 90, "command": "grep -r \"hot\\.decline\" src/"},
+        {"solution": "Test HMR by editing files and ensuring hot reload works without page refresh", "percentage": 85, "note": "Should see updated content in browser without refresh"}
+    ]'::jsonb,
+    'Vite 3.x project with HMR code, hot.decline() usage',
+    'HMR works correctly, Edited files trigger module updates, No console errors about deprecated APIs',
+    'hot.decline() silently fails in Vite 4. Use hot.invalidate() for proper HMR behavior.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://v4.vite.dev/guide/migration.html#plugintool-developer-changes'
+),
+(
+    'Vite 4→5: Node.js 18+ required (14, 16, 17, 19 no longer supported)',
+    'vite-migration',
+    'VERY_HIGH',
+    '[
+        {"solution": "Upgrade Node.js to v18.0.0 or higher: nvm install 18 && nvm use 18", "percentage": 95, "note": "Vite 5 requires Node.js 18+, v20+ recommended"},
+        {"solution": "Update CI/CD pipelines to use Node.js 18+ in workflows", "percentage": 92, "note": "GitHub Actions, GitLab CI, etc. must specify compatible Node version"},
+        {"solution": "Check .nvmrc and node-version files, update to 18 or 20", "percentage": 90, "command": "echo 18 > .nvmrc && echo 18 > .node-version"}
+    ]'::jsonb,
+    'Vite 4.x project, Node.js version <18 currently in use',
+    'npm install succeeds with Vite 5, vite --version shows v5.x, CI/CD passes with new Node version',
+    'Using Node <18 with Vite 5 causes install failures or runtime errors. Upgrade Node before upgrading Vite.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#general'
+),
+(
+    'Vite 4→5: CommonJS Node API deprecated, use ESM or dynamic import',
+    'vite-migration',
+    'HIGH',
+    '[
+        {"solution": "Add \"type\": \"module\" to package.json to use ESM syntax in vite.config.js", "percentage": 95, "note": "Preferred approach for new and existing projects"},
+        {"solution": "Rename vite.config.js to vite.config.mjs or vite.config.mts if keeping CommonJS", "percentage": 90, "note": ".mjs/.mts extensions enable ESM in CommonJS projects"},
+        {"solution": "Use dynamic import for Vite: const { defineConfig } = await import(\"vite\")", "percentage": 85, "note": "Only if CommonJS must be used, less readable"}
+    ]'::jsonb,
+    'Vite 4.x project with vite.config.js using require() syntax',
+    'vite dev and vite build run without deprecation warnings, Config loads successfully, npm install completes',
+    'CommonJS Node API is deprecated. Vite still works but shows warnings. Migrate to ESM for best experience.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#commonjs-node-api-deprecated'
+),
+(
+    'Vite 4→5: Rollup 4 requires import assertions renamed to import attributes',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Replace \"assert\" keyword with \"with\" in JSON imports: import data from \"./data.json\" with { type: \"json\" }", "percentage": 93, "note": "New import attributes syntax required by Rollup 4"},
+        {"solution": "Update any custom Rollup plugins using assertion API to attributes API", "percentage": 88, "note": "Consult Rollup 4 migration guide for plugin updates"},
+        {"solution": "Test JSON and other resource imports in dev and production builds", "percentage": 85, "note": "Verify imports still resolve correctly after syntax change"}
+    ]'::jsonb,
+    'Vite 4.x project with import assertions, Rollup plugin code',
+    'JSON and resource imports resolve correctly, Build completes without syntax errors, Resources accessible in code',
+    'Using assert instead of with syntax causes Rollup 4 parsing errors. Update all import statements.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#rollup-4-migration'
+),
+(
+    'Vite 4→5: Define and import.meta.env must use JSON-compatible expressions',
+    'vite-migration',
+    'HIGH',
+    '[
+        {"solution": "Ensure all define values are JSON: null, boolean, number, string, array, or object", "percentage": 94, "note": "esbuild replacement requires JSON-serializable values"},
+        {"solution": "For non-JSON values, use a function that returns JSON in vite.config.js", "percentage": 88, "note": "Define as object with JSON values, access via import.meta.env"},
+        {"solution": "Avoid single identifier expressions; use explicit string/number/boolean instead", "percentage": 85, "command": "Define: { CONST: \"true\" } instead of { CONST: true } if used as string"}
+    ]'::jsonb,
+    'Vite 4.x project with define configuration, Complex define values',
+    'vite build succeeds without esbuild replacement errors, import.meta.env variables resolve to expected values, No string interpolation issues',
+    'Non-JSON define values fail silently or cause unexpected replacements. Test define values with vite build.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#define-and-importmetaenv-strategy'
+),
+(
+    'Vite 4→5: Default CSS exports removed, use ?inline query instead',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Replace default CSS exports with ?inline query: import style from \"./style.css?inline\"", "percentage": 94, "note": "Default CSS exports were removed in v5 for clarity"},
+        {"solution": "Use side-effect imports for global styles: import \"./global.css\"", "percentage": 90, "note": "Clearer intent when CSS only needs to be loaded"},
+        {"solution": "Update TypeScript types if using CSS module patterns", "percentage": 80, "note": "May need cssModules config or ?module query"}
+    ]'::jsonb,
+    'Vite 4.x project with default CSS exports, CSS files imported as modules',
+    'CSS imports work correctly, HMR updates CSS properly, Build includes all CSS files, No console errors',
+    'Default CSS exports silently break in Vite 5. Use ?inline explicitly to access CSS as string.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#default-css-exports'
+),
+(
+    'Vite 4→5: import.meta.globEager removed, use glob with eager option',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Replace import.meta.globEager() with import.meta.glob() with { eager: true }", "percentage": 96, "note": "New API is more flexible and consistent"},
+        {"solution": "Update all glob patterns from globEager to glob with eager option", "percentage": 94, "command": "Replace: import.meta.globEager(...) with: import.meta.glob(..., { eager: true })"},
+        {"solution": "Test that modules are still eagerly loaded and accessible", "percentage": 90, "note": "Should work identically to old globEager"}
+    ]'::jsonb,
+    'Vite 4.x project using import.meta.globEager, Dynamic module imports',
+    'Modules load eagerly as before, glob patterns resolve correctly, No runtime errors accessing modules',
+    'import.meta.globEager is removed in Vite 5. Use glob with eager: true option instead.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#importmetaglobeager-removed'
+),
+(
+    'Vite 4→5: SSR externalized modules no longer wrapped with default/__esModule',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Update SSR code to access exports directly without .default handling", "percentage": 92, "note": "ESM externalized modules now behave like native Node.js modules"},
+        {"solution": "Remove checks for __esModule marker in SSR context", "percentage": 88, "note": "No longer needed since Vite matches Node.js behavior"},
+        {"solution": "Test SSR renders with external module imports, verify no undefined errors", "percentage": 85, "note": "Check server logs and rendered HTML for correct output"}
+    ]'::jsonb,
+    'Vite 4.x SSR setup with external modules, Node server running',
+    'SSR renders correctly, External modules resolve without .default wrapper, No console errors in server logs',
+    'Vite 4 wrapped externals with .default; v5 doesn''t. SSR code expecting wrapper will fail.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#ssr-module-changes'
+),
+(
+    'Vite 4→5: CSS files no longer listed as top-level entries in manifest',
+    'vite-migration',
+    'LOW',
+    '[
+        {"solution": "Update build manifest parsing to not expect CSS as top-level manifest entries", "percentage": 90, "note": "CSS imported from JS is referenced via JS entries instead"},
+        {"solution": "For custom build systems, adjust manifest walking logic to find CSS via JS imports", "percentage": 85, "note": "Check JS entry assets array instead of manifest root"},
+        {"solution": "Test manifest-based asset loading works correctly with split chunks", "percentage": 80, "note": "Verify all CSS loads correctly from manifest entries"}
+    ]'::jsonb,
+    'Vite 4.x project with custom manifest processing, SSR using vite manifest',
+    'Manifest loads and parses correctly, All CSS files included via JS entry references, Build matches manifest',
+    'Looking for CSS as top-level manifest entries fails in Vite 5. CSS is nested under JS entry assets.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#configuration-changes'
+),
+(
+    'Vite 4→5: TypeScript moduleResolution requires bundler or skipLibCheck for Rollup 4',
+    'vite-migration',
+    'MEDIUM',
+    '[
+        {"solution": "Set moduleResolution to \"bundler\" in tsconfig.json: { \"compilerOptions\": { \"moduleResolution\": \"bundler\" } }", "percentage": 94, "note": "Recommended for bundler environments like Vite"},
+        {"solution": "Alternatively set skipLibCheck: true in tsconfig.json if bundler not applicable", "percentage": 88, "note": "Less ideal but avoids TypeScript resolution errors"},
+        {"solution": "Run tsc --noEmit to verify TypeScript compilation succeeds", "percentage": 85, "command": "npx tsc --noEmit"}
+    ]'::jsonb,
+    'Vite 4.x TypeScript project, tsconfig.json with old moduleResolution',
+    'TypeScript compiles without errors, Vite build succeeds, No resolution errors in IDE',
+    'Rollup 4 requires bundler-aware moduleResolution. Old settings cause TypeScript errors.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://v5.vite.dev/guide/migration.html#rollup-4-migration'
+);
+
+-- Grant permissions if needed
+-- GRANT SELECT ON knowledge_entries TO service_role;

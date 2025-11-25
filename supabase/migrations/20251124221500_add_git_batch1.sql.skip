@@ -1,0 +1,213 @@
+-- Add Git common errors batch 1 - Official documentation mining
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Git merge conflict: Automatic merge failed; fix conflicts and then commit the result',
+    'git',
+    'VERY_HIGH',
+    '[
+        {"solution": "Review conflicts using git diff to see three-way comparison of changes", "percentage": 90, "note": "Shows common ancestor, HEAD, and merging branch versions"},
+        {"solution": "Edit conflicted files manually, removing conflict markers (<<<<<<, ======, >>>>>>)", "percentage": 95, "note": "Keep desired changes between markers"},
+        {"solution": "Stage resolved files with git add <filename>", "percentage": 95, "command": "git add <filename>"},
+        {"solution": "Complete merge with git commit or git merge --continue", "percentage": 95, "command": "git merge --continue"}
+    ]'::jsonb,
+    'Git repository initialized, Merge in progress, Write permissions on working directory',
+    'git status shows no remaining conflicts, git commit completes successfully, Merged branch visible in git log',
+    'Do not delete all content between markers - choose which changes to keep. Always stage files after resolving. If merge is too complex, use git merge --abort to restart.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-merge'
+),
+(
+    'Git merge conflict in binary files or complex scenarios',
+    'git',
+    'HIGH',
+    '[
+        {"solution": "Use git mergetool to launch graphical merge interface", "percentage": 90, "command": "git mergetool", "note": "Provides visual diff for easier resolution"},
+        {"solution": "Examine specific versions: git show :1:filename (ancestor), :2:filename (HEAD), :3:filename (merging branch)", "percentage": 85, "note": "View each version separately to understand changes"},
+        {"solution": "If merge is too complex, abort with git merge --abort to restart", "percentage": 95, "command": "git merge --abort", "note": "Reconstructs pre-merge state"}
+    ]'::jsonb,
+    'Git repository initialized, Merge in progress, Merge tool configured (for mergetool option)',
+    'Conflict markers removed from all files, All conflicted files staged, git status reports clean merge state',
+    'git merge --abort may fail if uncommitted changes existed before merge. Always commit or stash changes before merging to enable clean abort.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-merge'
+),
+(
+    'Git error: You are in detached HEAD state',
+    'git',
+    'HIGH',
+    '[
+        {"solution": "Create new branch to save work: git checkout -b <new-branch-name>", "percentage": 95, "command": "git checkout -b <new-branch-name>", "note": "Exits detached state and preserves commits"},
+        {"solution": "Create branch without moving HEAD: git branch <branch-name>", "percentage": 85, "command": "git branch <branch-name>", "note": "Preserves reference but stays detached"},
+        {"solution": "Create permanent tag: git tag <tag-name>", "percentage": 80, "command": "git tag <tag-name>", "note": "Preserves commit reference permanently"}
+    ]'::jsonb,
+    'Git repository initialized, Currently in detached HEAD state',
+    'git status shows On branch <branch-name> instead of HEAD detached, Commits visible in git log for branch',
+    'Never leave detached HEAD without creating a reference - commits will be garbage collected. Use git reflog to recover lost commits if you already moved away.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-checkout'
+),
+(
+    'Git push error: ! [rejected] main -> main (non-fast-forward)',
+    'git',
+    'VERY_HIGH',
+    '[
+        {"solution": "Pull remote changes first: git pull origin <branch-name>", "percentage": 95, "command": "git pull origin <branch-name>", "note": "Combines fetch and merge in one command"},
+        {"solution": "Fetch and merge separately: git fetch origin && git merge origin/<branch-name>", "percentage": 90, "command": "git fetch origin && git merge origin/<branch-name>", "note": "More control over merge process"},
+        {"solution": "Force push only if you are certain no one else pushed: git push --force-with-lease", "percentage": 70, "command": "git push --force-with-lease", "note": "Safer than --force; fails if remote changed"}
+    ]'::jsonb,
+    'Git repository initialized, Remote repository configured, Network connectivity, Authentication credentials valid',
+    'git push succeeds without errors, Remote branch shows your commits in git log origin/<branch>',
+    'Never use git push --force without --force-with-lease unless absolutely necessary. This error exists to prevent you from losing history - always pull before pushing.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.github.com/en/get-started/using-git/dealing-with-non-fast-forward-errors'
+),
+(
+    'Git push failed: The remote end refused the update',
+    'git',
+    'MEDIUM',
+    '[
+        {"solution": "Check if branch protection rules prevent direct pushes - use pull request instead", "percentage": 85, "note": "Common on protected branches like main/master"},
+        {"solution": "Verify remote repository does not have receive.denyCurrentBranch enabled", "percentage": 75, "note": "Prevents pushing to checked-out branch"},
+        {"solution": "Check if receive.denyNonFastForwards is enabled - fetch and merge first", "percentage": 80, "command": "git fetch && git merge"},
+        {"solution": "If hook rejection, contact repository admin to review server-side hooks", "percentage": 70, "note": "Custom hooks may enforce policies"}
+    ]'::jsonb,
+    'Git repository initialized, Remote configured, Valid authentication, Network connectivity',
+    'git push completes successfully, Remote repository shows your commits',
+    'Force push will not bypass remote repository safety configurations. These protections exist for a reason - work with them, not against them.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-push'
+),
+(
+    'Git authentication failed when pushing to remote',
+    'git',
+    'VERY_HIGH',
+    '[
+        {"solution": "For GitHub: Use Personal Access Token instead of password", "percentage": 95, "note": "GitHub disabled password authentication in 2021"},
+        {"solution": "Update cached credentials in credential manager (Windows: Credential Manager, macOS: Keychain, Linux: .git-credentials)", "percentage": 90, "note": "Remove old credentials first"},
+        {"solution": "Generate new PAT with repo scope at GitHub Settings > Developer settings > Personal access tokens", "percentage": 95, "note": "Add workflow scope if modifying Actions"},
+        {"solution": "For SSH: Verify SSH key is added to ssh-agent and uploaded to Git provider", "percentage": 90, "command": "ssh-add -l"}
+    ]'::jsonb,
+    'Git repository with remote configured, Valid account on Git hosting service, Network connectivity',
+    'git push completes without authentication errors, Credentials cached for future use',
+    'Passwords no longer work for GitHub - must use PAT or SSH. Store tokens securely, never commit them. Tokens can expire - check expiration settings when creating.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://docs.github.com/en/authentication'
+),
+(
+    'Git rebase conflict: error: could not apply <commit>',
+    'git',
+    'HIGH',
+    '[
+        {"solution": "Resolve conflicts manually, then continue: git add <files> && git rebase --continue", "percentage": 90, "command": "git rebase --continue", "note": "After resolving conflict markers"},
+        {"solution": "Skip problematic commit: git rebase --skip", "percentage": 75, "command": "git rebase --skip", "note": "Use when commit is no longer needed"},
+        {"solution": "Abort entire rebase: git rebase --abort", "percentage": 95, "command": "git rebase --abort", "note": "Returns to pre-rebase state"},
+        {"solution": "View current patch during conflict: git rebase --show-current-patch", "percentage": 80, "command": "git rebase --show-current-patch"}
+    ]'::jsonb,
+    'Git repository initialized, Rebase operation in progress, Write permissions on working directory',
+    'git rebase --continue succeeds, git status shows no rebase in progress, Commits rebased successfully in git log',
+    'Must stage files with git add before using --continue. Rebase rewrites history - never rebase commits already pushed to shared branches.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-rebase'
+),
+(
+    'Git rebase interactive failed: cannot abort rebase',
+    'git',
+    'MEDIUM',
+    '[
+        {"solution": "Use git rebase --quit to exit without resetting HEAD", "percentage": 85, "command": "git rebase --quit", "note": "Preserves current state when abort fails"},
+        {"solution": "If abort still fails, manually remove .git/rebase-merge or .git/rebase-apply directory", "percentage": 75, "note": "Last resort - use with caution"},
+        {"solution": "Edit todo list to remove problematic actions: git rebase --edit-todo", "percentage": 80, "command": "git rebase --edit-todo", "note": "Modify rebase plan before continuing"}
+    ]'::jsonb,
+    'Git repository initialized, Rebase in progress, File system access',
+    'Rebase operation exits successfully, .git/rebase-* directories removed, git status shows clean state',
+    'Apply backend has safety issues where Ctrl-C at wrong time prevents abort. Use --quit if --abort fails. Back up your work before manual .git directory manipulation.',
+    0.75,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-rebase'
+),
+(
+    'Git stash pop conflict: CONFLICT (content): Merge conflict in <file>',
+    'git',
+    'HIGH',
+    '[
+        {"solution": "Resolve conflicts manually, stage files with git add, then manually drop stash: git stash drop", "percentage": 90, "note": "Pop does not auto-drop on conflict"},
+        {"solution": "Use git stash apply instead of pop to keep stash until conflict verified resolved", "percentage": 85, "command": "git stash apply", "note": "Safer - preserves stash entry"},
+        {"solution": "Create new branch from stash base: git stash branch <branch-name>", "percentage": 80, "command": "git stash branch <branch-name>", "note": "Applies stash on original commit, avoiding conflicts"}
+    ]'::jsonb,
+    'Git repository initialized, Stash entry exists, Working directory state',
+    'Conflict markers resolved in all files, git status shows clean working tree, Stash entry removed from stash list',
+    'When pop conflicts occur, stash is NOT automatically dropped - must manually call git stash drop after resolving. Working directory must match index for clean pop.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-stash'
+),
+(
+    'Git stash apply failed with --index option',
+    'git',
+    'MEDIUM',
+    '[
+        {"solution": "Apply without --index to skip reinstate of staged changes: git stash apply", "percentage": 90, "command": "git stash apply", "note": "Applies only working tree changes"},
+        {"solution": "Resolve conflicts in index manually, then reapply stash", "percentage": 75, "note": "May require git reset to clear index first"},
+        {"solution": "Use git stash branch to apply on original commit: git stash branch <branch-name> stash@{0}", "percentage": 85, "command": "git stash branch <branch-name>", "note": "Restores state with no conflicts"}
+    ]'::jsonb,
+    'Git repository initialized, Stash entry exists, Index state',
+    'Stash applied successfully, git status shows expected changes, No conflict markers in files',
+    'The --index flag tries to reinstate both working tree and index changes, which can fail when conflicts are stored in index. Drop --index for simpler recovery.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-stash'
+),
+(
+    'Git error: fatal: refusing to merge unrelated histories',
+    'git',
+    'MEDIUM',
+    '[
+        {"solution": "Allow merge with --allow-unrelated-histories flag: git merge <branch> --allow-unrelated-histories", "percentage": 90, "command": "git merge <branch> --allow-unrelated-histories", "note": "Introduced in Git 2.9 as safety feature"},
+        {"solution": "For pull operations: git pull origin <branch> --allow-unrelated-histories", "percentage": 90, "command": "git pull origin <branch> --allow-unrelated-histories"},
+        {"solution": "Verify this is intentional - only use when truly merging independent project histories", "percentage": 95, "note": "Safety check prevents accidental merges"}
+    ]'::jsonb,
+    'Git version 2.9 or higher, Two repositories with no common ancestor commits, Write permissions',
+    'Merge completes successfully, git log shows combined history from both projects',
+    'This is a rare operation by design - no configuration exists to enable by default. Only use when intentionally merging two independent projects. Git prevents this by default to avoid accidental history pollution.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-merge'
+),
+(
+    'Git merge aborted: warning: Cannot merge binary files',
+    'git',
+    'MEDIUM',
+    '[
+        {"solution": "Choose one version manually: git checkout --ours <file> or git checkout --theirs <file>", "percentage": 85, "command": "git checkout --ours <file>", "note": "--ours keeps your version, --theirs takes their version"},
+        {"solution": "Accept both versions as separate files with custom naming", "percentage": 70, "note": "Manually rename and keep both if needed"},
+        {"solution": "Use .gitattributes to define merge strategy for binary file types", "percentage": 75, "note": "Prevents future conflicts for specific extensions"}
+    ]'::jsonb,
+    'Git repository initialized, Merge in progress with binary file conflicts, Write permissions',
+    'Binary files resolved with chosen version, git status shows files staged, Merge completes successfully',
+    'Git cannot automatically merge binary files - you must choose a version manually. Consider if binary files should be in version control or moved to LFS.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://git-scm.com/docs/git-merge'
+);

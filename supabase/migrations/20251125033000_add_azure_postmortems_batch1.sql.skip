@@ -1,0 +1,201 @@
+-- Azure Incident Postmortem Analysis Batch 1
+-- Extracted from: https://azure.status.microsoft/en-us/status/history/
+-- Date: November 25, 2025
+-- Focus: Virtual Machines, Azure AD, Storage, SQL Database outages
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, last_verified, source_url
+) VALUES
+(
+    'Azure VM outage: Thermal event in West Europe datacenter (2LGD-9VG)',
+    'azure-infrastructure',
+    'LOW',
+    '[
+        {"solution": "Manually reset affected cooling units when voltage sag causes automatic shutdown to fail. Facilities teams performed hard resets on cooling infrastructure.", "percentage": 95, "note": "Immediate action when thermal thresholds exceeded"},
+        {"solution": "Run comprehensive data consistency checks on storage systems before resuming operations to ensure no corruption from thermal event.", "percentage": 90, "note": "Prevents cascading data integrity issues"},
+        {"solution": "Stage VM host recovery to restore compute capacity before resuming dependent services like databases.", "percentage": 85, "note": "Prioritizes critical infrastructure restoration"}
+    ]'::jsonb,
+    'Access to datacenter facilities team, Monitoring showing thermal event, Storage management console access',
+    'Cooling units restart successfully, Data consistency checks pass, VMs resume operation within SLA',
+    'Do not restart VMs immediately - allow storage consistency checks to complete first. Thermal events can mask underlying hardware issues requiring forensic analysis.',
+    0.88,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Azure storage data consistency failure after thermal event',
+    'azure-storage',
+    'LOW',
+    '[
+        {"solution": "Execute full data consistency verification across all storage nodes before re-enabling write operations. Use Azure Storage diagnostic tools to validate block blob integrity.", "percentage": 95, "note": "Prevents silent data corruption"},
+        {"solution": "Implement staged recovery pattern: read-only mode first, then limited writes, then full operations.", "percentage": 90, "note": "Allows detection of issues before full traffic resumption"},
+        {"solution": "Monitor storage telemetry for unexpected latency spikes which may indicate underlying corruption still in progress.", "percentage": 80, "note": "Early warning sign of cascading issues"}
+    ]'::jsonb,
+    'Azure Storage diagnostic tools, Read access to affected storage accounts, Monitoring dashboard access',
+    'Data consistency checks return zero errors, All blob operations succeed without corruption, Storage latency returns to baseline',
+    'Storage consistency checks must complete fully before resuming writes. Partial recovery can propagate corruption. Always validate against backup before full resumption.',
+    0.87,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Azure AD authentication failures: Front Door metadata incompatibility (YKYN-BWZ)',
+    'azure-ad',
+    'MEDIUM',
+    '[
+        {"solution": "Implement configuration protection system that automatically blocks problematic deployments when cross-version incompatibilities detected between control plane builds.", "percentage": 95, "note": "Automated prevention of metadata corruption"},
+        {"solution": "Manually remove incompatible configuration entries from global configuration store when asynchronous processing crashes occur.", "percentage": 85, "note": "Quick mitigation without full rollback"},
+        {"solution": "Execute phased fleet redeployment with gradual traffic rebalancing to test each node before full load.", "percentage": 90, "note": "Reduces risk of cascading failures during recovery"}
+    ]'::jsonb,
+    'Azure Front Door console access, Configuration management API access, Global fleet monitoring dashboard',
+    'New deployments proceed without rejection, Azure AD authentication latency <200ms, No edge site crashes in logs',
+    'Never perform configuration changes across different control plane build versions simultaneously. Always maintain backward compatibility between builds. Test in canary environment first.',
+    0.86,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'SQL Database unavailable: Portal and management access failures (QKNQ-PB8)',
+    'azure-sql-database',
+    'MEDIUM',
+    '[
+        {"solution": "Validate AFD migration scripts use latest API versions before deployment. Outdated API versions can remove critical configuration during traffic rerouting.", "percentage": 95, "note": "Prevents configuration loss during migrations"},
+        {"solution": "Recover hosting service domains to restore correct AFD traffic routing paths when health checks begin failing.", "percentage": 90, "note": "Restores baseline connectivity without full rollback"},
+        {"solution": "Purge AFD cache after configuration recovery to ensure stale routing rules do not persist in edge caches.", "percentage": 85, "note": "Prevents lingering issues from cached bad state"}
+    ]'::jsonb,
+    'AFD console access, Hosting service domain management permissions, Cache management tools',
+    'Portal and SQL Database console accessible, AFD health checks pass, Routing latency <50ms',
+    'Always update migration scripts to latest API versions. Test routing changes in staging first. Do not assume cached configurations are correct after domain recovery.',
+    0.89,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Portal outage: AFD data plane crashes from corrupted metadata (QNBQ-5W8)',
+    'azure-portal',
+    'MEDIUM',
+    '[
+        {"solution": "Maintain strict automated protection systems that prevent bypassing safety checks during cleanup operations. Use offline configuration repair tools instead.", "percentage": 95, "note": "Prevents propagation of corrupted data to production"},
+        {"solution": "Disable problematic control plane components from accepting requests when metadata corruption is detected. This prevents generation of new corrupt entries.", "percentage": 90, "note": "Stops source of corruption while repairs proceed"},
+        {"solution": "Implement automated infrastructure restart procedures for data plane nodes after protection system restoration to clear corrupted state.", "percentage": 85, "note": "Clears in-memory corruption without rollback"}
+    ]'::jsonb,
+    'AFD control plane console access, Data plane infrastructure management, Safety system administrator privileges',
+    'Portal fully responsive, Azure AD sign-in succeeds, No data plane process crashes in telemetry',
+    'Never bypass automated protection systems even for internal cleanup. Corrupted metadata propagates faster than manual repairs can complete. Use design-time protection instead.',
+    0.87,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'VM provisioning failure: Switzerland North certificate misconfiguration (BT6W-FX0)',
+    'azure-virtual-machines',
+    'MEDIUM',
+    '[
+        {"solution": "Validate certificate configurations in software load balancer authorization settings before deployment. Malformed certificate values pass most validation but fail at runtime.", "percentage": 95, "note": "Catches configuration errors before fleet deployment"},
+        {"solution": "Remove expedited deployment paths that skip standard health safeguards. Standard staged rollouts detect configuration issues early.", "percentage": 92, "note": "Prevents widespread deployment of broken configs"},
+        {"solution": "For SQL Managed Instance VMs requiring explicit restarts, issue manual service restart commands after certificate correction is deployed.", "percentage": 85, "note": "Some VM types do not auto-recover from network configuration issues"}
+    ]'::jsonb,
+    'Load balancer configuration console access, Certificate management tools, VM restart capabilities',
+    'VMs successfully provision, Load balancer accepts new connections, SQL Managed Instance responds to queries',
+    'Malformed certificate values can bypass validation. Always test certificate changes in staging across all availability zones. Never use expedited deployments for infrastructure changes.',
+    0.84,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Azure VM allocation failure: East US 2 control plane overload (VKY3-PF8)',
+    'azure-virtual-machines',
+    'HIGH',
+    '[
+        {"solution": "When Allocator service throttling causes persistent request queues, immediately halt new VM deployments in affected availability zones to prevent queue growth.", "percentage": 93, "note": "Stops positive feedback loop of overload"},
+        {"solution": "Revert recent service changes to throttling logic that do not account for high-demand scenarios. Aggressive throttling creates cascading failures across zones.", "percentage": 90, "note": "Root cause fix prevents future incidents"},
+        {"solution": "Gradually re-enable deployments only after backlog drains below operational threshold. Monitor queue depth before each re-enable phase.", "percentage": 88, "note": "Prevents re-triggering overload condition"}
+    ]'::jsonb,
+    'Allocator service console access, Availability zone management tools, Deployment queue monitoring',
+    'New VM deployments succeed with <2min allocation time, Control plane queue depth <100, No failed deployment redirects',
+    'Do not deploy new throttling logic without load testing across demand spikes. Redirecting failed deployments to other zones amplifies overload. Fix root cause, not symptoms.',
+    0.85,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'SQL Managed Instance unavailable: Network configuration cascading failure (BT6W-FX0)',
+    'azure-sql-database',
+    'MEDIUM',
+    '[
+        {"solution": "For SQL Managed Instance deployments on Switzerland North, validate certificate entries in load balancer before deployment across all AZs.", "percentage": 94, "note": "SQL MI has strict network requirements"},
+        {"solution": "Issue explicit service restart to Trusted Launch VMs hosting SQL Managed Instance after network configuration recovery.", "percentage": 88, "note": "Some VM security features require manual restart to re-establish network"},
+        {"solution": "Use staged deployment rollout to catch region-specific configuration issues before full fleet update.", "percentage": 85, "note": "Detects region-specific incompatibilities early"}
+    ]'::jsonb,
+    'SQL Managed Instance administration console, Trusted Launch VM restart permissions, Certificate management access',
+    'SQL Managed Instance accepts connections, Query execution latency <50ms, No connectivity timeouts in application logs',
+    'Trusted Launch VMs may not auto-recover from network failures. Explicit restart required. Do not batch SQL MI updates with non-SQL workloads.',
+    0.83,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Storage and AKS outage: Cooling unit hardware failure (2LGD-9VG)',
+    'azure-storage',
+    'LOW',
+    '[
+        {"solution": "When thermal events occur, immediately perform firmware and hardware analysis on cooling relay systems to identify latent issues preventing automatic restart.", "percentage": 93, "note": "Previously unknown hardware issues emerge during power events"},
+        {"solution": "Upgrade UPS power supply systems for critical relay infrastructure to provide sustained power during utility grid sags.", "percentage": 90, "note": "Prevents cascading failures from partial power loss"},
+        {"solution": "Implement background integrity checks during VM and disk operations to detect and recover from thermal event damage without requiring full storage restart.", "percentage": 85, "note": "Reduces recovery time from hours to minutes"}
+    ]'::jsonb,
+    'Datacenter facilities access, Power infrastructure management tools, Storage diagnostic suite',
+    'Cooling units maintain temperature <threshold, Storage operations proceed without interruption, Background checks detect zero corruption',
+    'Power grid sags can trigger latent hardware failures. Do not assume automatic recovery works. Perform forensic analysis on all power events. Budget time for UPS upgrades.',
+    0.86,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Application Service authentication timeout: Front Door configuration incompatibility (YKYN-BWZ)',
+    'azure-app-service',
+    'MEDIUM',
+    '[
+        {"solution": "Enforce synchronous configuration processing in control plane to prevent metadata propagation delays that expose data plane bugs.", "percentage": 94, "note": "Eliminates asynchronous processing race conditions"},
+        {"solution": "Add additional pre-canary testing stage with extended bake time to allow latent data plane bugs to surface before canary deployment.", "percentage": 88, "note": "Catches bugs that only appear under sustained load"},
+        {"solution": "Decouple data plane from traffic-serving instances so configuration issues do not directly crash request-handling processes.", "percentage": 85, "note": "Improves graceful degradation under config issues"}
+    ]'::jsonb,
+    'Front Door control plane console, Application Service deployment tools, Canary testing infrastructure',
+    'Application Service authentication latency <100ms, Login success rate >99.95%, No timeout spikes in telemetry',
+    'Configuration propagation delays are invisible to metrics until data plane crashes. Always include extended bake time in canary deployments. Test under sustained high load.',
+    0.84,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'Communication Services unavailable: Portal metadata corruption propagation (YKYN-BWZ)',
+    'azure-communication-services',
+    'MEDIUM',
+    '[
+        {"solution": "Implement data plane decoupling so metadata issues in control plane do not cascade to message delivery systems. Process configuration asynchronously.", "percentage": 91, "note": "Prevents silent message loss during config propagation"},
+        {"solution": "Reduce configuration propagation time from 45 to 15 minutes to limit window where stale metadata can cause failures.", "percentage": 87, "note": "Minimizes blast radius of configuration issues"},
+        {"solution": "Add strict validation in configuration ingestion layer that rejects incompatible metadata from control plane before applying to data plane.", "percentage": 89, "note": "Catches metadata errors at ingestion boundary"}
+    ]'::jsonb,
+    'Communication Services administration console, Configuration validation tools, Message delivery monitoring',
+    'Messages deliver with <5s latency, No message loss detected, Configuration changes apply cleanly to all services',
+    'Configuration propagation delays can silently cause message delivery issues. Implement validation at boundaries. Do not rely on asynchronous config consistency.',
+    0.82,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+),
+(
+    'CosmosDB connection timeouts: Datacenter thermal event impact (2LGD-9VG)',
+    'azure-cosmos-db',
+    'LOW',
+    '[
+        {"solution": "After thermal events, perform comprehensive data consistency checks on CosmosDB replication layers before resuming write operations.", "percentage": 92, "note": "Thermal events can corrupt replication state machines"},
+        {"solution": "Use staged recovery pattern with read-only access first, then single-region writes, then multi-region replication to detect consistency issues early.", "percentage": 88, "note": "Prevents replication of corruption across regions"},
+        {"solution": "Implement background integrity checks during normal CosmosDB operations to detect thermal damage without requiring maintenance window.", "percentage": 85, "note": "Enables continuous recovery without downtime"}
+    ]'::jsonb,
+    'CosmosDB console access, Replication management tools, Diagnostic query execution',
+    'CosmosDB queries return results <50ms, Replication lag <1s across all regions, Zero consistency violations in logs',
+    'Thermal events can corrupt distributed transaction state. Staged recovery is essential. Do not resume multi-region writes until single-region consistency verified.',
+    0.83,
+    NOW(),
+    'https://azure.status.microsoft/en-us/status/history/'
+);

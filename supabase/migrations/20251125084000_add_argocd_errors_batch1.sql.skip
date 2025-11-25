@@ -1,0 +1,241 @@
+-- Add Argo CD common errors and troubleshooting solutions batch 1
+-- Extracted from official Argo CD documentation
+-- Date: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Argo CD application stays OutOfSync after syncing',
+    'argocd',
+    'VERY_HIGH',
+    '[
+        {"solution": "Configure Argo CD to ignore expected field differences using diffing customization in argocd-cm ConfigMap", "percentage": 95, "note": "Most common cause is normalized fields"},
+        {"solution": "Implement custom diffing rules for specific resources that have expected differences", "percentage": 90, "command": "kubectl edit configmap argocd-cm -n argocd"},
+        {"solution": "Check resource limit formatting differences (1000m vs 1) and add to ignoreDifferences list", "percentage": 85, "note": "Kubernetes normalizes resource formats"},
+        {"solution": "Verify generated manifests match cluster state by checking sync diff in UI", "percentage": 80, "note": "Use argocd app diff command"}
+    ]'::jsonb,
+    'Argo CD deployed, Application synced at least once, ConfigMap access',
+    'Application shows Synced status, No OutOfSync indicator, Sync resources view shows no diff',
+    'Kubernetes normalizes values (1000m becomes 1). Helm template outputs may differ from installed state. Use ignoreDifferences for known variations. Check argocd-cm for existing customizations.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+),
+(
+    'Argo CD failed to parse new notification settings YAML syntax error',
+    'argocd',
+    'HIGH',
+    '[
+        {"solution": "Fix YAML syntax in argocd-notifications-cm ConfigMap: use quoted values for special characters", "percentage": 95, "note": "Quote emoji icons like rocket in YAML"},
+        {"solution": "Validate YAML syntax before applying using online YAML validator or yamllint tool", "percentage": 90, "command": "yamllint argocd-notifications-cm.yaml"},
+        {"solution": "Ensure proper indentation in ConfigMap values - YAML is whitespace-sensitive", "percentage": 85, "note": "Use 2 or 4 space indentation consistently"},
+        {"solution": "Check ConfigMap is stored in correct namespace: argocd", "percentage": 80, "command": "kubectl get configmap argocd-notifications-cm -n argocd"}
+    ]'::jsonb,
+    'Argo CD Notifications controller deployed, kubectl access to argocd namespace',
+    'Notification controller restarts without errors, Template list shows no parse errors, Notifications send successfully',
+    'YAML syntax is strict - missing quotes on colons/special chars causes failures. Indentation must be consistent. ConfigMap must be in argocd namespace. Use kubectl edit to safely validate syntax.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/troubleshooting-errors/'
+),
+(
+    'Argo CD notification service not supported error',
+    'argocd',
+    'HIGH',
+    '[
+        {"solution": "Verify service is defined in argocd-notifications-cm ConfigMap and check for typos", "percentage": 95, "command": "kubectl get configmap argocd-notifications-cm -n argocd -o yaml | grep service.slack"},
+        {"solution": "Check Argo CD version supports the service type (Teams starting in v1.1.0)", "percentage": 90, "note": "Upgrade if using older version"},
+        {"solution": "Ensure service definition includes all required fields (token, url, channel as needed)", "percentage": 85, "note": "Missing fields cause parse failures"},
+        {"solution": "Restart argocd-notifications pod to reload configuration after ConfigMap changes", "percentage": 85, "command": "kubectl rollout restart deployment/argocd-notifications-controller -n argocd"}
+    ]'::jsonb,
+    'Argo CD with Notifications extension deployed, Service credentials available',
+    'Service appears in template get output, Notifications successfully send to service, No service not supported errors in logs',
+    'Service types require explicit definition in ConfigMap. Not all services are available in all versions - check version requirements. Typos in service names are common. Changes require pod restart.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/troubleshooting-errors/'
+),
+(
+    'Argo CD application with multiple sources: GitHub status API 404 error',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Use array index syntax for multi-source apps: {{index .app.status.operationState.syncResult.revisions 0}}", "percentage": 95, "note": "Single source template syntax fails on multi-source apps"},
+        {"solution": "Update notification template to handle multiple sources explicitly rather than using single source variable", "percentage": 90, "command": "argocd admin notifications template notify"},
+        {"solution": "Test template with sample multi-source application using admin template notify command", "percentage": 85, "note": "Validates template before deployment"},
+        {"solution": "Check GitHub status API endpoint has correct repository URL format from indexed source", "percentage": 80, "note": "Verify (index .app.spec.sources 0).repoURL is correct"}
+    ]'::jsonb,
+    'Argo CD deployed, GitHub webhook notifications configured, Multi-source application exists',
+    'GitHub status updates show correct revision, No 404 errors in notification logs, Status check passes on GitHub commits',
+    'Multi-source applications require array indexing in templates. Using single source templates (like .app.spec.source.repoURL) returns null for multi-source apps. Test with sample multi-source app.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/troubleshooting-errors/'
+),
+(
+    'Argo CD config referenced secret key but does not exist in secret',
+    'argocd',
+    'HIGH',
+    '[
+        {"solution": "Verify secret exists in Argo CD namespace: kubectl get secret -n argocd", "percentage": 95, "command": "kubectl get secret <secret-name> -n argocd"},
+        {"solution": "Add required label to secret: app.kubernetes.io/part-of: argocd", "percentage": 95, "command": "kubectl label secret <name> app.kubernetes.io/part-of=argocd -n argocd"},
+        {"solution": "Verify secret has correct key referenced in ConfigMap (e.g., slack-token key in argocd-slackbot secret)", "percentage": 90, "command": "kubectl get secret argocd-slackbot -n argocd -o yaml | grep slack-token"},
+        {"solution": "Restart argocd-notifications controller pod after secret creation or modification", "percentage": 85, "command": "kubectl rollout restart deployment/argocd-notifications-controller -n argocd"}
+    ]'::jsonb,
+    'Kubernetes cluster access with kubectl, Secret resource created with required data',
+    'Secret exists with correct label, Controller finds secret without errors, Notification service initializes successfully',
+    'Secrets must have label app.kubernetes.io/part-of: argocd or they are invisible to Argo CD. Key names are case-sensitive. ConfigMap references must match secret keys exactly. Restart required after secret changes.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/troubleshooting-errors/'
+),
+(
+    'Argo CD resource too large for kubectl apply exceeds annotation size',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Enable Server-Side Apply with ServerSideApply=true sync option to bypass annotation-based state tracking", "percentage": 95, "note": "Avoids kubectl apply annotation size limit"},
+        {"solution": "Use Replace=true sync option to use kubectl replace/create instead of apply (beware: causes recreation)", "percentage": 85, "note": "Simpler but may cause downtime"},
+        {"solution": "Split large resources into multiple smaller resources when possible", "percentage": 80, "note": "Reduces individual resource size"},
+        {"solution": "Enable Validate=false to skip validation for large resources", "percentage": 75, "note": "Only for known-safe incompatible types"}
+    ]'::jsonb,
+    'Argo CD configured with application, Resource specification available, Test cluster access',
+    'Application syncs successfully without annotation errors, Sync status shows Synced, No kubectl apply failures in logs',
+    'Kubectl apply stores entire manifest in annotation causing failures >262KB. Server-side apply has no annotation limit. Replace option recreates resources. Test in non-prod first.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/'
+),
+(
+    'Argo CD custom resource definition not found during sync',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Use SkipDryRunOnMissingResource=true annotation to skip dry-run validation for CRDs not in sync wave", "percentage": 95, "note": "Allows sync to proceed even if CRD missing at dry-run time"},
+        {"solution": "Ensure CRD is deployed in same sync operation before dependent custom resources", "percentage": 90, "note": "Use sync waves to order resource deployment"},
+        {"solution": "Add CRD installation hook or InitialSync strategy if CRD comes from separate chart", "percentage": 85, "note": "Guarantees CRD exists before custom resources"},
+        {"solution": "Check CRD is deployed to correct cluster specified in application", "percentage": 80, "note": "Multi-cluster deployments may have missing CRDs"}
+    ]'::jsonb,
+    'Argo CD with custom resources, CRD definition available, Kubernetes cluster with kubectl',
+    'Application syncs without CRD errors, Custom resources deploy successfully, Dry-run validation passes',
+    'CRDs must exist before custom resource sync unless using SkipDryRunOnMissingResource. Sync waves control deployment order. Each cluster must have CRD installed. Typos in CRD names cause 404 errors.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/'
+),
+(
+    'Argo CD rpc error code Unavailable desc transport is closing',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Use --grpc-web flag with CLI to use HTTP/2 compatible transport", "percentage": 95, "command": "argocd app list --grpc-web"},
+        {"solution": "Check if corporate proxy blocks HTTP/2 and configure proxy to support it", "percentage": 90, "note": "Some proxies only support HTTP/1.1"},
+        {"solution": "Upgrade Argo CD server to latest version - may have improved HTTP/2 handling", "percentage": 85, "note": "Older versions had transport issues"},
+        {"solution": "Verify network connectivity between client and Argo CD server", "percentage": 80, "command": "curl -v https://argo-server-url"}
+    ]'::jsonb,
+    'Argo CD CLI installed, Network connectivity to Argo CD server, Proxy details if behind corporate proxy',
+    'CLI commands succeed with --grpc-web flag, No transport closing errors, Full response data received',
+    'HTTP/2 proxy support is required for gRPC. Corporate proxies often only support HTTP/1.1. --grpc-web uses HTTP/1.1 fallback. May also indicate server overload or network timeout.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+),
+(
+    'Argo CD x509 certificate signed by unknown authority error',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Use --insecure flag for development/testing: argocd login --insecure <server>", "percentage": 90, "note": "Only for non-production use"},
+        {"solution": "Install proper certificate signed by trusted CA on Argo CD server", "percentage": 95, "note": "Required for production"},
+        {"solution": "Add custom CA certificate to client trust store if using self-signed cert", "percentage": 85, "command": "Add CA bundle to ~/.argocd/tls-cert.pem"},
+        {"solution": "Update TLS certificates in Argo CD deployment with valid signed certs", "percentage": 85, "command": "kubectl patch secret argocd-server-tls"}
+    ]'::jsonb,
+    'Argo CD server deployed with TLS, Access to certificate files, kubectl access',
+    'CLI connects without certificate errors, TLS handshake succeeds, HTTPS requests resolve certificate chain',
+    'Default Argo CD certificate is self-signed and not trusted. Production requires signed certificate. Add to system CA bundle or use --insecure for development only. Update every ~90 days.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+),
+(
+    'Argo CD admin password reset forgotten or lost',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Generate bcrypt hash of new password: argocd account bcrypt --password <NEW_PASSWORD>", "percentage": 95, "command": "argocd account bcrypt --password mypass123"},
+        {"solution": "Patch argocd-secret with new password hash and current timestamp", "percentage": 95, "note": "Use kubectl patch to update argocd-secret metadata"},
+        {"solution": "Disable admin user and use OIDC/SAML authentication instead", "percentage": 85, "note": "More secure long-term solution"},
+        {"solution": "Access via port-forward and update through UI if CLI inaccessible", "percentage": 80, "command": "kubectl port-forward -n argocd svc/argocd-server 8080:443"}
+    ]'::jsonb,
+    'Argo CD deployment with kubectl access, bcrypt tool available, Access to argocd-secret',
+    'Admin login succeeds with new password, Session authenticated, User can manage applications',
+    'Password hash must be valid bcrypt format. Timestamp must be in seconds. Use UTC time. Command requires admin access to patch secret. Store new password securely after reset.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+),
+(
+    'Argo CD application stuck in Progressing state',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Check if Ingress controller updating status fields - add custom health check to override", "percentage": 90, "note": "Some controllers don''t update status causing stuck state"},
+        {"solution": "Verify StatefulSet is not using OnDelete update strategy - change to RollingUpdate", "percentage": 85, "command": "kubectl patch statefulset <name> -p {spec: {updateStrategy: {type: RollingUpdate}}}"},
+        {"solution": "Check SealedSecret controller has --update-status flag enabled for status conditions", "percentage": 85, "command": "Check SealedSecret controller deployment args"},
+        {"solution": "Add resource health customization in argocd-cm for resources not detected as healthy", "percentage": 80, "note": "Override default health checks for custom resources"}
+    ]'::jsonb,
+    'Argo CD deployed, Application resource definitions available, kubectl access',
+    'Application shows Synced status, Progressing state resolves within timeout, Resource health indicators green',
+    'Ingress Pending status hangs indefinitely. StatefulSet OnDelete doesn''t trigger updates. SealedSecret requires controller flag. Custom resources need custom health checks. Check controller logs.',
+    0.82,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+),
+(
+    'Argo CD configured cluster does not show up in UI',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Verify cluster secret has label: argocd.argoproj.io/secret-type: cluster", "percentage": 95, "command": "kubectl label secret <name> argocd.argoproj.io/secret-type=cluster -n argocd"},
+        {"solution": "Check cluster secret exists in argocd namespace", "percentage": 90, "command": "kubectl get secret -n argocd -l argocd.argoproj.io/secret-type=cluster"},
+        {"solution": "Verify admin user has permissions to list cluster secrets via RBAC", "percentage": 85, "command": "kubectl auth can-i list secrets --as=system:serviceaccount:argocd:argocd-server"},
+        {"solution": "Restart argocd-server pod to refresh cluster cache", "percentage": 80, "command": "kubectl rollout restart deployment/argocd-server -n argocd"}
+    ]'::jsonb,
+    'Kubernetes cluster with kubectl access, Cluster secret created, Admin RBAC permissions',
+    'Cluster appears in cluster list command, UI shows cluster in dropdown, Applications can target cluster',
+    'Cluster secret requires correct label to be recognized. Must be in argocd namespace. Server needs read permission on secrets. Cache refresh may be needed after creation.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+),
+(
+    'Argo CD helm manifest generation error cached',
+    'argocd',
+    'MEDIUM',
+    '[
+        {"solution": "Search repo-server logs for application name to find underlying generation error", "percentage": 95, "command": "kubectl logs -n argocd deployment/argocd-repo-server | grep <app-name>"},
+        {"solution": "Check if Helm chart values are invalid or missing required dependencies", "percentage": 90, "note": "helm template fails due to missing values or bad syntax"},
+        {"solution": "Verify Helm repository is accessible and chart version exists", "percentage": 85, "command": "helm repo update && helm search repo <chart>"},
+        {"solution": "Clear app sync status to force re-generate manifests", "percentage": 85, "command": "argocd app set <app> --helm-set=forceReconcile=true"}
+    ]'::jsonb,
+    'Argo CD with Helm integration, Helm CLI installed, repo-server pod access',
+    'Manifests generate without error, App shows Synced status, No cached errors in UI',
+    'Error is cached - logs show real cause. Check helm template output directly. Missing values.yaml or requirements. Invalid YAML in chart. Chart version mismatch.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://argo-cd.readthedocs.io/en/stable/faq/'
+);

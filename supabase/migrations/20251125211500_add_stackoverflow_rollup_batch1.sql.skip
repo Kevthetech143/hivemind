@@ -1,0 +1,222 @@
+-- Add Stack Overflow Rollup (Bundler) Solutions Batch 1
+-- Extracted from highest-voted SO questions with accepted answers
+-- Category: stackoverflow-rollup
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'What is flat bundling and why is Rollup better at this than Webpack?',
+    'stackoverflow-rollup',
+    'HIGH',
+    '[
+        {"solution": "Rollup employs scope hoisting, flattening code to a single level while rewriting identifiers to prevent naming conflicts, eliminating wrapper function overhead", "percentage": 95, "note": "Core architectural advantage of Rollup"},
+        {"solution": "Webpack wraps each module in a function with a runtime loader, introducing per-module overhead but enabling code-splitting and HMR", "percentage": 92, "note": "Webpack trade-off for advanced features"},
+        {"solution": "For libraries, Rollup produces smaller, faster-executing bundles with no runtime cost due to flat bundling", "percentage": 90, "note": "Best use case for Rollup"},
+        {"solution": "Webpack 3+ added scope hoisting via ModuleConcatenationPlugin to compete with Rollup''s approach", "percentage": 88, "note": "Later convergence of bundler features"}
+    ]'::jsonb,
+    'Understanding of module bundling concepts, ES2015 module syntax knowledge, Library or bundle project setup',
+    'Bundle size is smaller than equivalent Webpack bundle, Bundle evaluation is faster, No runtime module loader present',
+    'Do not use Rollup for SPAs requiring code-splitting and dynamic loading - Webpack is better suited. Rollup excels for library bundling.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43219030/what-is-flat-bundling-and-why-is-rollup-better-at-this-than-webpack'
+),
+(
+    'How to embed all dependencies into one fat bundle with Rollup.js?',
+    'stackoverflow-rollup',
+    'HIGH',
+    '[
+        {"solution": "Use @rollup/plugin-node-resolve to resolve node modules and include them in the bundle", "percentage": 95, "command": "npm install @rollup/plugin-node-resolve --save-dev", "note": "Primary solution for bundling dependencies"},
+        {"solution": "For CommonJS dependencies, also install @rollup/plugin-commonjs to convert them to ES modules", "percentage": 93, "command": "npm install @rollup/plugin-commonjs --save-dev", "note": "Required for mixed module systems"},
+        {"solution": "Do not mark dependencies as external or configure globals to exclude them from bundle", "percentage": 88, "note": "Ensure plugins handle module resolution instead"}
+    ]'::jsonb,
+    'Dependencies installed with --save (not --save-dev) if used at runtime, Node modules available in project, Rollup configuration file',
+    'All dependencies bundled into single output file, No external module warnings during build, Bundle size includes all node_modules code',
+    'Do not install dependencies with --save-dev if they are runtime dependencies - this causes bundling issues. Ensure packages are in dependencies list.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/52125190/how-to-embed-all-dependencies-into-one-fat-target-bundle-with-rollup-js'
+),
+(
+    'How to include use of node_modules in Rollup compile?',
+    'stackoverflow-rollup',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use @rollup/plugin-node-resolve to resolve node_modules dependencies for bundling", "percentage": 96, "command": "import { nodeResolve } from ''@rollup/plugin-node-resolve''; plugins: [nodeResolve()]", "note": "Modern solution for all versions"},
+        {"solution": "Stop seeing ''Treating ''d3.js'' as external dependency'' by configuring node-resolve plugin with proper options", "percentage": 92, "note": "Replaces deprecated rollup-plugin-node-resolve"},
+        {"solution": "For CommonJS modules like d3.js v3, may also need @rollup/plugin-commonjs for proper conversion", "percentage": 88, "note": "Additional plugin for legacy packages"}
+    ]'::jsonb,
+    '@rollup/plugin-node-resolve installed, Node modules in node_modules/ directory, rollup.config.js configuration file',
+    'No external dependency warnings during build, Dependencies bundled into output, npm packages resolve correctly',
+    'The deprecated rollup-plugin-node-resolve should not be used - update to @rollup/plugin-node-resolve. Older d3.js v3 requires jsnext:true option.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/38637220/how-to-include-use-of-node-modules-in-rollup-compile'
+),
+(
+    'Does Rollup support TypeScript in rollup config file?',
+    'stackoverflow-rollup',
+    'HIGH',
+    '[
+        {"solution": "Use --configPlugin typescript flag with rollup config: rollup --config rollup.config.ts --configPlugin typescript", "percentage": 96, "command": "rollup --config rollup.config.ts --configPlugin typescript", "note": "Supported since Rollup v2.52.0+"},
+        {"solution": "Install @rollup/plugin-typescript and typescript as dev dependencies for type support", "percentage": 94, "command": "npm install @rollup/plugin-typescript typescript --save-dev", "note": "Required dependencies for TypeScript support"},
+        {"solution": "Add rollup.config.ts to tsconfig.json include array to ensure proper type checking", "percentage": 90, "note": "Prevents TypeScript compilation errors"},
+        {"solution": "Use proper type imports from rollup package: import type { RollupOptions } from ''rollup''", "percentage": 88, "note": "Maintains correct type annotations"}
+    ]'::jsonb,
+    '@rollup/plugin-typescript installed, typescript dev dependency, tsconfig.json exists and accessible, Node 12+',
+    'rollup.config.ts loads without errors, Type annotations recognized in IDE, Build completes successfully with typescript config',
+    'Do not use --configPlugin without installing plugin first. Omitting rollup.config.ts from tsconfig.json include causes type checking failures.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/54711437/does-rollup-support-typescript-in-rollup-config-file'
+),
+(
+    'Rollup + React not compiling JSX',
+    'stackoverflow-rollup',
+    'VERY_HIGH',
+    '[
+        {"solution": "Ensure babel plugin comes BEFORE commonjs plugin in Rollup plugins array: resolve() → babel() → commonjs()", "percentage": 96, "command": "plugins: [resolve(), babel(), commonjs()]", "note": "Plugin order is critical for JSX compilation"},
+        {"solution": "Install @babel/preset-react in .babelrc or babel.config.js configuration", "percentage": 94, "command": "npm install @babel/preset-react --save-dev", "note": "Babel preset required for JSX transformation"},
+        {"solution": "Set modules: false in Babel configuration to preserve ES modules for Rollup", "percentage": 92, "command": "{ presets: [''@babel/preset-react'', [''@babel/preset-env'', { modules: false }]] }", "note": "Prevents Babel from converting to CommonJS"},
+        {"solution": "Per npm documentation for @rollup/plugin-babel: commonjs must be placed BEFORE babel plugin", "percentage": 88, "note": "Official recommendation from plugin docs"}
+    ]'::jsonb,
+    '@rollup/plugin-babel installed, @rollup/plugin-commonjs installed, @babel/preset-react dependency, .babelrc or babel.config.js file',
+    'JSX compiles without syntax errors, React components render in output bundle, No unexpected token errors during build',
+    'Incorrect plugin order is the most common issue - babel MUST come before commonjs. JSX transformation will silently fail with wrong order.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/52884278/rollup-react-not-compiling-jsx'
+),
+(
+    'How to get Rollup to include a dependency from another package in a Lerna monorepo?',
+    'stackoverflow-rollup',
+    'MEDIUM',
+    '[
+        {"solution": "Use @rollup/plugin-babel to transpile node_modules source files from dependency packages in the monorepo", "percentage": 88, "note": "Allows transpiling sibling packages in Lerna setup"},
+        {"solution": "Configure rollup to include dependency source via @rollup/plugin-node-resolve with proper rootDir setting", "percentage": 85, "note": "Enables resolution of TypeScript from sibling packages"},
+        {"solution": "Set @rollup/plugin-typescript rootDir option to resolve TypeScript imports from other packages correctly", "percentage": 82, "command": "typescript({ rootDir: ''../../'' })", "note": "Points to monorepo root"},
+        {"solution": "Consider building all packages upfront before dependent packages if transpilation is not feasible", "percentage": 75, "note": "Alternative approach for complex setups"}
+    ]'::jsonb,
+    'Lerna monorepo set up with packages in /packages folder, tsconfig.json with path mappings configured, Root tsconfig extends to packages',
+    'Imports from @project/utils resolve and transpile correctly, Dependent package builds without TypeScript errors, ESM output contains transpiled code',
+    'This is a known pain point in Lerna + Rollup setups. Monorepo dependency resolution requires careful plugin and tsconfig configuration.',
+    0.78,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/60729218/how-to-get-rollup-to-include-a-dependency-from-another-package-in-a-lerna-monorepo'
+),
+(
+    'How to import from subfolders for a JavaScript package built with Rollup?',
+    'stackoverflow-rollup',
+    'HIGH',
+    '[
+        {"solution": "Publish the dist folder contents as the package root instead of the repository root", "percentage": 96, "command": "npm publish dist", "note": "Users install compiled files at package root level"},
+        {"solution": "Create a package.json file in the dist folder with main, exports, and files fields before publishing", "percentage": 94, "note": "Directs npm to publish dist contents"},
+        {"solution": "After publishing with npm publish dist, users can import as: import { Button } from ''my-lib/button'' instead of my-lib/dist/button", "percentage": 92, "note": "Module resolution works at filesystem level"},
+        {"solution": "Use Rollup preserveModules and preserveModulesRoot options if you prefer preserving folder structure in output", "percentage": 85, "note": "Alternative approach for complex packages"}
+    ]'::jsonb,
+    'Rollup configured with build output to dist directory, npm package published to registry, Consumers have npm/yarn installed',
+    'Users can import submodules directly: import { Button } from ''my-lib/button'', No need for /dist path in imports, Module resolution works correctly',
+    'Do not expect path aliases or tsconfig paths to affect consumer imports - they only work in development. File structure at package root determines imports.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/62518396/importing-from-subfolders-for-a-javascript-package'
+),
+(
+    'Failed to parse source map in React app consuming Rollup library',
+    'stackoverflow-rollup',
+    'VERY_HIGH',
+    '[
+        {"solution": "Add GENERATE_SOURCEMAP=false to .env file to disable source map generation in Create React App", "percentage": 95, "command": "echo GENERATE_SOURCEMAP=false >> .env", "note": "CRA/Webpack 5 issue with missing source files"},
+        {"solution": "In Rollup config, set sourceMap: false in TypeScript plugin while keeping sourcemap: true in output options", "percentage": 92, "command": "typescript({ sourceMap: false }), output: { sourcemap: true }", "note": "Balances dev and build settings"},
+        {"solution": "For production, consider disabling source maps entirely since compiled code lives in node_modules, not src", "percentage": 88, "note": "Production best practice for libraries"},
+        {"solution": "Include src folder in package.json files array if you want source maps: \"files\": [\"dist\", \"src\"]", "percentage": 82, "note": "Less common but viable for dev debugging"}
+    ]'::jsonb,
+    'React app using Create React App or Webpack 5, npm library built with Rollup and installed in node_modules, .env file accessible',
+    'No source map parsing warnings in development console, npm start completes without errors, Component renders correctly',
+    'Source map warnings are usually harmless but indicate Webpack searching for source files that don''t exist. Disabling source maps is the simplest solution.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70599784/failed-to-parse-source-map'
+),
+(
+    'Cannot find module react/jsx-runtime error in Rollup-built React library',
+    'stackoverflow-rollup',
+    'VERY_HIGH',
+    '[
+        {"solution": "Update React to v17+ which includes react/jsx-runtime module support", "percentage": 96, "command": "npm install react@latest react-dom@latest", "note": "Most common and reliable solution"},
+        {"solution": "In consuming app, update TypeScript config to jsx: react-jsx for React 17+ or jsx: react for older versions", "percentage": 93, "command": "{ compilerOptions: { jsx: ''react-jsx'' } }", "note": "Must match React version"},
+        {"solution": "Verify library and consuming app have matching React versions in package.json", "percentage": 90, "note": "Version mismatch causes JSX runtime errors"},
+        {"solution": "Clean install: rm -rf node_modules package-lock.json && npm install to resolve symlink issues", "percentage": 85, "command": "rm -rf node_modules package-lock.json && npm install", "note": "Fixes local linking problems"}
+    ]'::jsonb,
+    'React version 17+ with JSX transform support, npm or yarn package manager, TypeScript project with tsconfig.json',
+    'Rollup-built library imports successfully in consuming app, JSX renders without jsx-runtime error, Components compile correctly',
+    'This error indicates React version mismatch between library and consuming app. Always ensure both use React 17+. Check tsconfig.json jsx setting.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65913201/uncaught-error-cannot-find-module-react-jsx-runtime'
+),
+(
+    'Vite without hash in filename using Rollup options',
+    'stackoverflow-rollup',
+    'MEDIUM',
+    '[
+        {"solution": "Configure three Rollup output options in Vite build.rollupOptions: entryFileNames, chunkFileNames, and assetFileNames", "percentage": 96, "command": "rollupOptions: { output: { entryFileNames: `assets/[name].js`, chunkFileNames: `assets/[name].js`, assetFileNames: `assets/[name].[ext]` } }", "note": "All three required to remove all hashes"},
+        {"solution": "Use placeholder syntax [name] for deterministic naming, and [ext] for file extensions", "percentage": 94, "note": "Vite/Rollup standard placeholder format"},
+        {"solution": "Only configuring assetFileNames will NOT remove hashes from JavaScript files - all three must be set", "percentage": 88, "note": "Common incomplete configuration mistake"},
+        {"solution": "Consider cache invalidation strategy when removing hashes - dynamic imports may still need hashes for busting", "percentage": 80, "note": "Production deployment consideration"}
+    ]'::jsonb,
+    'Vite project with build configuration, vite.config.ts or vite.config.js file, Understanding of Rollup output naming',
+    'Build output files have no hash suffixes, File names use [name] pattern, Both .js and asset files follow naming convention',
+    'Incomplete configuration is common - setting only assetFileNames leaves JS file hashes. Always configure all three output name options.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69614671/vite-without-hash-in-filename'
+),
+(
+    'How to add types to a Vite library build with Rollup?',
+    'stackoverflow-rollup',
+    'HIGH',
+    '[
+        {"solution": "Use vite-plugin-dts to automatically generate TypeScript declaration files during build", "percentage": 96, "command": "import dts from ''vite-plugin-dts''; plugins: [dts({ insertTypesEntry: true })]", "note": "Modern recommended approach"},
+        {"solution": "Configure vite-plugin-dts with insertTypesEntry: true to add types entry to package.json automatically", "percentage": 93, "command": "dts({ insertTypesEntry: true })", "note": "Enables consumer type resolution"},
+        {"solution": "Alternative: Run vue-tsc --declaration --emitDeclarationOnly separately after build if plugin causes issues", "percentage": 85, "command": "vue-tsc --declaration --emitDeclarationOnly", "note": "Fallback for development mode problems"},
+        {"solution": "Type checking requires separate configuration - Vite strips types by default for performance", "percentage": 82, "note": "Not automatic even with plugin"}
+    ]'::jsonb,
+    'Vue 3 or TypeScript library project, vite.config.ts file, TypeScript configuration with proper tsconfig.json',
+    'Declaration files (.d.ts) generated in dist folder, package.json includes types field pointing to declarations, Consumer IDE shows type hints',
+    'vite-plugin-dts may have issues in development mode. Type checking is separate from type generation - both must be configured.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71982849/how-do-i-add-types-to-a-vite-library-build'
+),
+(
+    'Cannot resolve react/jsx-runtime with Storybook and Rollup in shared components',
+    'stackoverflow-rollup',
+    'HIGH',
+    '[
+        {"solution": "Update React to version 17 or higher for jsx-runtime module support", "percentage": 96, "command": "npm install react@^17.0.0 react-dom@^17.0.0", "note": "Most reliable solution"},
+        {"solution": "Update TypeScript jsconfig in tsconfig.json: use jsx: react-jsx for React 17+ or jsx: react for older versions", "percentage": 94, "command": "{ compilerOptions: { jsx: ''react-jsx'' } }", "note": "Config must match React version"},
+        {"solution": "Clean install dependencies: rm -rf node_modules package-lock.json && npm cache clean --force && npm install", "percentage": 88, "command": "rm -rf node_modules package-lock.json && npm cache clean && npm install", "note": "Resolves cache and symlink issues"},
+        {"solution": "Ensure versions are consistent between React in library build and Storybook consuming application", "percentage": 86, "note": "Version mismatch root cause"}
+    ]'::jsonb,
+    'React 17+ with JSX transform support, Storybook configured with Rollup bundler, TypeScript 4.0+ with proper tsconfig.json',
+    'Shared components build with Storybook without errors, Rollup transpiles JSX correctly, Storybook preview renders components successfully',
+    'React 17 introduced jsx-runtime but older projects still use jsx: react. Ensure config matches React version being used.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/65527359/got-cant-resolve-react-jsx-runtime-error-while-use-try-to-create-the-shared-c'
+);

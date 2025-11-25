@@ -1,0 +1,189 @@
+-- Add Stack Overflow Redux solutions batch 1
+-- Extracted from highest-voted Redux questions with accepted answers
+-- Category: stackoverflow-redux
+-- Date: 2025-11-25
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, source_url
+) VALUES
+(
+    'Why use Redux over Facebook Flux?',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Use Redux for reducer composition: reducers can be nested via functional composition, unlike Flux stores which are flat", "percentage": 95, "note": "Enables code reuse and nested reducer patterns"},
+        {"solution": "Leverage Redux for server-side rendering by using a single store model instead of managing multiple singleton stores per request", "percentage": 90, "note": "Simplifies SSR implementation"},
+        {"solution": "Enable hot module reloading and time-travel debugging through Redux DevTools for improved developer experience", "percentage": 85, "note": "Allows changing reducer code on the fly"}
+    ]'::jsonb,
+    'Understanding of Flux architecture, Familiarity with functional programming concepts, Knowledge of React components',
+    'Successful implementation of undo/redo functionality, Easier state management at scale, Improved code maintainability and developer experience',
+    'Over-engineering small projects with Redux, Using Flux singleton store pattern that complicates SSR, Difficulty reusing functionality across stores',
+    0.92,
+    'https://stackoverflow.com/questions/32461229/why-use-redux-over-facebook-flux'
+),
+(
+    'How to dispatch a Redux action with a timeout?',
+    'stackoverflow-redux',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use redux-thunk middleware to create action creators that return functions instead of objects, enabling async dispatch patterns", "percentage": 95, "note": "Official recommended approach for async operations"},
+        {"solution": "Extract async logic into reusable action creators that encapsulate setTimeout patterns instead of repeating timeout code", "percentage": 90, "note": "Improves code maintainability and reusability"},
+        {"solution": "Use inline setTimeout with dispatch for simple cases, but avoid race conditions with unique notification IDs", "percentage": 80, "note": "Works for simple patterns but doesn''t scale"}
+    ]'::jsonb,
+    'Redux store setup with thunk middleware installed, Understanding of action creators and dispatch, Basic JavaScript async/timeout knowledge',
+    'Notifications display and hide at correct intervals, No race conditions between multiple async actions, Clean reusable action creator patterns, Testable decoupled component logic',
+    'Race conditions from multiple notifications without unique IDs, Code duplication repeating timeout logic, Exporting singleton stores directly complicates SSR and testing, Over-engineering with middleware for simple cases',
+    0.93,
+    'https://stackoverflow.com/questions/35411423/how-to-dispatch-a-redux-action-with-a-timeout'
+),
+(
+    'Why do we need middleware for async flow in Redux?',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Use middleware to provide abstraction: components remain unaware whether action creators are sync or async", "percentage": 92, "note": "Enables flexible architecture without component changes"},
+        {"solution": "Implement redux-thunk or redux-saga to separate side effects from reducers, keeping reducers pure and synchronous", "percentage": 90, "note": "Maintains functional purity of reducers"},
+        {"solution": "Choose between imperative (thunks) or declarative (sagas) approaches for different complexity levels", "percentage": 85, "note": "Thunks for simple, sagas for complex async workflows"}
+    ]'::jsonb,
+    'Redux store with middleware configured, Understanding that action creators need not be pure functions, Knowledge of sync vs async action patterns',
+    'Clean separation between UI dispatches and side effects, Reducers remain pure and synchronous, Async logic reusable and testable without mocking, Team understands where effects occur',
+    'Over-engineering with redux-saga for simple API calls, Tight coupling when components handle async without middleware, Testing challenges when effects are imperative, Missing abstraction layer between UI and async logic',
+    0.88,
+    'https://stackoverflow.com/questions/34570758/why-do-we-need-middleware-for-async-flow-in-redux'
+),
+(
+    'How to reset the state of a Redux store?',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Create a root reducer wrapper that intercepts logout action and passes undefined to appReducer to trigger initial state", "percentage": 95, "note": "All reducers reinitialize with default values"},
+        {"solution": "Call appReducer(undefined, action) for logout action type to force all reducers to return their initial state", "percentage": 93, "note": "Leverages Redux reducer contract to return initial state on undefined"},
+        {"solution": "Clear redux-persist storage with storage.removeItem(''persist:root'') if using state persistence", "percentage": 85, "note": "Required when redux-persist is enabled to prevent cached data"}
+    ]'::jsonb,
+    'Understanding of Redux reducers and combineReducers(), Knowledge of logout/authentication flow, Awareness of redux-persist if used',
+    'All reducers initialize with default values, No cached user data accessible after logout, New user login shows clean state, Browser refresh does not restore old user data',
+    'Redux-persist complications requiring storage key removal, react-router-redux losing navigation state after reset, TypeScript conflicts when passing undefined, Selective clearing needed to preserve routing or UI preferences',
+    0.91,
+    'https://stackoverflow.com/questions/35622588/how-to-reset-the-state-of-a-redux-store'
+),
+(
+    'Pros and cons of redux-saga vs redux-thunk',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Use redux-saga for complex async workflows, token refresh patterns with automatic cancellation, and race condition handling", "percentage": 90, "note": "Sagas excel at sophisticated control flow with fork(), race(), takeLatest()"},
+        {"solution": "Use redux-thunk for simple API calls, smaller projects, and hooks-based applications with cleaner async/await syntax", "percentage": 88, "note": "Lower boilerplate, easier learning curve"},
+        {"solution": "Consider RTK Query for data fetching as official Redux recommendation superseding both saga and thunk patterns", "percentage": 85, "note": "Modern 2023+ approach for most cases"}
+    ]'::jsonb,
+    'Understanding of Redux middleware fundamentals, Familiarity with promises or generators/async-await, Knowledge of Redux action types',
+    'Complex async workflows handle token refresh and cancellation correctly, Sagas testable with plain object effects without mocking, Thunks support standard async/await patterns, Appropriate tool chosen for project complexity',
+    'Sagas'' decoupling makes code flow harder to trace between actions and handlers, Saga boilerplate with START, SUCCESS, FAILURE action types, Generator syntax unintuitive with call, fork, take, put functions, Over-engineering with sagas for simple use cases',
+    0.87,
+    'https://stackoverflow.com/questions/34930735/pros-cons-of-using-redux-saga-with-es6-generators-vs-redux-thunk-with-es2017-asy'
+),
+(
+    'What is mapDispatchToProps?',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Use mapDispatchToProps to map Redux dispatch actions to component props, replacing this.props.dispatch() calls with abstracted action methods", "percentage": 94, "note": "Enables clean action dispatching without direct dispatch reference"},
+        {"solution": "Structure mapDispatchToProps as object returning action creators for simpler syntax and automatic dispatch wrapping", "percentage": 91, "note": "Shorter syntax than function form"},
+        {"solution": "Pair with mapStateToProps in connect() to completely separate state reading from action dispatching responsibilities", "percentage": 88, "note": "Cleanly separates concerns between reading and writing state"}
+    ]'::jsonb,
+    'Understanding of Redux actions and dispatch, Familiarity with container vs presentational components, Knowledge of mapStateToProps for comparison, Understanding of React-Redux connect() function',
+    'Component props cleanly separate display logic from state management, Actions dispatch without explicit Redux references in presentational components, Code readability improves through abstracted dispatch calls',
+    'Confusing mapDispatchToProps with mapStateToProps - they serve different purposes, Coupling components to Redux tightens dependencies and reduces reusability, Misunderstanding that dispatch comes from Provider component wrapping the app',
+    0.90,
+    'https://stackoverflow.com/questions/39419237/what-is-mapdispatchtoprops'
+),
+(
+    'Accessing Redux state in an action creator?',
+    'stackoverflow-redux',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use redux-thunk middleware and return a function accepting (dispatch, getState) to access state within action creators", "percentage": 94, "note": "Official recommended approach - maintains traceability"},
+        {"solution": "Call getState() within thunk function body to read state conditionally before dispatching other actions", "percentage": 92, "note": "Enables conditional dispatch based on current state"},
+        {"solution": "Avoid importing store directly and calling store.getState() - causes server-rendering issues and singleton store problems", "percentage": 88, "note": "Anti-pattern: breaks SSR and testing"}
+    ]'::jsonb,
+    'Redux Thunk middleware configured, Understanding of action creators and reducers, Knowledge of how to setup thunk middleware',
+    'State reads occur conditionally without exposing store singletons, Selectors abstract state shape for maintainability, Action history remains visible in Redux DevTools for debugging',
+    'Importing and exporting singleton stores creates server-rendering issues sharing state across users, Fat actions with pre-computed state reduce traceability in DevTools, Cyclic dependencies when importing store in action files, Using direct store access instead of thunk middleware',
+    0.89,
+    'https://stackoverflow.com/questions/35667249/accessing-redux-state-in-an-action-creator'
+),
+(
+    'Best way to access Redux store outside a React component?',
+    'stackoverflow-redux',
+    'MEDIUM',
+    '[
+        {"solution": "Export the Redux store directly from the module where createStore is called and import in utilities for dispatch/getState", "percentage": 85, "note": "Simple approach for utilities and API interceptors"},
+        {"solution": "Use middleware to pass getState through dispatch context, avoiding direct store exports while maintaining flexibility", "percentage": 80, "note": "More sophisticated but avoids singleton issues"},
+        {"solution": "Subscribe to store changes and update external code through listeners instead of pulling state directly", "percentage": 78, "note": "Reactive approach for loosely coupled systems"}
+    ]'::jsonb,
+    'Redux store initialized in application, Utilities or libraries needing state access (API clients, loggers, middleware), Non-React context requiring dispatch functionality',
+    'Store methods dispatch() and getState() work from non-component code, Auth tokens set correctly in axios headers from store state, State updates reflect immediately',
+    'Singleton store exports share state across users in SSR environments causing data leaks, Cyclic dependencies between store and reducers/actions files, Getting stale state when calling store.getState() returns initial values not updates',
+    0.82,
+    'https://stackoverflow.com/questions/38460949/what-is-the-best-way-to-access-redux-store-outside-a-react-component'
+),
+(
+    'React Context vs React Redux, when should I use each one?',
+    'stackoverflow-redux',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use Context API for simple state sharing to avoid prop drilling in small to medium-sized applications", "percentage": 90, "note": "Sufficient for non-complex state management"},
+        {"solution": "Use Redux for centralized state management in complex applications requiring middleware, logging, and developer tooling", "percentage": 92, "note": "Provides architectural benefits beyond Context"},
+        {"solution": "Choose Redux when needing persistence, undo/redo, action serialization, or multiple data sources influencing single component", "percentage": 88, "note": "Redux DevTools and middleware justify complexity for larger apps"}
+    ]'::jsonb,
+    'Understanding that React Redux uses Context internally, Knowledge of prop drilling problem, Awareness of Redux middleware and DevTools capabilities',
+    'Right tool selected based on application complexity, Simple apps use Context without Redux overhead, Complex apps leverage Redux middleware and debugging, Performance appropriate for chosen solution',
+    'Assuming Context API can fully replace Redux in complex applications, Overlooking Redux middleware and developer tools value, Choosing Redux when Context would suffice for simple use cases, Underestimating serialization benefits in larger applications',
+    0.86,
+    'https://stackoverflow.com/questions/49568073/react-context-vs-react-redux-when-should-i-use-each-one'
+),
+(
+    'Redux multiple stores why not?',
+    'stackoverflow-redux',
+    'MEDIUM',
+    '[
+        {"solution": "Use reducer composition by splitting a single reducer into smaller reducers instead of creating separate stores", "percentage": 96, "note": "Modularity achieved through reducer composition not multiple stores"},
+        {"solution": "Maintain single store to enable Redux DevTools time-travel debugging, SSR hydration, and subscription consistency", "percentage": 93, "note": "Architectural benefits only with single store"},
+        {"solution": "Organize reducer tree with clear data domains - modularity is already achieved through well-structured composition", "percentage": 90, "note": "Separation between data domains at reducer level"}
+    ]'::jsonb,
+    'Understanding of reducer composition patterns, Familiarity with Flux architecture, Knowledge of how Redux DevTools operate',
+    'Single store with well-organized reducer tree, Debugging becomes faster with time-travel capability, No performance degradation with 100+ reducers, Cleaner server rendering implementation',
+    'Assuming multiple stores needed for modularity when composition solves this, Missing that separation between domains achieved through reducer composition, Attempting to recreate Flux patterns by using multiple stores',
+    0.94,
+    'https://stackoverflow.com/questions/33619775/redux-multiple-stores-why-not'
+),
+(
+    'Trace why a React component is re-rendering',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Use React DevTools Profiler by enabling ''Record why each component rendered'' setting to view render reasons without code", "percentage": 92, "note": "Modern recommended approach - built into DevTools"},
+        {"solution": "Create useTraceUpdate hook to log changed props and state in useEffect, comparing previous to current values", "percentage": 88, "note": "Functional component approach with custom hook"},
+        {"solution": "Use componentDidUpdate() in class components to log prop and state changes via shallow equality comparison", "percentage": 85, "note": "Class component approach for prop tracking"}
+    ]'::jsonb,
+    'React DevTools browser extension installed, Understanding of why components re-render, Ability to read React Profiler output, Knowledge of shallow equality checks',
+    'Identify which specific props/state changed causing render, Trace changes back to parent component assignments, Redux selectors properly prevent unnecessary re-renders, Component render count optimized',
+    'DevTools profiler shows vague Hook(s) N changed messages requiring manual inspection, Shallow comparison misses nested object changes requiring deep-diff library, Functional components always re-render when parents do without React.memo, Over-complicated custom logging instead of using DevTools',
+    0.87,
+    'https://stackoverflow.com/questions/41004631/trace-why-a-react-component-is-re-rendering'
+),
+(
+    'Cannot update a component while rendering a different component warning',
+    'stackoverflow-redux',
+    'HIGH',
+    '[
+        {"solution": "Wrap Redux dispatch and state-modifying logic in useEffect hook with appropriate dependencies to execute after mount not during render", "percentage": 94, "note": "Functional component best practice - executes after render phase"},
+        {"solution": "Move Redux dispatches from render to componentDidMount() or componentWillUnmount() lifecycle methods in class components", "percentage": 91, "note": "Class component pattern for side effects"},
+        {"solution": "Wrap navigation and event handlers in arrow functions to defer execution instead of calling immediately during render", "percentage": 89, "note": "Prevents state updates during render phase"}
+    ]'::jsonb,
+    'Understanding of React render phase vs commit phase, Knowledge of when state updates occur, Redux dispatch functionality, useEffect or lifecycle method understanding',
+    'Warning disappears from console, State updates occur in predictable order, No component re-renders unexpectedly, Redux actions dispatch only in event handlers or after mount',
+    'Calling dispatch directly in component body during render, Not wrapping callbacks in arrow functions causing immediate execution, Forgetting to use lifecycle methods or useEffect hooks, Moving state update to parent component unintentionally',
+    0.91,
+    'https://stackoverflow.com/questions/62336340/cannot-update-a-component-while-rendering-a-different-component-warning'
+);

@@ -21,6 +21,70 @@ import {
 
 const SUPABASE_URL = 'https://ksethrexopllfhyrxlrb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZXRocmV4b3BsbGZoeXJ4bHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3NDU4ODksImV4cCI6MjA3OTMyMTg4OX0.SDJulNaemJ66EaFl77-1IJLTAleihU5PvEChNaO5osI';
+const CURRENT_VERSION = '2.1.0';
+const NPM_PACKAGE_NAME = 'clauderepo-mcp';
+
+// ============================================================================
+// Version Checking (1 hour cache)
+// ============================================================================
+
+let latestVersionCache: { version: string | null; timestamp: number } = {
+  version: null,
+  timestamp: 0,
+};
+
+function isNewerVersion(latest: string, current: string): boolean {
+  const latestParts = latest.split('.').map(Number);
+  const currentParts = current.split('.').map(Number);
+
+  for (let i = 0; i < 3; i++) {
+    if ((latestParts[i] || 0) > (currentParts[i] || 0)) return true;
+    if ((latestParts[i] || 0) < (currentParts[i] || 0)) return false;
+  }
+  return false;
+}
+
+async function checkForUpdates(): Promise<string | null> {
+  const ONE_HOUR = 60 * 60 * 1000;
+  const now = Date.now();
+
+  // Return cached result if less than 1 hour old
+  if (latestVersionCache.version && (now - latestVersionCache.timestamp) < ONE_HOUR) {
+    return latestVersionCache.version;
+  }
+
+  try {
+    const response = await fetch(`https://registry.npmjs.org/${NPM_PACKAGE_NAME}/latest`, {
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const latestVersion = data.version;
+
+      // Update cache
+      latestVersionCache = {
+        version: latestVersion,
+        timestamp: now,
+      };
+
+      // Compare versions (only notify if npm is newer)
+      if (isNewerVersion(latestVersion, CURRENT_VERSION)) {
+        return latestVersion;
+      }
+    }
+  } catch (error) {
+    // Silently fail - don't interrupt user experience
+    console.error('Version check failed:', error);
+  }
+
+  return null;
+}
+
+function getUpdateMessage(latestVersion: string): string {
+  return `\n\n---\n\n📢 **Update Available**: v${latestVersion} (you have v${CURRENT_VERSION})\n` +
+         `Run: \`npm update -g ${NPM_PACKAGE_NAME}\`\n`;
+}
 
 // ============================================================================
 // API Client
@@ -54,7 +118,7 @@ async function callEdgeFunction(functionName: string, body: any): Promise<any> {
 const server = new Server(
   {
     name: 'clauderepo',
-    version: '2.0.0',
+    version: '2.1.0',
   },
   {
     capabilities: {
@@ -262,10 +326,62 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     try {
+      // Check for updates (async, non-blocking)
+      const updateCheckPromise = checkForUpdates();
+
       const result = await callEdgeFunction('search', { query });
 
       // Format response for Claude Code
       let formattedText = `# Search Results: "${query}"\n\n`;
+
+      // Handle multi-category response for ambiguous queries
+      if (result.search_mode === 'multi_category' && result.category_results) {
+        const CAT_EMOJI: Record<string, string> = {
+          'python': '🐍', 'rust': '🦀', 'javascript': '📜', 'typescript': '📘',
+          'go': '🔵', 'golang': '🔵', 'docker': '🐳', 'kubernetes': '☸️',
+          'postgres': '🐘', 'postgresql': '🐘', 'supabase': '⚡',
+          'mcp-troubleshooting': '🔌', 'web-automation': '🎭', 'playwright': '🎭',
+          'react': '⚛️', 'vue': '💚', 'svelte': '🔶', 'angular': '🅰️',
+          'node': '💚', 'nodejs': '💚', 'java': '☕', 'swift': '🍎',
+          'kotlin': '🟣', 'flutter': '💙', 'dart': '🎯',
+          'aws': '☁️', 'gcp': '🌐', 'azure': '🔷',
+          'security': '🔒', 'performance': '⚡', 'database': '🗄️',
+          'frontend': '🖥️', 'backend': '⚙️', 'general': '📦'
+        };
+
+        formattedText += `## 🎯 Multiple Contexts Found\n\n`;
+        formattedText += `Your query matches **${result.category_count} categories**. Here's the top result from each:\n\n`;
+
+        for (const cat of result.category_results) {
+          const catLower = cat.category.toLowerCase();
+          const emoji = CAT_EMOJI[catLower] || '📦';
+          formattedText += `### ${emoji} ${cat.category.toUpperCase()}\n`;
+          formattedText += `**${cat.query}**\n\n`;
+
+          const solutions = cat.solutions || [];
+          solutions.slice(0, 2).forEach((sol: any, idx: number) => {
+            formattedText += `${idx + 1}. ${sol.solution}`;
+            if (sol.command) formattedText += `\n   \`${sol.command}\``;
+            if (sol.note) formattedText += `\n   *${sol.note}*`;
+            formattedText += '\n';
+          });
+          formattedText += '\n';
+        }
+
+        formattedText += `---\n`;
+        formattedText += `💡 **Tip**: ${result.tip}\n\n`;
+        formattedText += `*Search completed in ${result.query_metadata.search_time_ms.toFixed(1)}ms using ${result.query_metadata.search_method}*\n`;
+
+        // Add update notification if available
+        const latestVersion = await updateCheckPromise;
+        if (latestVersion) {
+          formattedText += getUpdateMessage(latestVersion);
+        }
+
+        return {
+          content: [{ type: 'text', text: formattedText }],
+        };
+      }
 
       if (!result.primary_solution) {
         // Check if ticket was auto-created
@@ -298,6 +414,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           formattedText += '- Searching for technology name (e.g., "playwright", "MCP")\n';
         }
 
+        // Add update notification if available (await the promise)
+        const latestVersion = await updateCheckPromise;
+        if (latestVersion) {
+          formattedText += getUpdateMessage(latestVersion);
+        }
+
         return {
           content: [
             {
@@ -308,17 +430,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      const { primary_solution, confidence, related_solutions, environment_checks, validation_steps, community_stats } = result;
+      const { primary_solution, confidence, related_solutions, environment_checks, validation_steps } = result;
 
-      // Primary solution
+      // Primary solution - removed fake community stats
       formattedText += `## 🎯 Primary Solution (${(confidence * 100).toFixed(0)}% confidence)\n\n`;
       formattedText += `**Problem**: ${primary_solution.query}\n`;
-      formattedText += `**Category**: ${primary_solution.category}\n`;
-      formattedText += `**Community Data**: ${community_stats.total_hits} users hit this (${(community_stats.success_rate * 100).toFixed(0)}% success rate)\n\n`;
+      formattedText += `**Category**: ${primary_solution.category}\n\n`;
 
-      formattedText += `### 💡 Solutions (ranked by success rate):\n\n`;
+      // Pattern info
+      if (primary_solution.pattern) {
+        formattedText += `### 🔍 Pattern: ${primary_solution.pattern.display_name}\n\n`;
+        formattedText += `**Why this happens**: ${primary_solution.pattern.root_cause}\n\n`;
+        formattedText += `**How to recognize**: ${primary_solution.pattern.detection_signals}\n\n`;
+        formattedText += `**General approach**: ${primary_solution.pattern.solution_template}\n\n`;
+      }
+
+      formattedText += `### 💡 Solutions:\n\n`;
       primary_solution.solutions.forEach((sol: any, idx: number) => {
-        formattedText += `**${idx + 1}. ${sol.solution}** (${sol.percentage}% of users)\n`;
+        formattedText += `**${idx + 1}. ${sol.solution}**\n`;
         if (sol.command) formattedText += `   \`\`\`bash\n   ${sol.command}\n   \`\`\`\n`;
         if (sol.example) formattedText += `   *Example*: ${sol.example}\n`;
         if (sol.note) formattedText += `   *Note*: ${sol.note}\n`;
@@ -363,6 +492,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       formattedText += `*Search completed in ${result.query_metadata.search_time_ms.toFixed(1)}ms using ${result.query_metadata.search_method}*\n\n`;
       formattedText += `💬 **After trying a solution, tell me:** "clauderepo: worked" or "clauderepo: failed"\n`;
       formattedText += `   This helps improve rankings for the community.\n`;
+
+      // Add update notification if available (await the promise)
+      const latestVersion = await updateCheckPromise;
+      if (latestVersion) {
+        formattedText += getUpdateMessage(latestVersion);
+      }
 
       return {
         content: [

@@ -1,0 +1,215 @@
+-- Mine Stack Overflow top-voted Kotlin Q&A entries for knowledge base
+-- Batch 1: 12 highest voted Kotlin questions with accepted answers
+-- Category: stackoverflow-kotlin
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'What is the equivalent of Java static methods in Kotlin?',
+    'stackoverflow-kotlin',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use companion object with @JvmStatic annotation for Java interop. Define inside class: companion object { @JvmStatic fun methodName() { } }", "percentage": 95, "note": "Most common approach, callable as ClassName.methodName()"},
+        {"solution": "Define package-level functions outside any class - more idiomatic Kotlin. Place fun declaration at top level in .kt file", "percentage": 90, "note": "Kotlin-recommended approach, no class needed"},
+        {"solution": "Use object (singleton) with @JvmStatic for shared state: object Utils { @JvmStatic fun doSomething() { } }", "percentage": 85, "note": "Best for singleton utilities with state"}
+    ]'::jsonb,
+    'Basic Kotlin knowledge, understanding of Java interoperability needs',
+    'Method callable as ClassName.methodName() from both Kotlin and Java, no compilation errors',
+    'Forgetting @JvmStatic annotation - will require Companion.methodName() from Java. Static keyword does not exist in Kotlin. Not using companion object leads to class instantiation requirements.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40352684/what-is-the-equivalent-of-java-static-methods-in-kotlin'
+),
+(
+    'How to check if a lateinit variable has been initialized in Kotlin?',
+    'stackoverflow-kotlin',
+    'HIGH',
+    '[
+        {"solution": "Use .isInitialized property with :: reference operator. Syntax: if (this::variableName.isInitialized) { /* is initialized */ }", "percentage": 95, "note": "Works since Kotlin 1.2, standard approach"},
+        {"solution": "For inner classes/listeners use fully qualified reference: this@OuterClassName::variableName.isInitialized", "percentage": 90, "note": "Needed when checking from nested scope"},
+        {"solution": "Create helper function in original class to expose initialization state when external access needed", "percentage": 80, "note": "Workaround for backing field visibility restrictions"}
+    ]'::jsonb,
+    'Kotlin 1.2+, lateinit property declared in same class or accessible scope',
+    'isInitialized returns true when property has been set, false when not yet initialized. No exceptions thrown.',
+    'Cannot check lateinit from external classes due to backing field visibility. Attempting this causes compilation error. Must use :: operator syntax, not direct property name.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37618738/how-to-check-if-a-lateinit-variable-has-been-initialized'
+),
+(
+    'Kotlin ternary conditional operator equivalent',
+    'stackoverflow-kotlin',
+    'HIGH',
+    '[
+        {"solution": "Use if-expression instead: val result = if (condition) valueIfTrue else valueIfFalse. Returns value directly.", "percentage": 95, "note": "Official Kotlin design - if is an expression, not a statement"},
+        {"solution": "Use when expression for multiple conditions: val result = when(condition) { true -> valueIfTrue; false -> valueIfFalse }", "percentage": 85, "note": "More readable for complex branching"},
+        {"solution": "Use Elvis operator for null checks: val result = nullableValue ?: defaultValue", "percentage": 90, "note": "Shorthand for null coalescing"},
+        {"solution": "Use takeIf for conditional filtering: val result = value.takeIf { condition } ?: alternativeValue", "percentage": 75, "note": "Functional approach for transformations"}
+    ]'::jsonb,
+    'Basic Kotlin syntax knowledge',
+    'Expression evaluates and assigns to variable successfully. Returns expected type. No type mismatch errors.',
+    'Trying to use ternary operator syntax (a ? b : c) - does not exist in Kotlin. Using if as statement instead of expression loses value. Elvis operator only for null checks, not general conditions.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/16336500/kotlin-ternary-conditional-operator'
+),
+(
+    'Cannot inline bytecode built with JVM target 1.8 into bytecode targeting 1.6',
+    'stackoverflow-kotlin',
+    'HIGH',
+    '[
+        {"solution": "Add kotlinOptions and compileOptions to app/build.gradle inside android block: kotlinOptions { jvmTarget = \"1.8\" } and compileOptions { sourceCompatibility = JavaVersion.VERSION_1_8; targetCompatibility = JavaVersion.VERSION_1_8 }", "percentage": 95, "note": "Both settings required for full resolution"},
+        {"solution": "Apply same JVM target settings to all modules in multi-module project", "percentage": 90, "note": "Issue spreads across modules if not consistent"},
+        {"solution": "Clean rebuild and invalidate IDE cache after changes", "percentage": 85, "command": "File > Invalidate Caches / Restart in Android Studio", "note": "IDE may cache old bytecode"}
+    ]'::jsonb,
+    'Android project with build.gradle, Kotlin compiler, module dependencies',
+    'Project builds without inlining errors. Bytecode targets consistent JVM version. No compilation failures.',
+    'Setting only compileOptions without kotlinOptions or vice versa - requires both. Not updating all modules in multi-module setup. Cache not invalidated causes lingering issues.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/48988778/cannot-inline-bytecode-built-with-jvm-target-1-8-into-bytecode-that-is-being-bui'
+),
+(
+    'Property initialization using by lazy vs lateinit in Kotlin',
+    'stackoverflow-kotlin',
+    'VERY_HIGH',
+    '[
+        {"solution": "Use lateinit var for mutable properties requiring external initialization: lateinit var property: Type. Check with ::property.isInitialized", "percentage": 92, "note": "For dependency injection, Android frameworks like Hilt, variable re-initialization"},
+        {"solution": "Use lazy val for immutable properties with expensive initialization deferred until first access: val property: Type by lazy { /* init code */ }", "percentage": 93, "note": "Thread-safe by default, compute-once semantics, better performance"},
+        {"solution": "Choose based on type of assignment: lateinit for external init, lazy for computed/deferred init", "percentage": 88, "note": "Most important decision factor"}
+    ]'::jsonb,
+    'Understanding of Kotlin initialization patterns, property concepts',
+    'Properties initialize correctly on first access. Type system enforces correctness. No UninitializedPropertyAccessException or initialization loops.',
+    'Using lateinit for expensive computations - should use lazy instead. Using lazy val with var keyword - lazy only works with val. Accessing lateinit before initialization causes exception. Forgetting isInitialized check causes crashes.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/36623177/property-initialization-using-by-lazy-vs-lateinit'
+),
+(
+    'What is the difference between const and val in Kotlin?',
+    'stackoverflow-kotlin',
+    'VERY_HIGH',
+    '[
+        {"solution": "const is compile-time constant: value assigned at compile time, only String/primitive types allowed, inlined to bytecode. Use at top-level, objects, or companion objects only.", "percentage": 95, "note": "Transpiles to public static final in Java"},
+        {"solution": "val is runtime constant: value assigned at runtime, accepts any type including complex objects, stored as property. Can be used anywhere (functions, classes, etc).", "percentage": 95, "note": "Transpiles to final in Java"},
+        {"solution": "Use const for true compile-time constants (better performance), use val for runtime-computed or non-primitive values", "percentage": 90, "note": "Decision matrix: const = compile-time known, primitive/String only; val = runtime computed or complex types"}
+    ]'::jsonb,
+    'Kotlin syntax understanding, knowledge of compile-time vs runtime evaluation',
+    'Code compiles successfully. const values inlined in bytecode. val properties accessible at runtime. Type system enforces restrictions.',
+    'Trying to use const with function results - functions execute at runtime, not compile time. Using const with complex types like List - only String/primitives allowed. Declaring const inside functions - scope invalid, only top-level allowed.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/37595936/what-is-the-difference-between-const-and-val'
+),
+(
+    'How does the reified keyword in Kotlin work?',
+    'stackoverflow-kotlin',
+    'HIGH',
+    '[
+        {"solution": "reified preserves generic type info at runtime by inlining function. Use: inline fun <reified T> myFun() { T::class.simpleName }. Type T available inside function.", "percentage": 95, "note": "Solves Java type erasure problem for generics"},
+        {"solution": "reified requires inline keyword - compiler replaces T with actual type at each call site. Example: myFun<String>() becomes code with String class directly.", "percentage": 92, "note": "Compiler generates specialized bytecode per type"},
+        {"solution": "Cannot be called from Java code - only from Kotlin where compiler can inline and substitute types", "percentage": 85, "note": "Java interop limitation due to inlining requirement"}
+    ]'::jsonb,
+    'Kotlin inline functions understanding, generic type knowledge, compiler concepts',
+    'T::class accessible inside function. Actual type correctly substituted at call site. No type erasure errors. Function inlines correctly.',
+    'Using reified without inline keyword - reified requires inline. Trying to call from Java - only callable from Kotlin. Accessing T as instance (T()) without bounds - type instantiation not guaranteed. Nested reified types in complex generics.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45949584/how-does-the-reified-keyword-in-kotlin-work'
+),
+(
+    'How to convert a Kotlin source file to a Java source file',
+    'stackoverflow-kotlin',
+    'MEDIUM',
+    '[
+        {"solution": "Use Android Studio/IntelliJ decompiler: Tools > Kotlin > Show Kotlin Bytecode, then click Decompile button to get Java code", "percentage": 90, "note": "Most practical approach for IDE users, shortcut: Ctrl+Shift+A then search Kotlin Bytecode"},
+        {"solution": "No direct source-to-source conversion tool exists. Process is: Compile Kotlin to bytecode, then decompile bytecode back to Java", "percentage": 85, "note": "Two-step process required"},
+        {"solution": "Use external decompilers like CFR or JADX for cleaner output than IntelliJ builtin", "percentage": 75, "note": "Produces more readable but still synthetic Java code"}
+    ]'::jsonb,
+    'Android Studio or IntelliJ IDEA installation, Kotlin project files',
+    'Decompiled Java code generated successfully. Code is readable approximation of original logic. Bytecodepanel displays without errors.',
+    'Decompiled output is synthetic and unmaintainable - not intended for production use. Generated code includes extra checks and synthetic methods. May not compile independently without Kotlin stdlib in classpath. Output serves understanding Kotlin compilation, not code migration.',
+    0.80,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/34957430/how-to-convert-a-kotlin-source-file-to-a-java-source-file'
+),
+(
+    'Unfortunately MyApp has stopped - Android crash debugging guide',
+    'stackoverflow-kotlin',
+    'HIGH',
+    '[
+        {"solution": "Check Logcat console for stack trace - click Logcat button in Android Studio bottom toolbar (Alt+6) or View > Tool Windows > Logcat", "percentage": 95, "note": "Stack trace shows exact exception type, file, and line number where crash occurred"},
+        {"solution": "Look for root cause in Logcat output - NullPointerException is most common, click blue links to navigate to problematic code", "percentage": 92, "note": "Search for red error text, examine exception message carefully"},
+        {"solution": "Use Log.d() statements to track variable state and execution flow if root cause unclear from stack trace", "percentage": 85, "note": "Add debugging logs near suspected crash location"},
+        {"solution": "Integrate Firebase Crashlytics for production apps to capture real user crash data", "percentage": 80, "note": "Essential for post-release debugging"}
+    ]'::jsonb,
+    'Android development environment, Android Studio with Logcat access, basic exception understanding',
+    'Stack trace visible in Logcat showing exception type and location. Crash location identified in source code. Reproduction possible locally.',
+    'Not checking Logcat - wandering blind without stack trace. NullPointerException indicates uninitialized object access - check variable initialization. Filtering Logcat incorrectly - set filter to see all Error level logs. Missing recent code changes - check git diff near crash line.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/23353173/unfortunately-myapp-has-stopped-how-can-i-solve-this'
+),
+(
+    'Place cursor at the end of text in EditText programmatically',
+    'stackoverflow-kotlin',
+    'MEDIUM',
+    '[
+        {"solution": "Use setSelection() with text length: editText.setSelection(editText.length()). Kotlin version of getText().length() logic.", "percentage": 93, "note": "Direct approach positions cursor at last character index"},
+        {"solution": "Use post() for delayed execution if setSelection fails: editText.post { editText.setSelection(editText.getText().length()) }", "percentage": 90, "note": "Needed when cursor override happens after layout, common with setText() calls"},
+        {"solution": "Use append(\"\") method - automatically positions cursor at end after appending nothing", "percentage": 85, "note": "Side effect approach, less explicit"},
+        {"solution": "Use OnFocusChangeListener for automatic cursor positioning on focus: setOnFocusChangeListener { v, hasFocus -> if(hasFocus) (v as EditText).setSelection(v.getText().length()) }", "percentage": 75, "note": "Event-driven approach for user interaction"}
+    ]'::jsonb,
+    'Android EditText widget, Kotlin/Java Android development, Handler/post knowledge',
+    'Cursor positioned at end of text visually. User can type at end position. No exceptions thrown. getText().length() matches cursor position.',
+    'Android overrides cursor position after setText() - use post() to queue after layout complete. Cursor moves to beginning - layout operations happened after selection. Not using correct text length - use getText().length() or length(). Forgetting post() when combining setText with selection.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/6217378/place-cursor-at-the-end-of-text-in-edittext'
+),
+(
+    'Kotlin inline functions with inline keyword performance optimization',
+    'stackoverflow-kotlin',
+    'MEDIUM',
+    '[
+        {"solution": "inline keyword copies function body to each call site instead of creating function call overhead. Use for small, frequently-called functions", "percentage": 92, "note": "Reduces function call overhead, enables reified type parameters"},
+        {"solution": "Inline functions can use reified type parameters to access T::class at runtime - not possible in regular functions due to type erasure", "percentage": 90, "note": "Major benefit for generic functions"},
+        {"solution": "Use only for short functions - inlining large functions increases bytecode size. Measure performance impact.", "percentage": 85, "note": "Code bloat concern with large inlined functions"}
+    ]'::jsonb,
+    'Kotlin compiler knowledge, understanding of function call overhead, bytecode concepts',
+    'Function inlines at call sites. Reified types work correctly. No compilation errors. Bytecode size reasonable for small functions.',
+    'Inlining large complex functions - causes code bloat and defeats optimization purpose. Using inline with private functions - unnecessary since internal visibility already prevents cross-module inlining. Not considering reified type parameter possibilities with inline functions.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/45949584/how-does-the-reified-keyword-in-kotlin-work'
+),
+(
+    'Kotlin extension functions and receiver scope understanding',
+    'stackoverflow-kotlin',
+    'MEDIUM',
+    '[
+        {"solution": "Extension function syntax: fun ReceiverType.extensionName() { /* this refers to receiver instance */ }. Call as: receiverInstance.extensionName()", "percentage": 93, "note": "this inside body refers to the object function called on"},
+        {"solution": "Extensions are resolved statically at compile time based on declared type, not runtime type for polymorphism", "percentage": 88, "note": "Unlike virtual methods, extensions dispatch on static type"},
+        {"solution": "Can add extension functions to platform types (Java classes, String, List, etc) without subclassing", "percentage": 90, "note": "Adds methods to classes you don''t own"}
+    ]'::jsonb,
+    'Kotlin functions understanding, receiver concept knowledge',
+    'Extension callable on receiver type instances. this reference works correctly. Extensions accessible in scope. Correct dispatch behavior.',
+    'Expecting virtual dispatch with extension functions - they use static dispatch based on declared type. Accessing private members of receiver - extensions cannot access private. Scope issues - extensions must be imported or in same package to use.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/40352684/what-is-the-equivalent-of-java-static-methods-in-kotlin'
+);

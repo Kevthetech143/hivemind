@@ -1,0 +1,72 @@
+-- Create patterns table for reusable troubleshooting templates
+
+CREATE TABLE IF NOT EXISTS patterns (
+    id SERIAL PRIMARY KEY,
+    pattern_name TEXT NOT NULL UNIQUE, -- e.g., "PATH_INHERITANCE"
+    display_name TEXT NOT NULL, -- e.g., "GUI PATH Inheritance Failure"
+    root_cause TEXT NOT NULL, -- Why this happens
+    detection_signals TEXT NOT NULL, -- How to recognize this pattern
+    solution_template TEXT NOT NULL, -- General approach to fix
+    examples TEXT, -- Optional: real-world examples
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add pattern_id to knowledge_entries
+ALTER TABLE knowledge_entries
+ADD COLUMN IF NOT EXISTS pattern_id INTEGER REFERENCES patterns(id) ON DELETE SET NULL;
+
+-- Create index for pattern lookups
+CREATE INDEX IF NOT EXISTS idx_knowledge_entries_pattern_id ON knowledge_entries(pattern_id);
+
+-- Insert initial 6 patterns
+INSERT INTO patterns (pattern_name, display_name, root_cause, detection_signals, solution_template, examples)
+VALUES
+(
+    'PATH_INHERITANCE',
+    'GUI PATH Inheritance Failure',
+    'GUI applications (Electron, macOS apps, Claude Desktop) don''t inherit the shell PATH environment variable. They use system default paths only.',
+    'Error: spawn [command] ENOENT. Command works in terminal but fails in GUI app. Common commands: npx, node, python, dotnet, ruby, go.',
+    'Use absolute paths to executables. Find with: which [command]. Replace "command": "npx" with "command": "/usr/local/bin/node" in config files.',
+    'Claude Desktop MCP config, Electron apps, macOS applications, Windows GUI tools'
+),
+(
+    'STREAMING_BUFFER_CONFLICT',
+    'Request Buffering Breaks Streaming',
+    'Middleware that waits for complete request body (like express.json()) blocks streaming protocols. Streaming sends data indefinitely without "end" signal.',
+    'Timeouts after 60s. Request handler never executes. Works with single requests but fails with streaming/SSE. Common: express.json(), body-parser.',
+    'Remove buffering middleware for streaming endpoints. Handle POST (client messages) and GET (server SSE) separately. Use raw streams, not buffered parsers.',
+    'MCP HTTP servers, SSE connections, WebSocket upgrades, streaming APIs'
+),
+(
+    'SANDBOX_LOCALHOST_BLOCK',
+    'Security Sandbox Blocks Localhost',
+    'Security sandboxes in browsers and Electron apps restrict localhost connections to prevent malicious code accessing local services.',
+    'fetch failed error. Works in browser/curl but fails in app. Specifically affects localhost/127.0.0.1. External URLs work fine.',
+    'Use actual local network IP (192.168.x.x) instead of localhost. Find with: ifconfig | grep inet (macOS/Linux) or ipconfig (Windows).',
+    'Claude Desktop MCP servers, Electron app fetch calls, browser extensions'
+),
+(
+    'ENV_VAR_CHAIN_DEPENDENCY',
+    'Incomplete Environment Variable Set',
+    'Some integrations require multiple environment variables together. Setting only some causes silent failures or cryptic errors.',
+    'Works with some env vars but not others. Error messages about missing config. Features partially work. Examples: AWS needs region + credentials + profile.',
+    'Identify all required env vars from documentation. Set complete chain together. Test with: printenv | grep [PREFIX] to verify all are set.',
+    'AWS Bedrock (3 vars), Docker (DOCKER_HOST + TLS vars), Kubernetes (multiple KUBECONFIG vars)'
+),
+(
+    'VERSION_REGRESSION',
+    'Bug Fixed in Later Version',
+    'Feature worked, broke in version X, fixed in version Y. Users on X try complex workarounds when simple upgrade solves it.',
+    'Works for some users but not others. GitHub issues mention version numbers. Release notes mention "fixed in vX.X.X". Workarounds feel hacky.',
+    'Check current version. Search GitHub issues + release notes for version mentions. Upgrade to latest stable before attempting workarounds.',
+    'Electron v38 IPC fix, Claude settings.json v2.0.36 regression, Node.js 24.0.0 crash'
+),
+(
+    'NULL_FEATURE_DETECTION',
+    'Null Value as Feature Flag',
+    'Applications use null (not false/empty) to indicate special modes. Checking for falsy values misses this distinction.',
+    'Feature detection fails. Boolean checks don''t work. Empty string vs null confusion. Type coercion issues in conditionals.',
+    'Use strict equality checks (=== null). Don''t rely on falsy (!value). Check type explicitly: typeof value === "undefined" vs value === null.',
+    'terminalShellType detection, optional config fields, feature flags in JSON'
+);

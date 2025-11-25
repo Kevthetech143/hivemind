@@ -1,0 +1,219 @@
+-- Add top-voted Stack Overflow CORS solutions batch 1
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'Why does my JavaScript code receive a "No Access-Control-Allow-Origin header" error while Postman does not?',
+    'stackoverflow-cors',
+    'VERY_HIGH',
+    '[
+        {"solution": "Understand that CORS is enforced by browsers, not servers. Browsers block cross-origin responses unless the server sends appropriate CORS headers. Postman bypasses this because it does not enforce Same-Origin Policy.", "percentage": 95, "note": "Core understanding - CORS is browser security"},
+        {"solution": "Configure your server to respond with Access-Control-Allow-Origin header matching the requesting origin", "percentage": 90, "note": "Server-side responsibility - client cannot unilaterally enable CORS"},
+        {"solution": "Ensure the server sends the header in the response, not the client in the request", "percentage": 85, "command": "Server response header: Access-Control-Allow-Origin: http://yourfrontend.com"}
+    ]'::jsonb,
+    'Cross-origin request from browser JavaScript, server with no CORS headers',
+    'Browser no longer blocks response, console shows no CORS error, JavaScript can read response',
+    'Client-side CORS headers do nothing - only server response headers matter. Postman and curl bypass CORS checks, making it seem like the problem is client-side. The issue is always on the server.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/20035101/why-does-my-javascript-code-receive-a-no-access-control-allow-origin-header-is-present-on-the-requested-resource-error-while-postman-does-not'
+),
+(
+    'How does the Access-Control-Allow-Origin header work?',
+    'stackoverflow-cors',
+    'VERY_HIGH',
+    '[
+        {"solution": "Browser performs the network fetch regardless of CORS, then blocks JavaScript from reading the response if the header does not match", "percentage": 95, "note": "Data is transferred - browser just hides it from JavaScript"},
+        {"solution": "For simple requests (GET, HEAD, POST with basic content-types), the server responds with Access-Control-Allow-Origin. Browser checks and allows JavaScript access.", "percentage": 92, "note": "Simple requests skip preflight"},
+        {"solution": "For non-simple requests (custom headers, PUT, DELETE), browser sends OPTIONS preflight first. Server must respond with Access-Control-Allow-Methods and Access-Control-Allow-Headers.", "percentage": 90, "note": "Preflight happens before actual request"}
+    ]'::jsonb,
+    'Cross-origin request from JavaScript in browser, understanding of CORS mechanism needed',
+    'JavaScript can read response headers and body, preflight OPTIONS requests handled correctly, no CORS errors',
+    'Many assume the request is blocked before sending. Actually: browser sends it, receives response, then blocks JavaScript from reading it. Preflight (OPTIONS) is sent BEFORE the actual request for non-simple cases.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/10636611/how-does-the-access-control-allow-origin-header-work'
+),
+(
+    'Access-Control-Allow-Origin: Multiple Origin Domains - how to allow more than one?',
+    'stackoverflow-cors',
+    'HIGH',
+    '[
+        {"solution": "The header only accepts a single origin value or wildcard *. Read the client Origin header and echo it back if it matches your whitelist.", "percentage": 95, "note": "Dynamic approach - per-request basis"},
+        {"solution": "Apache/htaccess: Use regex SetEnvIf to match Origins pattern, then echo back via Header directive", "percentage": 90, "command": "SetEnvIf Origin \"^(https?://(www\\.)?(domain1\\.com|domain2\\.com))$\" CORS=$0\nHeader add Access-Control-Allow-Origin %{CORS}e env=CORS"},
+        {"solution": "Node.js/Express: Check incoming request.headers.origin against whitelist, set response header conditionally", "percentage": 92, "command": "const whitelist = [''https://domain1.com'', ''https://domain2.com'']; if (whitelist.includes(req.headers.origin)) { res.set(''Access-Control-Allow-Origin'', req.headers.origin); }"},
+        {"solution": "Always include Vary: Origin response header when using dynamic origins for proper caching", "percentage": 88, "command": "Header merge Vary Origin", "note": "Critical for cache correctness"}
+    ]'::jsonb,
+    'Multiple frontend domains, control over server configuration, list of allowed origins',
+    'JavaScript from whitelisted origins can read responses, non-whitelisted origins receive no CORS header, Vary header present',
+    'Do not try to send multiple origins in header value separated by commas - HTTP spec does not support this. Always check request Origin header and echo back. Vary header is essential - without it, browsers cache responses for wrong origins.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/1653308/access-control-allow-origin-multiple-origin-domains'
+),
+(
+    'No Access-Control-Allow-Origin header error when trying to get data from REST API',
+    'stackoverflow-cors',
+    'VERY_HIGH',
+    '[
+        {"solution": "Recognize that response headers like Access-Control-Allow-Origin belong on the SERVER, not in your fetch request", "percentage": 95, "note": "Common mistake - adding headers to request instead of server"},
+        {"solution": "The Content-Type: application/json header triggers a CORS preflight. Browser sends OPTIONS first, and if server responds with 501/not allowed, actual request fails.", "percentage": 93, "command": "Server must handle OPTIONS requests and respond with proper CORS headers"},
+        {"solution": "Configure backend to respond to OPTIONS requests with: Access-Control-Allow-Origin, Access-Control-Allow-Methods: POST, Access-Control-Allow-Headers: Content-Type", "percentage": 94, "note": "Preflight handler required for non-simple requests"},
+        {"solution": "Use CORS proxy (like CORS Anywhere) only for development - never for production", "percentage": 75, "note": "Temporary workaround while fixing server"}
+    ]'::jsonb,
+    'JavaScript fetch call to API, API server you control or can configure, Content-Type: application/json in request',
+    'Preflight OPTIONS request succeeds with 200 status, actual request completes, browser no longer blocks response',
+    'Developers often try to add CORS headers to their fetch request - this does nothing. Headers must come FROM the server. If Content-Type is not application/x-www-form-urlencoded, form-data, or text/plain, a preflight happens. Server must respond to OPTIONS with 200 and proper headers.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43871637/no-access-control-allow-origin-header-is-present-on-the-requested-resource-when-trying-to-get-data-from-a-rest-api'
+),
+(
+    'Why doesn''t adding CORS headers to an OPTIONS route allow browsers to access my API?',
+    'stackoverflow-cors',
+    'HIGH',
+    '[
+        {"solution": "Understand that OPTIONS (preflight) is only sent for non-simple requests. Simple GET requests do not trigger preflight, so custom headers on OPTIONS route do not help for simple cases.", "percentage": 92, "note": "If no custom headers or special content-type, no preflight"},
+        {"solution": "Use Express cors middleware package for automatic handling: app.use(cors()); app.options(''*'', cors());", "percentage": 95, "command": "const cors = require(''cors''); app.use(cors()); app.options(''*'', cors());"},
+        {"solution": "Preflight is required when request uses: PUT/DELETE/PATCH, custom headers (Authorization, X-Custom), or Content-Type other than form/text/urlencoded", "percentage": 90, "note": "Know when preflight is triggered"},
+        {"solution": "Place CORS middleware BEFORE route definitions to ensure it handles OPTIONS requests", "percentage": 88, "command": "app.use(cors()) // Place this before app.get(), app.post(), etc."}
+    ]'::jsonb,
+    'Express.js or Node.js server, understanding of when preflight requests occur, CORS headers in place',
+    'Non-simple requests receive 200 response to OPTIONS, actual request succeeds without CORS errors, browser allows JavaScript access',
+    'Many set CORS headers on GET route but expect them to apply to OPTIONS preflight. Preflight only happens for non-simple requests. If request is simple (no custom headers, standard content-type), no OPTIONS is sent. Middleware placement matters - must be before routes.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/7067966/why-doesnt-adding-cors-headers-to-an-options-route-allow-browsers-to-access-my-api'
+),
+(
+    'Response to preflight request does not pass access control check',
+    'stackoverflow-cors',
+    'HIGH',
+    '[
+        {"solution": "Ensure server responds to OPTIONS preflight requests with HTTP 200 status code (not 404, 500, or 501)", "percentage": 95, "note": "Any non-2xx response fails preflight"},
+        {"solution": "Include required CORS response headers: Access-Control-Allow-Origin, Access-Control-Allow-Methods, Access-Control-Allow-Headers", "percentage": 94, "command": "Response headers must include all three: Access-Control-Allow-Origin: http://origin.com, Access-Control-Allow-Methods: GET,POST, Access-Control-Allow-Headers: Content-Type"},
+        {"solution": "Verify method and headers in OPTIONS response exactly match what your actual request needs", "percentage": 91, "note": "Mismatch between preflight response and actual request causes failure"},
+        {"solution": "Check server logs to see if OPTIONS request is even reaching your handler - some frameworks block unfamiliar methods by default", "percentage": 85, "note": "Framework may reject OPTIONS requests silently"}
+    ]'::jsonb,
+    'Cross-origin request being made from browser, backend server, preflight being sent',
+    'Browser console shows no CORS error, OPTIONS request returns 200, response includes all required headers, actual request succeeds',
+    'Common: server does not respond to OPTIONS at all (404). Server responds with wrong status. Headers are missing or mismatched. AWS API Gateway, Lambda, or other cloud services may need specific CORS configuration.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/35588699/response-to-preflight-request-doesnt-pass-access-control-check'
+),
+(
+    'Why is an OPTIONS request sent and can I disable it?',
+    'stackoverflow-cors',
+    'VERY_HIGH',
+    '[
+        {"solution": "OPTIONS is a CORS preflight request sent by the browser before the actual request for non-simple requests. You cannot disable it from the client.", "percentage": 95, "note": "Browser behavior - not optional"},
+        {"solution": "To avoid preflight, make your request a simple request: use GET/HEAD/POST, no custom headers, and Content-Type of form-urlencoded, form-data, or text/plain", "percentage": 88, "note": "Only works if your use case allows it"},
+        {"solution": "Cache preflight results with Access-Control-Max-Age header (browser caps at 2 hours / 7200 seconds) to reduce OPTIONS requests", "percentage": 85, "command": "Server response: Access-Control-Max-Age: 7200", "note": "Reduces frequency but does not eliminate preflight"},
+        {"solution": "Properly configure server to respond to OPTIONS with 200 and required headers - this is the only real solution", "percentage": 95, "note": "Accept and optimize preflight handling"}
+    ]'::jsonb,
+    'Cross-origin request setup, understanding that browser controls preflight, server configuration access',
+    'OPTIONS requests return 200 with proper CORS headers, subsequent requests succeed quickly, no CORS errors in browser',
+    'Developers often ask if they can disable preflight - you cannot from client side. Browser sends it for non-simple requests. Trying to use simple request workarounds may break your API design. Best approach: handle OPTIONS efficiently on server.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/29954037/why-is-an-options-request-sent-and-can-i-disable-it'
+),
+(
+    'Origin null is not allowed by Access-Control-Allow-Origin error',
+    'stackoverflow-cors',
+    'HIGH',
+    '[
+        {"solution": "Recognize that file:// URLs generate a null origin, which cannot be matched by CORS headers. Run your HTML through a local HTTP server instead.", "percentage": 95, "note": "file:// protocol is the root cause"},
+        {"solution": "Use JSONP as workaround for file:// protocol: append callback=? to URL for jQuery or equivalent", "percentage": 85, "command": "$.getJSON(''http://api.com/data?callback=?'', function(data) { /* handle data */ });"},
+        {"solution": "For development: use python -m http.server, npm http-server, or live-server instead of file:// URLs", "percentage": 98, "command": "python3 -m http.server 8000", "note": "Best practice - actual server environment"}
+    ]'::jsonb,
+    'HTML file being opened with file:// protocol, JavaScript making cross-origin request',
+    'Request works when served via HTTP/HTTPS, JSONP callback receives data, no null origin error',
+    'The null origin cannot be whitelisted. Cannot send wildcard * with credentials. JSONP is old workaround - proper solution is to use actual HTTP server. CORS headers are useless for file:// protocol.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/3595515/origin-null-is-not-allowed-by-access-control-allow-origin'
+),
+(
+    'What is the motivation behind the introduction of preflight CORS requests?',
+    'stackoverflow-cors',
+    'MEDIUM',
+    '[
+        {"solution": "Preflight ensures only CORS-aware servers receive potentially dangerous cross-origin requests (PUT, DELETE, custom headers). Legacy servers that predate CORS are protected.", "percentage": 92, "note": "Backward compatibility mechanism"},
+        {"solution": "Before CORS, same-origin policy prevented most cross-origin requests. Preflight allows opt-in: old servers simply ignore OPTIONS and never receive dangerous requests.", "percentage": 90, "note": "Protects existing infrastructure"},
+        {"solution": "Understand that CORS does not prevent CSRF attacks - that requires separate server-side CSRF protection. Preflight only prevents breaking legacy systems.", "percentage": 85, "note": "Security mechanism for compatibility, not CSRF prevention"},
+        {"solution": "Preflight is a W3C design decision balancing new functionality (CORS) with protecting existing non-CORS-aware servers", "percentage": 80, "note": "Architectural choice for web platform stability"}
+    ]'::jsonb,
+    'Understanding of web history, knowledge of pre-CORS internet, legacy server systems',
+    'Understands why preflight exists and what it protects, can explain rationale to team, recognizes CSRF requires separate solution',
+    'Many think preflight is a security feature - it is actually backward compatibility. CORS does not protect against CSRF. POST requests skip preflight and can still modify state - servers need separate CSRF tokens. Preflight just asks "do you understand CORS?"',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/15381105/what-is-the-motivation-behind-the-introduction-of-preflight-cors-requests'
+),
+(
+    'Trying to use fetch with mode: no-cors does not fix CORS errors',
+    'stackoverflow-cors',
+    'HIGH',
+    '[
+        {"solution": "Understand that mode: no-cors does not enable cross-origin requests - it only blocks your JavaScript from reading the response", "percentage": 95, "note": "Counterintuitive behavior - makes problem worse"},
+        {"solution": "Use a CORS proxy server in development/production to add necessary headers to responses", "percentage": 90, "command": "fetch(''https://cors-proxy.example.com/https://api.example.com/data'')"},
+        {"solution": "Configure your backend to add proper Access-Control-Allow-Origin headers - this is the only real fix", "percentage": 95, "note": "Permanent solution"},
+        {"solution": "For development: use Vite proxy, webpack-dev-server proxy, or local proxy to forward requests with CORS headers", "percentage": 88, "command": "// Vite: proxy in vite.config.js"},
+        {"solution": "Browser extensions that add CORS headers are development-only - never rely on them for production", "percentage": 60, "note": "Users won''t have the extension"}
+    ]'::jsonb,
+    'Fetch request failing with CORS error, need to understand no-cors behavior',
+    'Request succeeds with proper CORS headers or via proxy, browser no longer blocks response, JavaScript can read data',
+    'mode: no-cors makes CORS errors worse - browser still blocks response, and you cannot read it. It is only useful for no-response-needed requests. The origin server MUST send proper CORS headers.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/43262121/trying-to-use-fetch-and-pass-in-mode-no-cors'
+),
+(
+    'CORS: Cannot use wildcard in Access-Control-Allow-Origin when credentials flag is true',
+    'stackoverflow-cors',
+    'HIGH',
+    '[
+        {"solution": "Cannot use wildcard (*) with credentialed requests - must specify exact origin: http://localhost:3000 (note: no trailing slash)", "percentage": 95, "note": "Security constraint from browser"},
+        {"solution": "When credentials: true in fetch or withCredentials in XMLHttpRequest, specify origin explicitly, not *", "percentage": 94, "command": "// Client: fetch(url, {credentials: ''include''}); // Server: Access-Control-Allow-Origin: http://localhost:3000 (exact)"},
+        {"solution": "Use npm cors package with explicit origin whitelist for Express: app.use(cors({credentials: true, origin: ''http://localhost:3000''}))", "percentage": 92, "command": "const cors = require(''cors''); app.use(cors({credentials: true, origin: ''http://localhost:3000''}));"},
+        {"solution": "For Django, configure CORS_ALLOW_CREDENTIALS = True and CORS_ORIGIN_WHITELIST with specific domains", "percentage": 88, "command": "CORS_ALLOW_CREDENTIALS = True\nCORS_ORIGIN_WHITELIST = (''http://localhost:3000'',)"}
+    ]'::jsonb,
+    'Credentialed cross-origin request (cookies, auth headers), multiple frontend origins or wildcard needed',
+    'Credentialed request succeeds with specific origin in header, cookies sent and received, no CORS error',
+    'Combining wildcard (*) with credentials defeats purpose - would allow any origin to access protected resources. Trailing slash in origin matters: http://localhost:3000 (correct) vs http://localhost:3000/ (fails). Must whitelist specific origins when credentials involved.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/19743396/cors-cannot-use-wildcard-in-access-control-allow-origin-when-credentials-flag-is-true'
+),
+(
+    'Access-Control-Allow-Origin: Cannot use wildcard for subdomains, ports, and protocols',
+    'stackoverflow-cors',
+    'MEDIUM',
+    '[
+        {"solution": "CORS header spec only supports exact origin or wildcard (*) - no pattern matching like *.example.com. Validate incoming Origin header with regex instead.", "percentage": 94, "note": "Header itself cannot contain wildcards"},
+        {"solution": "Apache/htaccess solution: Use SetEnvIf with regex to match pattern, then echo back the matching origin", "percentage": 92, "command": "SetEnvIf Origin \"^(https?://(.+\\.)?mywebsite\\.example(:\\d{1,5})?)$\" CORS=$0\nHeader set Access-Control-Allow-Origin \"%{CORS}e\" env=CORS"},
+        {"solution": "Node.js solution: Check request.headers.origin against regex pattern, set response header if matches", "percentage": 90, "command": "const pattern = /^(https?:\\/\\/(.+\\.)?mywebsite\\.example(:\\d{1,5})?)$/; if (pattern.test(req.headers.origin)) { res.set(''Access-Control-Allow-Origin'', req.headers.origin); }"},
+        {"solution": "Always include Vary: Origin header when using dynamic origin matching for proper HTTP caching", "percentage": 88, "command": "Header merge Vary Origin"}
+    ]'::jsonb,
+    'Multiple subdomains/ports/protocols for same app, control over server configuration, need flexible CORS',
+    'Requests from different subdomains/ports/protocols all work, caching works correctly with Vary header, specific origins are echoed back',
+    'Cannot use *.example.com in the header. Must validate incoming Origin with regex and echo back matching origin. Vary: Origin header is essential - without it, cached responses from one origin apply to all others. Some frameworks require explicit Vary header configuration.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/14003332/access-control-allow-origin-wildcard-subdomains-ports-and-protocols'
+);

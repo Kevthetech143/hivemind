@@ -1,0 +1,199 @@
+-- Add Stack Overflow Sequelize solutions batch 1 (12 high-voted questions with accepted answers)
+
+INSERT INTO knowledge_entries (query, category, solutions, common_pitfalls, success_rate, hit_frequency, claude_version, last_verified)
+VALUES
+(
+  'Prevent Sequelize from outputting SQL to console',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Set logging: false option when creating Sequelize instance", "percentage": 95, "command": "var sequelize = new Sequelize(''database'', ''username'', ''password'', { logging: false })", "note": "Default logging uses console.log. This is the most direct approach."},
+    {"solution": "Add logging: false to config.json development settings", "percentage": 90, "command": "Add to config/config.json: \"logging\": false", "note": "Configuration file approach for persistent settings"},
+    {"solution": "Use selective logging with Winston framework for debug-level output", "percentage": 85, "command": "logging: winston.debug", "note": "Allows SQL logging only at debug level or lower"},
+    {"solution": "Disable logging per-query using logging: false in findAll options", "percentage": 80, "command": "User.findAll({ where: {...}, logging: false })", "note": "Useful for selective query debugging"}
+  ]'::jsonb,
+  'Default logging parameter uses console.log. Setting to false is required to suppress output. Logging at query level overrides instance-level settings. Cannot set to null; must be false or a function.',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'How to update a record using Sequelize for Node.js',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use Model.update() with where clause for direct updates", "percentage": 95, "command": "Project.update({ title: ''new title'' }, { where: { _id: 1 } })", "note": "Standard approach for updating records. Returns number of affected rows."},
+    {"solution": "Use async/await syntax with Model.update()", "percentage": 92, "command": "const result = await Project.update({ title: ''new title'' }, { where: { _id: 1 } })", "note": "Modern Promise-based approach"},
+    {"solution": "Find instance first, then update and save", "percentage": 85, "command": "const project = await Project.findOne({where: {title: ''aProject''}}); await project.update({title: ''new title''})", "note": "Requires two queries but allows instance method use"},
+    {"solution": "Use increment() for numeric field increments", "percentage": 80, "command": "User.increment(''field'', {by: 1, where: {id: 1}})", "note": "Specialized method for increment/decrement operations"}
+  ]'::jsonb,
+  'Do not use Model.build() followed by updateAttributes() - this creates new record instead of updating. Always use Model.update() with where clause. findOne + update requires two queries versus one with Model.update().',
+  0.95,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'How to make join queries using Sequelize on Node.js',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use include parameter with association to join related models", "percentage": 93, "command": "User.findAll({ include: [{ model: Post }] })", "note": "Most straightforward approach for eager loading"},
+    {"solution": "Specify multiple includes for complex joins", "percentage": 88, "command": "User.findAll({ include: [{ model: Post }, { model: Comment }] })", "note": "Allows joining multiple associated tables"},
+    {"solution": "Use include with where clause for filtered joins", "percentage": 85, "command": "User.findAll({ include: [{ model: Post, where: {published: true} }] })", "note": "Filters associated records before join"},
+    {"solution": "Use LEFT OUTER JOIN with required: false", "percentage": 80, "command": "User.findAll({ include: [{ model: Post, required: false }] })", "note": "Returns parent records even without matching associations"}
+  ]'::jsonb,
+  'Forgetting to define associations before using include. Using include without proper association setup. Not understanding required: false creates INNER vs LEFT JOIN. Aliases must match defined association names.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize.js: how to use migrations and sync',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use sequelize-cli for managing migrations with umzug auto-runner", "percentage": 92, "command": "npm install sequelize-cli && sequelize model:create --name User --attributes first_name:string", "note": "Creates models and migrations together. Use umzug for auto-running migrations on startup."},
+    {"solution": "Create initial migration file manually with full schema, then incremental migrations", "percentage": 88, "command": "sequelize migration:create --name initial-schema", "note": "Allows control over exact migration content"},
+    {"solution": "Run migrations automatically on app startup using umzug", "percentage": 85, "command": "umzug.pending().then(migrations => { umzug.execute({migrations, method: ''up''}).then(() => app.listen(3000)) })", "note": "Ensures database schema is current before app starts"},
+    {"solution": "Modify package.json to run migrations before server start", "percentage": 80, "command": "''start'': ''sequelize db:migrate && node bin/www''", "note": "Production-safe approach for deployment"}
+  ]'::jsonb,
+  'Avoid using sync({force: true}) in production - destroys data. Do not rely on sync() for schema management. Migrations must be written manually for production use. Old approach with database dumps is less maintainable.',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize, convert entity to plain object',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use raw: true option in query to return plain JavaScript objects", "percentage": 94, "command": "db.Sensors.findAll({ where: {nodeid: node.nodeid}, raw: true })", "note": "Simplest approach for single-level results"},
+    {"solution": "Use raw: true with nest: true for nested associations", "percentage": 88, "command": "db.Sensors.findAll({ include: [{model: someModel}], raw: true, nest: true })", "note": "Preserves nested structure while returning plain objects"},
+    {"solution": "Use .get({plain: true}) for individual instances", "percentage": 85, "command": "var nodedata = node.get({plain: true})", "note": "For single instance conversion. Map over arrays for multiple results."},
+    {"solution": "Use JSON.parse(JSON.stringify()) workaround for complex nesting", "percentage": 78, "command": "const obj = JSON.parse(JSON.stringify(results))", "note": "Less performant but handles complex nested structures"}
+  ]'::jsonb,
+  'raw: true omits virtual columns. raw: true with nested associations may flatten one-to-many relationships incorrectly. .get({plain: true}) requires mapping over arrays. raw: true loses Sequelize instance methods.',
+  0.92,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'How to make Sequelize use singular table names',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use freezeTableName: true in model definition", "percentage": 96, "command": "var Bar = sequelize.define(''Bar'', {...}, { freezeTableName: true, tableName: ''my_custom_table_name'' })", "note": "Prevents automatic pluralization. Use with explicit tableName."},
+    {"solution": "Set freezeTableName globally in Sequelize constructor", "percentage": 93, "command": "var sequelize = new Sequelize(..., { define: { freezeTableName: true } })", "note": "Applies to all models at once"},
+    {"solution": "Explicitly specify tableName for each model", "percentage": 85, "command": "sequelize.define(''User'', {...}, { tableName: ''users'' })", "note": "Works without freezeTableName but less convenient"},
+    {"solution": "Define custom singular/plural forms with name property", "percentage": 75, "command": "name: { singular: ''person'', plural: ''people'' }", "note": "For non-standard pluralization rules"}
+  ]'::jsonb,
+  'Sequelize automatically pluralizes model names by default. freezeTableName must be true to prevent this. Model name case affects pluralization (Bar vs bar). Must explicitly set tableName if using freezeTableName.',
+  0.96,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize findAll sort order in nodejs',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use order parameter with array of column and direction pairs", "percentage": 93, "command": "Company.findAll({ where: {...}, order: [[''id'', ''DESC''], [''name'', ''ASC'']] })", "note": "Standard approach using SQL ASC/DESC ordering"},
+    {"solution": "Use MySQL FIELD() function for custom ID sequence ordering", "percentage": 80, "command": "order: sequelize.literal(''FIELD(company.id,'' + companyIds.join('','') + '')'') ", "note": "Maintains specific ID order. MySQL-specific."},
+    {"solution": "Use PostgreSQL ARRAY_POSITION for custom ordering", "percentage": 75, "command": "order: [sequelize.literal(`ARRAY_POSITION(ARRAY[${arr}]::integer[], ''id'')`)]", "note": "PostgreSQL alternative to FIELD()"},
+    {"solution": "Sort results client-side after retrieval using JavaScript", "percentage": 60, "command": "const sorted = results.sort((a,b) => customOrder.indexOf(a.id) - customOrder.indexOf(b.id))", "note": "Less efficient but works with any database"}
+  ]'::jsonb,
+  'Standard SQL ORDER BY cannot enforce arbitrary custom sequences. FIELD() is MySQL-specific and not portable. Client-side sorting on large datasets impacts performance. Multiple order arrays use AND logic, not OR.',
+  0.90,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize.js delete query',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use Model.destroy() with where clause to delete filtered records", "percentage": 96, "command": "Model.destroy({ where: { id: 123 } })", "note": "Returns number of deleted rows. Standard approach for Sequelize 3+"},
+    {"solution": "Use destroy with Promise handling", "percentage": 90, "command": "Model.destroy({where: {id: 123}}).then(rowDeleted => console.log(rowDeleted === 1 ? ''Deleted'' : ''Not found''))", "note": "Proper error handling for delete operations"},
+    {"solution": "Use async/await with destroy()", "percentage": 88, "command": "const deleted = await products.destroy({where: {id: id}}); return !!deleted", "note": "Modern Promise-based approach"},
+    {"solution": "Delete all records using truncate option", "percentage": 85, "command": "Model.destroy({ truncate: true })", "note": "Truncates table instead of using DELETE WHERE. Faster for bulk deletion."}
+  ]'::jsonb,
+  'Older versions used .destroy(id) syntax. destroy() returns row count, not true/false. Calling without where clause deletes all records silently. truncate: true does not trigger before/after hooks.',
+  0.96,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize Unknown column createdAt in field list',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Disable timestamps in model definition using timestamps: false", "percentage": 97, "command": "sequelize.define(''model'', {...}, { timestamps: false })", "note": "Most common cause. Sequelize adds createdAt/updatedAt by default."},
+    {"solution": "Disable timestamps globally in Sequelize constructor", "percentage": 95, "command": "var sequelize = new Sequelize(..., { define: { timestamps: false } })", "note": "Applies to all models at once"},
+    {"solution": "Add createdAt and updatedAt columns to database table", "percentage": 90, "command": "ALTER TABLE users ADD COLUMN createdAt DATETIME DEFAULT NOW(), ADD COLUMN updatedAt DATETIME DEFAULT NOW()", "note": "Alternative if timestamps are desired"},
+    {"solution": "Use underscored: true if database uses snake_case naming", "percentage": 85, "command": "sequelize.define(..., { underscored: true })", "note": "Maps created_at to createdAt automatically"}
+  ]'::jsonb,
+  'Sequelize enables timestamps by default. Error occurs when joining tables with associations. Default timestamp columns are createdAt/updatedAt (camelCase). Database may use snake_case (created_at/updated_at) requiring underscored mapping.',
+  0.97,
+  'VERY_HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Auto generate migrations with Sequelize CLI',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use sequelize-auto-migrations npm package for model-based generation", "percentage": 88, "command": "npm install sequelize-auto-migrations && node ./node_modules/sequelize-auto-migrations/bin/makemigration --name initial", "note": "Only tool that generates from existing models. Fork by Scimonster recommended."},
+    {"solution": "Use sequelize-mig for active maintained alternative", "percentage": 82, "command": "npm install sequelize-mig && sequelize-mig up", "note": "Newer package with better ES6 support and renamed column handling"},
+    {"solution": "Create models via CLI to auto-generate matching migrations", "percentage": 80, "command": "sequelize model:create --name MyUser --attributes first_name:string,bio:text", "note": "Only sequelize-cli feature that auto-generates migrations"},
+    {"solution": "Manually write migrations by studying sync() output", "percentage": 75, "command": "Use sequelize.sync() to see generated SQL, then manually write equivalent migrations", "note": "More control but requires manual work"}
+  ]'::jsonb,
+  'Sequelize CLI cannot auto-generate migrations from manually-created models. Only generates migrations when creating models via CLI. Auto-migration tools are third-party and require maintenance. Manual migration consistency is difficult to maintain.',
+  0.85,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize OR condition object',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use Op.or operator from sequelize for modern versions (v5+)", "percentage": 94, "command": "const {Op} = require(''sequelize''); Post.findAll({where: {[Op.or]: [{authorId: 12}, {authorId: 13}]}})", "note": "Modern recommended approach. Replaces deprecated string operators."},
+    {"solution": "Use symbolic Op operators for property-level OR", "percentage": 90, "command": "where: {FirstName: {[Op.or]: [''John'', ''Jane'']}, Age: {[Op.gt]: 18}}", "note": "Property-specific OR logic combining with AND"},
+    {"solution": "Use legacy $or operator for Sequelize 3-4", "percentage": 75, "command": "where: {LastName: ''Doe'', $or: [{FirstName: {$eq: ''John''}}, {FirstName: {$eq: ''Jane''}}]}", "note": "Deprecated in v5+ but still works in older versions"},
+    {"solution": "Use Sequelize.or() method for complex OR logic", "percentage": 70, "command": "Sequelize.or({id: [1,2,3]}, {id: {lt: 10}})", "note": "Legacy approach, now replaced by Op"}
+  ]'::jsonb,
+  'String operators ($or, $eq) are deprecated in Sequelize v5+. Must use symbolic operators (Op.or, Op.eq) in modern versions. AND is default logic; OR must be explicit. Property-level OR still uses AND with other properties.',
+  0.93,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize table without column id',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Define custom primaryKey on desired column using primaryKey: true", "percentage": 95, "command": "academy_id: {type: DataTypes.INTEGER, primaryKey: true}", "note": "Tells Sequelize which column is primary key instead of auto-generating id"},
+    {"solution": "Use freezeTableName with explicit primaryKey definition", "percentage": 93, "command": "sequelize.define(''model'', {academy_id: {type: DataTypes.INTEGER, primaryKey: true}}, {freezeTableName: true})", "note": "Prevents pluralization and removes default id"},
+    {"solution": "Remove id attribute using Model.removeAttribute()", "percentage": 70, "command": "AcademyModule.removeAttribute(''id'')", "note": "Less recommended as it can cause problems with joins and associations"},
+    {"solution": "Composite primary key with multiple columns", "percentage": 85, "command": "academy_id: {primaryKey: true}, module_id: {primaryKey: true}", "note": "When table has composite key spanning multiple columns"}
+  ]'::jsonb,
+  'Sequelize auto-generates id primary key by default. Must explicitly override with primaryKey: true on another column. Removing id entirely may break associations and joins. Composite keys require both columns marked as primaryKey.',
+  0.93,
+  'MEDIUM',
+  'sonnet-4',
+  NOW()
+),
+(
+  'Sequelize Where statement with date',
+  'stackoverflow-sequelize',
+  '[
+    {"solution": "Use Op.gte operator with moment.js for date comparison", "percentage": 92, "command": "const {Op} = require(''sequelize''); model.findAll({where: {start_datetime: {[Op.gte]: moment().subtract(7, ''days'').toDate()}}})", "note": "Most reliable approach with moment library"},
+    {"solution": "Use native JavaScript Date manipulation without moment", "percentage": 88, "command": "const sevenDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7)); where: {my_date: {[Op.gt]: sevenDaysAgo, [Op.lt]: new Date()}}", "note": "Works without external dependencies"},
+    {"solution": "Use SQL literal for PostgreSQL date arithmetic", "percentage": 85, "command": "where: {created_at: {[Op.gte]: Sequelize.literal(''NOW() - INTERVAL 7 days'')}}", "note": "PostgreSQL-specific for server-side date math"},
+    {"solution": "Use between operator for date range queries", "percentage": 83, "command": "where: {date: {[Op.between]: [startDate, endDate]}}", "note": "Cleaner syntax for date range conditions"}
+  ]'::jsonb,
+  'Sequelize v5+ requires Op imports and Symbol syntax [Op.gte]. String operators like $gte are deprecated. Moment.js is external dependency but handles timezone issues. Bare JavaScript Date manipulation may have edge cases with timezones. Must call .toDate() on moment objects.',
+  0.91,
+  'HIGH',
+  'sonnet-4',
+  NOW()
+);

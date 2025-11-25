@@ -1,0 +1,241 @@
+-- Add Stack Overflow Vite solutions batch 1
+-- Extracted: 12 highest-voted Vite questions with accepted answers
+-- Category: stackoverflow-vite
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES
+(
+    'How to load environment variables from .env file using Vite',
+    'stackoverflow-vite',
+    'HIGH',
+    '[
+        {"solution": "Prefix environment variables with VITE_ and access via import.meta.env.VITE_VAR_NAME in client code", "percentage": 95, "note": "Variables prefixed with VITE_ are exposed to client-side code by default", "command": "Add VITE_TEST_VAR=123 to .env, then use import.meta.env.VITE_TEST_VAR"},
+        {"solution": "For vite.config.js, use loadEnv() function: const env = loadEnv(mode, process.cwd())", "percentage": 90, "note": "Required for accessing environment in configuration file", "command": "import { loadEnv } from ''vite''; const env = loadEnv(mode, process.cwd())"},
+        {"solution": "Restart development server after modifying .env file for changes to take effect", "percentage": 85, "note": "Changes require dev server restart"},
+        {"solution": "Customize env variable prefix using envPrefix option in vite.config.js if needed", "percentage": 75, "note": "Avoid setting envPrefix to empty string for security reasons"}
+    ]'::jsonb,
+    'Vite project initialized, .env file in project root directory',
+    'Environment variables accessible via import.meta.env, dev server running without errors',
+    'Only VITE_ prefixed variables are exposed by default. .env files must be in root, not src directory. Prefix requirement cannot be completely disabled for security. Server restart required after .env modifications.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/70709987/how-to-load-environment-variables-from-env-file-using-vite'
+),
+(
+    'What is the difference between "vite" and "vite preview"',
+    'stackoverflow-vite',
+    'HIGH',
+    '[
+        {"solution": "vite command launches development server with Hot Module Replacement for live code updates", "percentage": 95, "note": "Use for active development - automatically recompiles on file changes"},
+        {"solution": "vite preview command serves production build from dist folder without automatic updates", "percentage": 95, "note": "Use to test production builds - requires running npm run build first"},
+        {"solution": "Always run npm run build before npm run preview to ensure dist folder contains latest code", "percentage": 90, "command": "npm run build && npm run preview", "note": "Preview shows outdated build if skipped"}
+    ]'::jsonb,
+    'Node.js and npm installed, Vite project initialized',
+    'npm run dev shows live code changes, npm run preview displays production build, both servers start without errors',
+    'Attempting preview without building first will display outdated code. Preview does not support hot module replacement. Confusing dev server HMR with preview capabilities.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71703933/what-is-the-difference-between-vite-and-vite-preview'
+),
+(
+    'vite is not recognized on npm run dev',
+    'stackoverflow-vite',
+    'VERY_HIGH',
+    '[
+        {"solution": "Run npm install to install all project dependencies including Vite", "percentage": 95, "command": "npm install or npm i", "note": "Most common cause - missing node_modules directory"},
+        {"solution": "Verify Node.js version is 15 or higher for best compatibility", "percentage": 85, "note": "Older Node versions may have issues"},
+        {"solution": "Clear npm cache and reinstall: npm cache clean --force && npm install", "percentage": 80, "note": "Fixes corrupted dependency caches"},
+        {"solution": "Check NODE_ENV environment variable is not set to production (prevents dev dependencies from installing)", "percentage": 75, "note": "Set NODE_ENV=development or leave unset during development"}
+    ]'::jsonb,
+    'Node.js and npm installed, Vite project created with npm create vite@latest, cd into project directory',
+    'npm run dev starts development server without "vite is not recognized" error, all dependencies listed in npm list',
+    'Skipping npm install after project creation. NODE_ENV set to production prevents dev dependencies installation. Antivirus software may block esbuild binary installation. Special characters in folder paths (colons, ampersands) break PATH resolution.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/71844271/vite-is-not-recognized-on-npm-run-dev'
+),
+(
+    'Vite https on localhost',
+    'stackoverflow-vite',
+    'HIGH',
+    '[
+        {"solution": "Use vite-plugin-mkcert plugin: install with npm i vite-plugin-mkcert -D, add to plugins in vite.config.js", "percentage": 95, "command": "npm i vite-plugin-mkcert -D, then add mkcert() to plugins array", "note": "Highest-rated solution (240 votes), handles certificate installation automatically"},
+        {"solution": "Use @vitejs/plugin-basic-ssl: npm i @vitejs/plugin-basic-ssl -D, add to plugins", "percentage": 92, "command": "npm i @vitejs/plugin-basic-ssl -D", "note": "Second-rated option (226 votes), simpler but does not work with service workers"},
+        {"solution": "Manual mkcert approach: generate certificate files and reference in vite.config.js https option", "percentage": 78, "note": "More complex, recommended for Docker environments"},
+        {"solution": "Browser will prompt for password on first run when using mkcert plugin to install system certificate", "percentage": 85, "note": "Normal behavior - certificate gets installed system-wide"}
+    ]'::jsonb,
+    'Node.js/npm installed, Vite project initialized, understanding of vite.config.js configuration',
+    'Dev server accessible at https://localhost:5173 without certificate warnings, browser trusted certificate installed',
+    'Self-signed certificates are not trusted by default without system certificate installation. Mixing basicSsl() with custom certificates causes Vite to ignore configured certs. @vitejs/plugin-basic-ssl does not work with service workers. Plugin-based solutions may fail in Docker; file-based approaches work better.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69417788/vite-https-on-localhost'
+),
+(
+    'Why does Vite create two TypeScript config files: tsconfig.json and tsconfig.node.json',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "tsconfig.json configures browser runtime environment for application code in src folder", "percentage": 90, "note": "Handles browser-specific APIs and constraints"},
+        {"solution": "tsconfig.node.json configures Node.js runtime environment for vite.config.ts and build-time code", "percentage": 90, "note": "Separate context with different APIs than browser"},
+        {"solution": "Main tsconfig.json includes references field pointing to tsconfig.node.json creating composite project structure", "percentage": 88, "note": "Master config setup for type checking both environments"},
+        {"solution": "Do not delete tsconfig.node.json even if not immediately breaking - may cause issues with future type-checking", "percentage": 75, "note": "May work initially but risks problems later"}
+    ]'::jsonb,
+    'TypeScript project with both browser and Node.js code, understanding of TypeScript compiler options',
+    'Both tsconfig files recognized by editor, type-checking works for browser and build code, no type errors in vite.config.ts',
+    'Assuming tsconfig.node.json can be deleted without consequences. Forgetting to update references path if renaming Node config. Not recognizing vite.config.ts requires separate type-checking setup.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72027949/why-does-vite-create-two-typescript-config-files-tsconfig-json-and-tsconfig-node-json'
+),
+(
+    'The @ alias that points to the src folder does not work in Vite',
+    'stackoverflow-vite',
+    'HIGH',
+    '[
+        {"solution": "Configure alias in vite.config.js: resolve.alias with fileURLToPath for ES modules", "percentage": 95, "command": "alias: { ''@'': fileURLToPath(new URL(''./src'', import.meta.url)) }", "note": "Modern approach using import.meta.url"},
+        {"solution": "Add paths mapping to tsconfig.json for editor intellisense: { ''paths'': { ''@/*'': [''./src/*''] } }", "percentage": 92, "note": "Critical for IDE support even if dev server works"},
+        {"solution": "For older Vite versions use path.resolve(__dirname) instead of fileURLToPath", "percentage": 80, "note": "Vite version-specific workaround"},
+        {"solution": "Ensure paths include trailing slash for directories: ''@/'' instead of just ''@''", "percentage": 85, "note": "Some versions require this format"}
+    ]'::jsonb,
+    'Vite project initialized, @vitejs/plugin-vue installed (for Vue projects), TypeScript configuration file',
+    'Editor provides intellisense for @ imports, dev server resolves @/component paths correctly, production build works without import errors',
+    'Missing tsconfig.json paths mapping causes editor intellisense errors even when dev server works. Incorrect path resolution without fileURLToPath may fail in production. Not adding trailing slash in some versions. Vite version differences in path resolution approaches.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/66043612/the-alias-that-points-to-the-src-folder-doesnt-work'
+),
+(
+    'Vitest defineConfig test does not exist in type UserConfigExport',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "Import defineConfig from vitest/config instead of vite for full type support", "percentage": 95, "command": "import { defineConfig } from ''vitest/config''", "note": "Simplest solution - directly imports extended type"},
+        {"solution": "Use triple-slash directive for Vitest 2.1+: /// <reference types=\"vitest/config\" /> at top of file", "percentage": 90, "command": "Add /// <reference types=\"vitest/config\" /> before imports", "note": "Keep vite defineConfig, extends type via directive"},
+        {"solution": "For older Vitest versions (pre-2.1) use: /// <reference types=\"vitest\" />", "percentage": 85, "command": "Add /// <reference types=\"vitest\" /> before imports"},
+        {"solution": "Upgrade both Vite and Vitest to compatible versions to resolve persistent errors", "percentage": 80, "note": "Version mismatch is common cause"}
+    ]'::jsonb,
+    'Vitest and Vite installed, TypeScript project with proper type definitions',
+    'TypeScript compilation succeeds without errors, test configuration recognized, editor intellisense shows test property',
+    'Using incompatible Vite and Vitest versions causes persistent errors even after applying solutions. Triple-slash directive may fail if packages are outdated. Separating into vite.config.ts and vitest.config.ts may cause Vitest to ignore Vite options.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/72146352/vitest-defineconfig-test-does-not-exist-in-type-userconfigexport'
+),
+(
+    'How can I use Vite env variables in vite.config.js',
+    'stackoverflow-vite',
+    'HIGH',
+    '[
+        {"solution": "Use loadEnv function with mode parameter to load environment variables in config: process.env = {...process.env, ...loadEnv(mode, process.cwd())}", "percentage": 94, "command": "import { loadEnv } from ''vite''; const env = loadEnv(mode, process.cwd()); process.env = {...process.env, ...env};", "note": "Recommended approach for accessing env in config"},
+        {"solution": "Export config as function to receive mode parameter: export default ({ mode }) => { ... }", "percentage": 92, "note": "Function-based export receives build mode"},
+        {"solution": "Use parseInt() for numeric environment variables to convert string values", "percentage": 85, "note": "Environment variables are always strings"},
+        {"solution": "For Windows, use Object.assign() instead of spread operator to preserve case-insensitivity", "percentage": 78, "note": "Windows system variables have different case handling"}
+    ]'::jsonb,
+    'Vite project with .env file containing VITE_ prefixed variables, basic understanding of vite.config.js',
+    'vite.config.js accesses environment variables correctly, build uses correct values from .env file, npm run build and npm run dev respect environment configuration',
+    'Type errors if not converting string values to proper types. Using spread operator on Windows may not preserve system variable case-sensitivity. Setting variables directly in process.env may prevent .env.production overrides during builds. Missing VITE_ prefix prevents variables from loading by default.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/66389043/how-can-i-use-vite-env-variables-in-vite-config-js'
+),
+(
+    'Absolute path not working in Vite project React TypeScript',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "Use vite-tsconfig-paths plugin to automatically resolve TypeScript paths without duplication", "percentage": 95, "command": "npm install vite-tsconfig-paths --save-dev, then add tsconfigPaths() to plugins", "note": "Recommended - single source of truth for path configuration"},
+        {"solution": "Manually configure vite.config.ts with resolve.alias for baseUrl path", "percentage": 88, "command": "resolve: { alias: { ''@'': path.resolve(__dirname, ''./src'') } }", "note": "Requires additional npm install path @types/node"},
+        {"solution": "Update tsconfig.json with baseUrl pointing to src directory", "percentage": 90, "command": "{ ''compilerOptions'': { ''baseUrl'': ''./src'' } }", "note": "Required for IDE intellisense"},
+        {"solution": "VSCode may require reload after changing configuration for intellisense updates", "percentage": 80, "note": "Editor caching requires refresh"}
+    ]'::jsonb,
+    'Vite React TypeScript project, tsconfig.json configured, understanding of path resolution',
+    'Absolute imports like "import Test from ''components/Test''" work without errors, IDE provides intellisense for imported paths, production build resolves paths correctly',
+    'TypeScript needs separate path resolution configuration from Vite. IDE changes often require VSCode reload to take effect. Using baseUrl alone in tsconfig is insufficient - Vite also needs configuration. Some newer Vite projects require updates in tsconfig.app.json instead of tsconfig.json.',
+    0.87,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/68241263/absolute-path-not-working-in-vite-project-react-ts'
+),
+(
+    'TypeError: Failed to fetch dynamically imported module on Vue/Vite vanilla setup',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "Error correlates with deployments due to Vite chunk hashing - old cached chunks no longer exist after redeployment", "percentage": 92, "note": "Root cause explanation - not directly a code fix"},
+        {"solution": "Add router error handler to detect and reload page on import failures: if (error.message.includes(''Failed to fetch dynamically imported module''))", "percentage": 88, "command": "router.onError((error) => { if (error.message.includes(''Failed to fetch dynamically imported module'')) window.location.href = to.fullPath })"},
+        {"solution": "Use modern Vite 4.4+ native handler: window.addEventListener(''vite:preloadError'', (event) => { window.location.reload() })", "percentage": 85, "command": "Add vite:preloadError event listener to window", "note": "Native solution for Vite 4.4+"},
+        {"solution": "Ensure dynamic route components have proper file extensions (.vue) in import paths", "percentage": 75, "note": "Missing extensions can cause import resolution issues"}
+    ]'::jsonb,
+    'Vue/Vite project with dynamic imports, router configuration, deployed to production',
+    'Page reloads on dynamically imported module fetch failures, users can recover from deployment cache issues, no persistent 404 errors after redeployment',
+    'Missing file extensions in dynamic imports (e.g., @/views/Home instead of @/views/Home.vue). Stale dev server caches - restart dev server required. Ad blockers may block files with certain names causing fetch failures.',
+    0.83,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/69300341/typeerror-failed-to-fetch-dynamically-imported-module-on-vue-vite-vanilla-set'
+),
+(
+    '504 (Outdated Optimize Dep) while using react-vite',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "Add problematic package to optimizeDeps.exclude in vite.config.js to prevent caching issues", "percentage": 90, "command": "optimizeDeps: { exclude: [''js-big-decimal''] }", "note": "Solution for specific packages like js-big-decimal, tesseract-wasm"},
+        {"solution": "Delete node_modules and .vite cache directory, then reinstall dependencies", "percentage": 88, "command": "rm -rf node_modules .vite && npm install", "note": "Clears all dependency caches"},
+        {"solution": "Hard refresh browser with disabled cache (Shift+Ctrl+F5) as temporary workaround", "percentage": 75, "note": "Temporary fix - not permanent solution"},
+        {"solution": "Stop dev server before running npm install to prevent cache conflicts", "percentage": 82, "note": "Installing while server runs can corrupt cache"}
+    ]'::jsonb,
+    'React + Vite project, recently installed problematic package, dev server running',
+    'npm run dev no longer returns 504 error, vite cache rebuilds successfully, browser loads application without outdated optimize dep errors',
+    'Installing packages while dev server runs without stopping first. Partial cache clearing - simply restarting server is insufficient. Browser cache issues requiring hard refresh. Multiple Vite instances sharing same cache directory causing conflicts.',
+    0.85,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/75883720/504-outdated-optimize-dep-while-using-react-vite'
+),
+(
+    'The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "Configure modern-compiler API in vite.config.ts: css.preprocessorOptions.scss.api = ''modern-compiler''", "percentage": 94, "command": "scss: { api: ''modern-compiler'' }", "note": "Recommended for Sass v1.79.1+"},
+        {"solution": "Use ''modern'' shorthand instead of ''modern-compiler'' for newer Sass versions", "percentage": 92, "command": "scss: { api: ''modern'' }"},
+        {"solution": "Silence deprecation warning temporarily if upgrading not feasible: silenceDeprecations: [''legacy-js-api'']", "percentage": 70, "note": "Temporary workaround - not recommended long-term"},
+        {"solution": "For Nuxt projects wrap css property within vite object in nuxt.config.ts", "percentage": 85, "note": "Framework-specific configuration"}
+    ]'::jsonb,
+    'Vite project with Sass/SCSS dependencies, sass v1.79.1 or higher recommended, Node.js v18+',
+    'Sass compilation succeeds without deprecation warnings, CSS files generated correctly, no errors in dev server console',
+    'Framework-specific config - Nuxt requires css property wrapped in vite object. Using sass key instead of scss for SvelteKit projects. Some setups require configuring both scss and sass keys simultaneously. If importing uncompiled Sass files, switch to precompiled CSS versions.',
+    0.88,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/78997907/the-legacy-js-api-is-deprecated-and-will-be-removed-in-dart-sass-2-0-0'
+),
+(
+    'Changing the input and output directory in Vite',
+    'stackoverflow-vite',
+    'MEDIUM',
+    '[
+        {"solution": "Set root option in vite.config.js to source directory and configure build.outDir for output", "percentage": 93, "command": "root: ''src'', build: { outDir: ''../dist'', emptyOutDir: true }", "note": "Standard approach for custom directory structure"},
+        {"solution": "Place vite.config.js in the configured root directory for proper path resolution", "percentage": 90, "note": "Config file location affects relative path behavior"},
+        {"solution": "Enable emptyOutDir: true to clear old build files before new build to prevent stale files", "percentage": 88, "command": "build: { emptyOutDir: true }", "note": "Prevents accumulation of old artifacts"},
+        {"solution": "For multipage apps with multiple HTML entry points, use glob and configure rollup input options", "percentage": 75, "note": "More complex setup for multiple entry points"}
+    ]'::jsonb,
+    'Vite project with custom directory structure, understanding of root concept in Vite configuration',
+    'npm run build outputs files to configured directory, dev server serves from configured root, no build errors related to directory paths',
+    'Config file location matters - placing vite.config.js in project root instead of src directory may not work properly. Missing emptyOutDir causes old build files to persist. Multipage setup requires glob package and rollup configuration. Path resolution issues when relative paths not calculated from correct root.',
+    0.86,
+    'sonnet-4',
+    NOW(),
+    'https://stackoverflow.com/questions/66863200/changing-the-input-and-output-directory-in-vite'
+);

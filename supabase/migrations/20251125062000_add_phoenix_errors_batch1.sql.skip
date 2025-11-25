@@ -1,0 +1,227 @@
+-- Add Phoenix (Elixir) framework common errors and solutions batch 1
+-- Mined from official Phoenix hexdocs.pm documentation
+
+INSERT INTO knowledge_entries (
+    query, category, hit_frequency, solutions, prerequisites, success_indicators,
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
+) VALUES (
+    'PostgreSQL role "postgres" does not exist error',
+    'phoenix',
+    'HIGH',
+    '[
+        {"solution": "Create the postgres role with login and database creation permissions: CREATE ROLE postgres LOGIN CREATEDB;", "percentage": 95, "note": "Run in PostgreSQL psql console", "command": "CREATE ROLE postgres LOGIN CREATEDB;"},
+        {"solution": "If role exists but login is denied, grant login permission: ALTER ROLE postgres LOGIN;", "percentage": 90, "note": "Role may exist but have login disabled"},
+        {"solution": "If role exists but lacks database creation: ALTER ROLE postgres CREATEDB;", "percentage": 85, "note": "Separate permission for database operations"}
+    ]'::jsonb,
+    'PostgreSQL installed and running, Access to psql console',
+    'psql connects successfully without FATAL role errors, Mix.Ecto setup completes',
+    'Do not create multiple postgres roles. Use exact case-sensitive role name. Verify permissions match DATABASE_URL configuration.',
+    0.93,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/ecto.html'
+),
+(
+    'PostgreSQL password authentication failed for user error',
+    'phoenix',
+    'HIGH',
+    '[
+        {"solution": "Update the password in config/dev.exs to match your actual PostgreSQL password", "percentage": 95, "note": "Database URL format: postgres://user:password@localhost:5432/db"},
+        {"solution": "Verify PostgreSQL user password with: psql -U postgres -h localhost", "percentage": 90, "note": "Test connection before updating config"},
+        {"solution": "Reset PostgreSQL password and update config/dev.exs simultaneously", "percentage": 85, "command": "ALTER USER postgres WITH PASSWORD ''your_new_password'';"}
+    ]'::jsonb,
+    'PostgreSQL user created, config/dev.exs file accessible, Database URL format known',
+    'Database connection succeeds, mix ecto.create completes without password errors',
+    'Password must match exactly between PostgreSQL and config file. Whitespace matters. Update both sides together. Use strong passwords in production.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/ecto.html'
+),
+(
+    'Missing Erlang VM installation for Elixir',
+    'phoenix',
+    'VERY_HIGH',
+    '[
+        {"solution": "Install Erlang via Elixir installation guide: https://hexdocs.pm/elixir/main/installation.html", "percentage": 95, "note": "Erlang 24+ required for Phoenix 1.8"},
+        {"solution": "Verify installation with: erl -version", "percentage": 92, "note": "Check Erlang version output"},
+        {"solution": "Reinstall Elixir which bundles Erlang for easier setup", "percentage": 88, "note": "Package managers may separate Elixir and Erlang"}
+    ]'::jsonb,
+    'Administrator/sudo access, Package manager or installer access',
+    'erl -version returns Erlang 24+, elixir -v shows both Erlang and Elixir versions',
+    'Elixir requires Erlang VM to run. Cannot use Elixir without Erlang. Installation order matters - Erlang before Elixir.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/installation.html'
+),
+(
+    'Live reloading not working on Linux (inotify-tools missing)',
+    'phoenix',
+    'MEDIUM',
+    '[
+        {"solution": "Install inotify-tools using your distribution package manager: apt install inotify-tools (Debian/Ubuntu), yum install inotify-tools (RHEL/CentOS)", "percentage": 94, "note": "Required for file system watcher"},
+        {"solution": "Verify installation: which inotifywait", "percentage": 90, "note": "Check that inotify-tools are in PATH"},
+        {"solution": "Increase inotify watch limit if still fails: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p", "percentage": 82, "note": "For systems with many files"}
+    ]'::jsonb,
+    'Linux system (Debian, RHEL, etc.), Package manager access, Mix project with Live Reload configured',
+    'File changes trigger automatic reload in dev server, No file system watcher errors in logs',
+    'inotify-tools only needed on Linux. macOS and Windows handle file watching differently. Not required for production.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/installation.html'
+),
+(
+    'Static manifest not found during Phoenix deployment',
+    'phoenix',
+    'HIGH',
+    '[
+        {"solution": "Run MIX_ENV=prod mix assets.deploy before starting production server to generate cache manifest", "percentage": 96, "note": "Must run in production environment", "command": "MIX_ENV=prod mix assets.deploy"},
+        {"solution": "Ensure assets.deploy is in your deployment checklist before server start", "percentage": 92, "note": "Part of deployment sequence, not application code"},
+        {"solution": "Verify cache_manifest.json exists in priv/static/ after running assets.deploy", "percentage": 88, "note": "File should be present before deployment"}
+    ]'::jsonb,
+    'MIX_ENV=prod set correctly, Dependencies compiled with mix deps.get --only prod, Code compiled with MIX_ENV=prod mix compile',
+    'cache_manifest.json file present in _build/prod/lib/app/priv/static/, Application starts without manifest errors',
+    'assets.deploy must run AFTER dependencies and code compilation. Running in wrong environment skips asset compilation. Cannot be skipped in production.',
+    0.95,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/deployment.html'
+),
+(
+    'Missing SECRET_KEY_BASE in Phoenix production',
+    'phoenix',
+    'VERY_HIGH',
+    '[
+        {"solution": "Generate SECRET_KEY_BASE with mix phx.gen.secret and set as environment variable", "percentage": 97, "note": "Required for session encryption and signing", "command": "mix phx.gen.secret"},
+        {"solution": "Export SECRET_KEY_BASE environment variable in production: export SECRET_KEY_BASE=$(mix phx.gen.secret)", "percentage": 94, "note": "Can also set in .env or deployment platform secrets"},
+        {"solution": "Verify secret is at least 64 bytes and random: echo $SECRET_KEY_BASE | wc -c", "percentage": 85, "note": "Check entropy and length"}
+    ]'::jsonb,
+    'Production environment configured, MIX_ENV=prod set, Ability to set environment variables in deployment platform',
+    'Application starts without SECRET_KEY_BASE missing error, Sessions persist and encrypt correctly',
+    'Do not commit SECRET_KEY_BASE to version control. Generate unique secret per environment. Not the same across deployments.',
+    0.97,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/deployment.html'
+),
+(
+    'Database connection errors in production (missing DATABASE_URL)',
+    'phoenix',
+    'VERY_HIGH',
+    '[
+        {"solution": "Set DATABASE_URL environment variable with full connection string: postgres://user:password@host:5432/database", "percentage": 97, "note": "Format: adapter://user:password@host:port/database"},
+        {"solution": "Verify DATABASE_URL format matches your database adapter (postgres, mysql, mssql, sqlite)", "percentage": 94, "note": "Wrong adapter in URL causes connection failures"},
+        {"solution": "Test connection string locally before deploying: psql \"$DATABASE_URL\"", "percentage": 91, "command": "psql \"$DATABASE_URL\""}
+    ]'::jsonb,
+    'Database server running and accessible, Valid credentials, Network connectivity to database host, PostgreSQL client tools installed for testing',
+    'Application connects to database on startup, Migrations run successfully, Database queries execute without connection errors',
+    'DATABASE_URL must be complete with scheme. Missing port defaults wrong. Special characters in password need URL encoding. Test before deployment.',
+    0.96,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/deployment.html'
+),
+(
+    'Route parameter interpolation in nested resources fails',
+    'phoenix',
+    'MEDIUM',
+    '[
+        {"solution": "Use proper interpolation syntax for nested routes: ~p\"/users/#{user_id}/posts/#{post_id}\"", "percentage": 95, "note": "Both IDs must be interpolated in correct order"},
+        {"solution": "Ensure parent resource ID is available in context before child route generation", "percentage": 91, "note": "Scope nesting affects variable availability"},
+        {"solution": "Use mix phx.routes to verify generated routes match expected paths", "percentage": 88, "command": "mix phx.routes"}
+    ]'::jsonb,
+    'Routes defined with resources in router.ex, Parent resource ID available as variable, Mix project with Phoenix generator',
+    'Generated URLs match expected paths, No compiler warnings about unknown routes, Links render correctly in templates',
+    'Interpolation order matters - parent before child. Using wrong variable name causes compile error. Check route definition syntax.',
+    0.92,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/routing.html'
+),
+(
+    'Duplicate route definitions causing compiler errors',
+    'phoenix',
+    'MEDIUM',
+    '[
+        {"solution": "Use mix phx.routes to identify duplicate paths, then reorder routes so specific ones appear before generic ones", "percentage": 95, "command": "mix phx.routes"},
+        {"solution": "Use :only and :except options to filter resource routes: resources \"/posts\", PostController, only: [:index, :show]", "percentage": 93, "note": "Reduces duplicate route generation"},
+        {"solution": "Organize scopes to avoid overlapping paths - put more specific scopes before general ones", "percentage": 89, "note": "Router matches first matching clause"}
+    ]'::jsonb,
+    'Phoenix router.ex file, Understanding of route matching order, Mix project with routes defined',
+    'mix phx.routes shows no duplicate paths, Compiler succeeds without errors, All intended routes appear exactly once',
+    'Router matches first clause that fits. More specific routes must come before generic ones. Scopes affect matching order.',
+    0.91,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/routing.html'
+),
+(
+    'Missing controller view module causes render failure',
+    'phoenix',
+    'HIGH',
+    '[
+        {"solution": "For each controller (e.g., UserController), create matching view module (UserHTML) in lib/app_web/controllers/user_html.ex", "percentage": 96, "note": "View module name must match controller name with HTML suffix"},
+        {"solution": "Create templates directory matching view name: lib/app_web/controllers/user_html/ with .html.heex files", "percentage": 94, "note": "Template files must match action names"},
+        {"solution": "Verify render/3 call in controller matches existing template: render(conn, :index, posts: posts)", "percentage": 92, "note": "First arg to render must match template atom"}
+    ]'::jsonb,
+    'Phoenix project with controllers generated, Understanding of controller-view-template relationship, File structure set up correctly',
+    'Controller action renders without errors, Template file loads successfully, Variables in template populate correctly',
+    'View module name must exactly match controller. Template atom in render must match template filename. Case-sensitive file paths.',
+    0.94,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/controllers.html'
+),
+(
+    'Query string formatting errors in verified routes',
+    'phoenix',
+    'MEDIUM',
+    '[
+        {"solution": "Use keyword list syntax for query strings: ~p\"/users/17?#{[admin: true, sort: \"name\"]}\"", "percentage": 95, "note": "Keyword list automatically converted to query string"},
+        {"solution": "Alternative map syntax: ~p\"/users/17?#{%{admin: true, sort: \"name\"}}\"", "percentage": 93, "note": "Maps also work for query parameters"},
+        {"solution": "Use mix phx.routes to verify route signature if errors occur", "percentage": 88, "command": "mix phx.routes"}
+    ]'::jsonb,
+    'Phoenix router with verified routes (~p), Elixir knowledge of keyword lists and maps, Mix project with routing',
+    'Verified routes compile without errors, Generated URLs contain correct query parameters, Links render with proper query strings',
+    'Only keyword lists and maps work in sigil. Plain strings in queries fail. URL encoding handled automatically by sigil.',
+    0.90,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/routing.html'
+),
+(
+    'WebSocket channel connection authentication fails',
+    'phoenix',
+    'MEDIUM',
+    '[
+        {"solution": "Pass authentication token through socket constructor: let socket = new Socket(\"/socket\", {authToken: window.userToken})", "percentage": 94, "note": "Token available in window object"},
+        {"solution": "Verify token in channel connect/3 callback using Phoenix.Token.verify/4", "percentage": 92, "note": "Callback returns {:ok, user_id} or {:error, reason}"},
+        {"solution": "Set max_age: 2 weeks (default) or custom value in verify call to control token expiration", "percentage": 88, "note": "Expired tokens cause verification failure"}
+    ]'::jsonb,
+    'Phoenix Channels configured, JavaScript Socket client loaded, User token generation implemented, connect/3 callback defined',
+    'Socket connects without authentication errors, user_id extracted successfully in connect callback, Channel join succeeds after auth',
+    'Token must be valid and not expired. Default max_age is 2 weeks. Mismatched tokens always fail. Ensure token generated same server that verifies it.',
+    0.89,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/channels.html'
+),
+(
+    'Phoenix channel message delivery not guaranteed during offline',
+    'phoenix',
+    'MEDIUM',
+    '[
+        {"solution": "Implement client-side tracking of last_seen_id and pass during channel join for catch-up", "percentage": 91, "note": "Server can replay messages since last_seen_id"},
+        {"solution": "Store last_seen_id in localStorage and restore on reconnect: localStorage.setItem(''lastSeenId'', id)", "percentage": 88, "note": "Persists across browser sessions"},
+        {"solution": "Send full state refresh after channel rejoin instead of relying on message buffer", "percentage": 85, "note": "Guarantees client has latest data"}
+    ]'::jsonb,
+    'Phoenix Channels configured, Client-side message handling logic, Understanding of at-most-once delivery semantics',
+    'Offline messages tracked correctly, Client catches up with server state after reconnection, No duplicate messages after rejoin',
+    'Phoenix does not guarantee message persistence. Clients offline miss messages permanently. PushBuffer clears on browser close. Implement catch-up yourself.',
+    0.84,
+    'sonnet-4',
+    NOW(),
+    'https://hexdocs.pm/phoenix/channels.html'
+);

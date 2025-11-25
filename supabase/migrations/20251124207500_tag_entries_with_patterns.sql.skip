@@ -1,0 +1,51 @@
+-- Tag recent Stack Overflow entries with patterns
+
+-- PATH_INHERITANCE pattern (spawn ENOENT issues)
+UPDATE knowledge_entries
+SET pattern_id = (SELECT id FROM patterns WHERE pattern_name = 'PATH_INHERITANCE')
+WHERE query IN (
+    'Could not start MCP server spawn npx ENOENT error',
+    'MCP server spawn npx ENOENT in Cline VSCode Windows',
+    'MCP server spawn dotnet ENOENT Claude Desktop macOS',
+    'Cannot build Claude MCP environment on Mac node command not found'
+);
+
+-- STREAMING_BUFFER_CONFLICT pattern
+UPDATE knowledge_entries
+SET pattern_id = (SELECT id FROM patterns WHERE pattern_name = 'STREAMING_BUFFER_CONFLICT')
+WHERE query IN (
+    'MCP error -32001 Request timed out Node.js server HTTP/SSE'
+);
+
+-- SANDBOX_LOCALHOST_BLOCK pattern
+UPDATE knowledge_entries
+SET pattern_id = (SELECT id FROM patterns WHERE pattern_name = 'SANDBOX_LOCALHOST_BLOCK')
+WHERE query IN (
+    'MCP server fetch failed error when calling localhost'
+);
+
+-- VERSION_REGRESSION pattern
+UPDATE knowledge_entries
+SET pattern_id = (SELECT id FROM patterns WHERE pattern_name = 'VERSION_REGRESSION')
+WHERE query IN (
+    'IPC delay 65+ seconds from main process to renderer Claude integration Electron',
+    'Claude Code settings.json deny block not respected reads .env despite restrictions',
+    'Claude Code not opening after update to v0.2.119',
+    'Claude CLI freezes on Windows version 1.0.96',
+    'Permission to read and edit files not being respected after update'
+);
+
+-- NULL_FEATURE_DETECTION pattern
+UPDATE knowledge_entries
+SET pattern_id = (SELECT id FROM patterns WHERE pattern_name = 'NULL_FEATURE_DETECTION')
+WHERE query IN (
+    'VSCode keybindings interfere with Claude Code terminal Shift+Enter sends backslash'
+);
+
+-- ENV_VAR_CHAIN_DEPENDENCY pattern
+UPDATE knowledge_entries
+SET pattern_id = (SELECT id FROM patterns WHERE pattern_name = 'ENV_VAR_CHAIN_DEPENDENCY')
+WHERE query IN (
+    'Claude Code through AWS Bedrock authentication fails',
+    'How to use Claude Code through AWS bedrock'
+);

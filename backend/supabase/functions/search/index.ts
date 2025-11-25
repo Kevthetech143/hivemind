@@ -187,6 +187,18 @@ serve(async (req) => {
         .eq('id', rel.entry.id)
     }
 
+    // Build pattern info if available
+    let pattern_info = null
+    if (primary.pattern_id && primary.pattern_name) {
+      pattern_info = {
+        pattern_name: primary.pattern_name,
+        display_name: primary.pattern_display_name,
+        root_cause: primary.pattern_root_cause,
+        detection_signals: primary.pattern_detection_signals,
+        solution_template: primary.pattern_solution_template
+      }
+    }
+
     // Build response
     const response = {
       query,
@@ -196,9 +208,11 @@ serve(async (req) => {
         category: primary.category,
         hit_frequency: primary.hit_frequency,
         solutions: primary.solutions,
+        failed_attempts: primary.failed_attempts || [],
         prerequisites: prereqs?.map(p => p.prerequisite).join(', ') || '',
         success_indicators: indicators?.map(i => i.indicator).join(', ') || '',
-        common_pitfalls: primary.common_pitfalls
+        common_pitfalls: primary.common_pitfalls,
+        pattern: pattern_info
       },
       confidence: Math.round(confidence * 100) / 100,
       related_solutions,
