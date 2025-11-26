@@ -1,6 +1,6 @@
 {
   "name": "clauderepo-mcp",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Instant troubleshooting solutions for Claude Code with integrated ticket system. Auto-opens systematic troubleshooting tickets when no solutions found.",
   "type": "module",
   "main": "dist/index.js",

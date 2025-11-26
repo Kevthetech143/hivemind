@@ -1,7 +1,9 @@
 # clauderepo
 
 > **Instant troubleshooting solutions for AI coding assistants**
-> Community-driven knowledge base with 2,400+ solutions - works with Claude Code, Codex CLI, Gemini CLI, Grok CLI
+> Community-driven knowledge base with 2,400+ solutions and growing
+
+**Works with any MCP-compatible CLI:** Claude Code, Codex CLI, Gemini CLI, Grok CLI, Cursor, and more.
 
 [![npm version](https://img.shields.io/npm/v/clauderepo-mcp.svg)](https://www.npmjs.com/package/clauderepo-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +12,15 @@
 
 ## 🎯 What is clauderepo?
 
-clauderepo is a **Model Context Protocol (MCP) server** that gives AI coding assistants instant access to a searchable knowledge base of troubleshooting solutions. Works with any MCP-compatible CLI: Claude Code, OpenAI Codex, Google Gemini CLI, Grok CLI, and more.
+clauderepo is a **Model Context Protocol (MCP) server** that gives AI coding assistants instant access to a searchable knowledge base of troubleshooting solutions.
+
+**Supported platforms:**
+- Claude Code (Anthropic)
+- Codex CLI (OpenAI)
+- Gemini CLI (Google)
+- Grok CLI (xAI)
+- Cursor
+- Any MCP-compatible tool
 
 When you hit an error, search clauderepo - get ranked solutions from the community in seconds.
 
@@ -108,7 +118,7 @@ Claude automatically tracks your feedback to improve rankings!
 | Auth problems | "user signed in but gets must sign in error" |
 | Supabase issues | "supabase migration failed" |
 
-**Current knowledge base**: 2,400+ solutions covering MCP, Playwright, Supabase, web development, databases, security, and more.
+**Current knowledge base**: 2,400+ solutions (and growing) covering MCP, Playwright, Supabase, web development, databases, security, and more.
 
 ---
 

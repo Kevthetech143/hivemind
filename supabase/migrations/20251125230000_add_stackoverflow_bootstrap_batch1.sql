@@ -5,7 +5,7 @@
 
 INSERT INTO knowledge_entries (
     query, category, hit_frequency, solutions, prerequisites, success_indicators,
-    common_pitfalls, success_rate, claude_version, last_verified, source_url, pattern_id
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
 ) VALUES
 (
     'Bootstrap is CSS or JavaScript framework or both?',

@@ -4,7 +4,7 @@
 
 INSERT INTO knowledge_entries (
     query, category, hit_frequency, solutions, prerequisites, success_indicators,
-    common_pitfalls, success_rate, claude_version, last_verified, source_url, pattern_id
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
 ) VALUES
 (
     'Transparent background with three.js canvas',
@@ -21,8 +21,7 @@ INSERT INTO knowledge_entries (
     0.92,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/20495302/transparent-background-with-three-js',
-    NULL
+    'https://stackoverflow.com/questions/20495302/transparent-background-with-three-js'
 ),
 (
     'How to change Three.js background color or make it transparent',
@@ -40,8 +39,7 @@ INSERT INTO knowledge_entries (
     0.93,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/16177056/changing-three-js-background-to-transparent-or-other-color',
-    NULL
+    'https://stackoverflow.com/questions/16177056/changing-three-js-background-to-transparent-or-other-color'
 ),
 (
     'Learning WebGL and Three.js - which should I learn first',
@@ -59,8 +57,7 @@ INSERT INTO knowledge_entries (
     0.88,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/11966779/learning-webgl-and-three-js',
-    NULL
+    'https://stackoverflow.com/questions/11966779/learning-webgl-and-three-js'
 ),
 (
     'Convert mouse coordinates to Three.js world coordinates or screen to 3D space',
@@ -78,8 +75,7 @@ INSERT INTO knowledge_entries (
     0.91,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/13055214/mouse-canvas-x-y-to-three-js-world-x-y-z',
-    NULL
+    'https://stackoverflow.com/questions/13055214/mouse-canvas-x-y-to-three-js-world-x-y-z'
 ),
 (
     'Transparent objects rendering issues in Three.js - overlapping transparency',
@@ -97,8 +93,7 @@ INSERT INTO knowledge_entries (
     0.89,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/15994944/transparent-objects-in-three-js',
-    NULL
+    'https://stackoverflow.com/questions/15994944/transparent-objects-in-three-js'
 ),
 (
     'How to stop requestAnimationFrame loop in Three.js',
@@ -116,8 +111,7 @@ INSERT INTO knowledge_entries (
     0.94,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/10735922/how-to-stop-a-requestanimationframe-recursion-loop',
-    NULL
+    'https://stackoverflow.com/questions/10735922/how-to-stop-a-requestanimationframe-recursion-loop'
 ),
 (
     'Collision detection between meshes in Three.js',
@@ -135,8 +129,7 @@ INSERT INTO knowledge_entries (
     0.87,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/11473755/how-to-detect-collision-in-three-js',
-    NULL
+    'https://stackoverflow.com/questions/11473755/how-to-detect-collision-in-three-js'
 ),
 (
     'Rotate camera around origin with mouse in Three.js',
@@ -154,8 +147,7 @@ INSERT INTO knowledge_entries (
     0.95,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/8426822/rotate-camera-in-three-js-with-mouse',
-    NULL
+    'https://stackoverflow.com/questions/8426822/rotate-camera-in-three-js-with-mouse'
 ),
 (
     'Remove object from Three.js scene',
@@ -173,8 +165,7 @@ INSERT INTO knowledge_entries (
     0.91,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/18357529/threejs-remove-object-from-scene',
-    NULL
+    'https://stackoverflow.com/questions/18357529/threejs-remove-object-from-scene'
 ),
 (
     'Rotate mesh by specific angle (e.g., 90 degrees) in Three.js',
@@ -192,8 +183,7 @@ INSERT INTO knowledge_entries (
     0.94,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/29907536/how-can-i-rotate-a-mesh-by-90-degrees-in-threejs',
-    NULL
+    'https://stackoverflow.com/questions/29907536/how-can-i-rotate-a-mesh-by-90-degrees-in-threejs'
 ),
 (
     'Load and apply textures to meshes in Three.js',
@@ -211,8 +201,7 @@ INSERT INTO knowledge_entries (
     0.90,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/7919516/using-textures-in-three-js',
-    NULL
+    'https://stackoverflow.com/questions/7919516/using-textures-in-three-js'
 ),
 (
     'Rotate object around its own center instead of world center in Three.js',
@@ -230,8 +219,7 @@ INSERT INTO knowledge_entries (
     0.90,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/28848863/threejs-how-to-rotate-around-objects-own-center-instead-of-world-center',
-    NULL
+    'https://stackoverflow.com/questions/28848863/threejs-how-to-rotate-around-objects-own-center-instead-of-world-center'
 ),
 (
     'Calculate bounding box from Three.js Object3D',
@@ -249,6 +237,5 @@ INSERT INTO knowledge_entries (
     0.88,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/15492857/any-way-to-get-a-bounding-box-from-a-three-js-object3d',
-    NULL
+    'https://stackoverflow.com/questions/15492857/any-way-to-get-a-bounding-box-from-a-three-js-object3d'
 );

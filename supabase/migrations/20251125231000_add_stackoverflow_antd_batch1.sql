@@ -3,7 +3,7 @@
 
 INSERT INTO knowledge_entries (
     query, category, hit_frequency, solutions, prerequisites, success_indicators,
-    common_pitfalls, success_rate, claude_version, last_verified, source_url, pattern_id
+    common_pitfalls, success_rate, claude_version, last_verified, source_url
 ) VALUES (
     'How to hide the OK and Cancel buttons of Ant Design Modal',
     'stackoverflow-antd',
@@ -19,8 +19,7 @@ INSERT INTO knowledge_entries (
     0.92,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/40699879/how-to-hide-the-ok-and-cancel-buttons-of-antd-modal',
-    NULL
+    'https://stackoverflow.com/questions/40699879/how-to-hide-the-ok-and-cancel-buttons-of-antd-modal'
 ),
 (
     'How to sort an Ant Design table in alphabetical order',
@@ -36,8 +35,7 @@ INSERT INTO knowledge_entries (
     0.93,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/55808128/how-to-sort-a-table-in-alphabetical-order-with-antd',
-    NULL
+    'https://stackoverflow.com/questions/55808128/how-to-sort-a-table-in-alphabetical-order-with-antd'
 ),
 (
     'Ant Design huge bundle size issue',
@@ -54,8 +52,7 @@ INSERT INTO knowledge_entries (
     0.90,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/48721290/ant-design-huge-imports',
-    NULL
+    'https://stackoverflow.com/questions/48721290/ant-design-huge-imports'
 ),
 (
     'Ant Design Upload component requires action prop but I dont need it',
@@ -67,12 +64,11 @@ INSERT INTO knowledge_entries (
     ]'::jsonb,
     'Ant Design Upload component, React component with state management for files',
     'File selection works, onChange event fires without uploading to server, form can submit files via custom endpoint',
-    'Without setTimeout in customRequest, onChange won\'t trigger \"done\" status. beforeUpload returning false prevents upload but also prevents done status.',
+    'Without setTimeout in customRequest, onChange won''''t trigger \"done\" status. beforeUpload returning false prevents upload but also prevents done status.',
     0.89,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/51514757/action-function-is-required-with-antd-upload-control-but-i-dont-need-it',
-    NULL
+    'https://stackoverflow.com/questions/51514757/action-function-is-required-with-antd-upload-control-but-i-dont-need-it'
 ),
 (
     'ESLint react/display-name error in Ant Design render props',
@@ -89,8 +85,7 @@ INSERT INTO knowledge_entries (
     0.91,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/55620562/eslint-component-definition-is-missing-displayname-react-display-name',
-    NULL
+    'https://stackoverflow.com/questions/55620562/eslint-component-definition-is-missing-displayname-react-display-name'
 ),
 (
     'Ant Design Table requires unique key prop for each record',
@@ -107,8 +102,7 @@ INSERT INTO knowledge_entries (
     0.94,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/51703111/each-record-in-table-should-have-a-unique-key-prop-or-set-rowkey-to-an-uniqu',
-    NULL
+    'https://stackoverflow.com/questions/51703111/each-record-in-table-should-have-a-unique-key-prop-or-set-rowkey-to-an-uniqu'
 ),
 (
     'How to disable pagination and show all records in Ant Design Table',
@@ -124,8 +118,7 @@ INSERT INTO knowledge_entries (
     0.95,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/50007081/ant-design-table-how-can-i-disable-pagination-and-show-all-records',
-    NULL
+    'https://stackoverflow.com/questions/50007081/ant-design-table-how-can-i-disable-pagination-and-show-all-records'
 ),
 (
     'How to set Ant Design form field error message dynamically',
@@ -141,8 +134,7 @@ INSERT INTO knowledge_entries (
     0.91,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/47246396/ant-design-how-to-set-form-field-error-message-dynamically',
-    NULL
+    'https://stackoverflow.com/questions/47246396/ant-design-how-to-set-form-field-error-message-dynamically'
 ),
 (
     'How to use Ant Design Form.create() with TypeScript',
@@ -158,8 +150,7 @@ INSERT INTO knowledge_entries (
     0.89,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/44898248/how-to-use-antd-form-create-in-typescript',
-    NULL
+    'https://stackoverflow.com/questions/44898248/how-to-use-antd-form-create-in-typescript'
 ),
 (
     'How to configure Next.js with Ant Design, Less and Sass CSS modules',
@@ -176,8 +167,7 @@ INSERT INTO knowledge_entries (
     0.75,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/61240582/how-to-configure-next-js-with-antd-less-and-sass-css-modules',
-    NULL
+    'https://stackoverflow.com/questions/61240582/how-to-configure-next-js-with-antd-less-and-sass-css-modules'
 ),
 (
     'How to update Ant Design form when initialValue prop changes',
@@ -193,8 +183,7 @@ INSERT INTO knowledge_entries (
     0.92,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/61422607/update-antd-form-if-initialvalue-is-changed',
-    NULL
+    'https://stackoverflow.com/questions/61422607/update-antd-form-if-initialvalue-is-changed'
 ),
 (
     'How to right-align menu items in Ant Design Menu',
@@ -211,6 +200,5 @@ INSERT INTO knowledge_entries (
     0.88,
     'sonnet-4',
     NOW(),
-    'https://stackoverflow.com/questions/50882990/how-to-right-align-menu-items-in-ant-design',
-    NULL
+    'https://stackoverflow.com/questions/50882990/how-to-right-align-menu-items-in-ant-design'
 );

@@ -23,13 +23,30 @@ serve(async (req) => {
     )
 
     // Parse tracking event
-    const { event_type, solution_query } = await req.json()
+    const { event_type, solution_query, solution_id } = await req.json()
 
-    if (!event_type || !solution_query) {
+    if (!event_type || (!solution_query && !solution_id)) {
       return new Response(
-        JSON.stringify({ error: 'event_type and solution_query required' }),
+        JSON.stringify({ error: 'event_type and (solution_query or solution_id) required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Helper to find entry by ID or query
+    async function findEntry(selectFields: string) {
+      if (solution_id) {
+        return await supabaseClient
+          .from('knowledge_entries')
+          .select(selectFields)
+          .eq('id', solution_id)
+          .single()
+      } else {
+        return await supabaseClient
+          .from('knowledge_entries')
+          .select(selectFields)
+          .eq('query', solution_query)
+          .single()
+      }
     }
 
     // Rate limiting for voting events (stricter limits)
@@ -75,11 +92,7 @@ serve(async (req) => {
 
     if (event_type === 'repeat_search') {
       // Get current stats
-      const { data: entry, error: fetchError } = await supabaseClient
-        .from('knowledge_entries')
-        .select('view_count, repeat_search_rate')
-        .eq('query', solution_query)
-        .single()
+      const { data: entry, error: fetchError } = await findEntry('id, view_count, repeat_search_rate')
 
       if (fetchError || !entry) {
         return new Response(
@@ -97,7 +110,7 @@ serve(async (req) => {
       const { error: updateError } = await supabaseClient
         .from('knowledge_entries')
         .update({ repeat_search_rate: new_rate })
-        .eq('query', solution_query)
+        .eq('id', entry.id)
 
       if (updateError) {
         console.error('Repeat search tracking error:', updateError)
@@ -115,11 +128,7 @@ serve(async (req) => {
 
     if (event_type === 'solution_success') {
       // Get current thumbs_up count
-      const { data: entry, error: fetchError } = await supabaseClient
-        .from('knowledge_entries')
-        .select('thumbs_up')
-        .eq('query', solution_query)
-        .single()
+      const { data: entry, error: fetchError } = await findEntry('id, thumbs_up')
 
       if (fetchError || !entry) {
         return new Response(
@@ -132,7 +141,7 @@ serve(async (req) => {
       const { error } = await supabaseClient
         .from('knowledge_entries')
         .update({ thumbs_up: (entry.thumbs_up || 0) + 1 })
-        .eq('query', solution_query)
+        .eq('id', entry.id)
 
       if (error) {
         console.error('Thumbs up tracking error:', error)
@@ -150,11 +159,7 @@ serve(async (req) => {
 
     if (event_type === 'solution_failure') {
       // Get current thumbs_down count
-      const { data: entry, error: fetchError } = await supabaseClient
-        .from('knowledge_entries')
-        .select('thumbs_down')
-        .eq('query', solution_query)
-        .single()
+      const { data: entry, error: fetchError } = await findEntry('id, thumbs_down')
 
       if (fetchError || !entry) {
         return new Response(
@@ -167,7 +172,7 @@ serve(async (req) => {
       const { error } = await supabaseClient
         .from('knowledge_entries')
         .update({ thumbs_down: (entry.thumbs_down || 0) + 1 })
-        .eq('query', solution_query)
+        .eq('id', entry.id)
 
       if (error) {
         console.error('Thumbs down tracking error:', error)

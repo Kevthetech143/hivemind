@@ -22,7 +22,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { action, ticket_id, step, result, solution_data } = await req.json()
+    const { action, ticket_id, step, result, solution_data, pending_id } = await req.json()
 
     if (!action || !ticket_id) {
       return new Response(
@@ -84,7 +84,7 @@ serve(async (req) => {
       )
     }
 
-    // RESOLVE ticket and auto-contribute to knowledge base
+    // RESOLVE ticket and route to pending queue (not main KB)
     if (action === 'resolve') {
       if (!solution_data) {
         return new Response(
@@ -111,9 +111,93 @@ serve(async (req) => {
       )
     }
 
+    // CONFIRM a pending solution (user says "clauderepo: worked" after resolving ticket)
+    if (action === 'confirm_pending') {
+      if (!pending_id) {
+        return new Response(
+          JSON.stringify({ error: 'pending_id required for confirm_pending action' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const { data: graduated, error } = await supabaseClient.rpc('confirm_pending_solution', {
+        p_pending_id: pending_id
+      })
+
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          graduated: graduated,
+          message: graduated
+            ? 'Solution verified and added to knowledge base!'
+            : 'Confirmation recorded. Need 1 more confirmation to graduate.'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ADMIN APPROVE a pending solution (fast-track to KB)
+    if (action === 'admin_approve') {
+      if (!pending_id) {
+        return new Response(
+          JSON.stringify({ error: 'pending_id required for admin_approve action' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const { data: new_id, error } = await supabaseClient.rpc('admin_approve_solution', {
+        p_pending_id: pending_id
+      })
+
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          knowledge_entry_id: new_id,
+          message: 'Solution approved and added to knowledge base!'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // LIST pending solutions (for admin review)
+    if (action === 'list_pending') {
+      const { data: pending, error } = await supabaseClient
+        .from('pending_ticket_solutions')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) {
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({ pending_solutions: pending }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Invalid action
     return new Response(
-      JSON.stringify({ error: 'Invalid action. Must be: get, update, or resolve' }),
+      JSON.stringify({ error: 'Invalid action. Must be: get, update, resolve, confirm_pending, admin_approve, or list_pending' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

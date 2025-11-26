@@ -203,6 +203,36 @@
 
 ---
 
+## Phase 5: Hot Skills Integration - Month 6+
+
+**Goal**: Become the unified discovery layer for solutions AND skills
+
+### Concept: "Hot Skills" System
+When users search clauderepo, return not just solutions but relevant skills they can install on-demand - no local storage needed.
+
+### Implementation Steps:
+- [ ] Add `skill_url` field to knowledge entries (link to relevant skill repo)
+- [ ] Index external skill sources (skillsmp.com, awesome-claude-skills, anthropics/skills)
+- [ ] Build skill metadata table: name, description, source_url, install_command, categories
+- [ ] MCP tool returns: solution + "Recommended skill: X" with install command
+- [ ] Advanced: Return skill content directly via MCP (no git clone needed)
+- [ ] Search unification: "memory leak" returns both fix AND prevention workflow
+
+### Data Sources to Index:
+- skillsmp.com (15,000+ skills)
+- travisvn/awesome-claude-skills (450+ curated)
+- anthropics/skills (official marketplace)
+- obra/superpowers (20+ battle-tested)
+- Community submissions
+
+### Value Proposition:
+- **Before**: Search 5 different repos/sites for skills
+- **After**: One search → solutions + skills + install commands
+
+**Success Criteria**: 1,000+ indexed skills, 20% of searches return skill recommendations
+
+---
+
 ## Risk Mitigation
 
 ### Risk: Supabase costs spiral

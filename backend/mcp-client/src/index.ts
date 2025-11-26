@@ -21,7 +21,7 @@ import {
 
 const SUPABASE_URL = 'https://ksethrexopllfhyrxlrb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZXRocmV4b3BsbGZoeXJ4bHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3NDU4ODksImV4cCI6MjA3OTMyMTg4OX0.SDJulNaemJ66EaFl77-1IJLTAleihU5PvEChNaO5osI';
-const CURRENT_VERSION = '2.1.0';
+const CURRENT_VERSION = '2.2.0';
 const NPM_PACKAGE_NAME = 'clauderepo-mcp';
 
 // ============================================================================
@@ -118,7 +118,7 @@ async function callEdgeFunction(functionName: string, body: any): Promise<any> {
 const server = new Server(
   {
     name: 'clauderepo',
-    version: '2.1.0',
+    version: '2.2.0',
   },
   {
     capabilities: {
@@ -206,13 +206,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           'Report solution feedback to improve rankings and quality. ' +
           'TRIGGER WORDS: When the user says "clauderepo: worked" or "clauderepo: failed", call this tool IMMEDIATELY. ' +
           'Also call when user says "that worked", "it worked", "that fixed it", "didn\'t work", "still broken", etc. ' +
-          'Extract the solution_query from the most recent search result you showed them.',
+          'Use the solution_id from the most recent search result (preferred) or solution_query as fallback.',
         inputSchema: {
           type: 'object',
           properties: {
+            solution_id: {
+              type: 'number',
+              description: 'The numeric ID of the solution (from primary_solution.id in search results). Preferred over solution_query.',
+            },
             solution_query: {
               type: 'string',
-              description: 'The exact query/problem title of the solution they tried (from the search results you just showed)',
+              description: 'Fallback: The exact query/problem title of the solution (use solution_id instead if available)',
             },
             outcome: {
               type: 'string',
@@ -224,7 +228,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: 'Optional: Did you copy and run a command from the solution?',
             },
           },
-          required: ['solution_query', 'outcome'],
+          required: ['outcome'],
         },
       },
       {
@@ -254,8 +258,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'resolve_ticket',
         description:
-          'Resolve a troubleshooting ticket and auto-contribute the solution to the knowledge base. ' +
-          'Call this when the problem is solved. The solution will be automatically added to clauderepo.',
+          'Resolve a troubleshooting ticket and queue the solution for verification. ' +
+          'Call this when the problem is solved. Solution goes to pending queue until verified.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -305,6 +309,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ['ticket_id', 'solution_data'],
+        },
+      },
+      {
+        name: 'list_pending_solutions',
+        description:
+          'List solutions awaiting verification. Admin tool to review pending solutions from resolved tickets.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: 'approve_pending_solution',
+        description:
+          'Admin approve a pending solution to immediately add it to the knowledge base. ' +
+          'Use this after reviewing a pending solution and confirming it is valid.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            pending_id: {
+              type: 'number',
+              description: 'The pending solution ID to approve',
+            },
+          },
+          required: ['pending_id'],
         },
       },
     ],
@@ -434,6 +464,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Primary solution - removed fake community stats
       formattedText += `## 🎯 Primary Solution (${(confidence * 100).toFixed(0)}% confidence)\n\n`;
+      formattedText += `**Solution ID**: ${primary_solution.id}\n`;
       formattedText += `**Problem**: ${primary_solution.query}\n`;
       formattedText += `**Category**: ${primary_solution.category}\n\n`;
 
@@ -491,7 +522,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       formattedText += `---\n`;
       formattedText += `*Search completed in ${result.query_metadata.search_time_ms.toFixed(1)}ms using ${result.query_metadata.search_method}*\n\n`;
       formattedText += `💬 **After trying a solution, tell me:** "clauderepo: worked" or "clauderepo: failed"\n`;
-      formattedText += `   This helps improve rankings for the community.\n`;
+      formattedText += `   *(Use solution_id: ${primary_solution.id} for feedback)*\n`;
 
       // Add update notification if available (await the promise)
       const latestVersion = await updateCheckPromise;
@@ -564,33 +595,45 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (toolName === 'report_solution_outcome') {
     const args = request.params.arguments as any;
 
-    if (!args.solution_query || !args.outcome) {
-      throw new McpError(ErrorCode.InvalidParams, 'solution_query and outcome are required');
+    if (!args.outcome) {
+      throw new McpError(ErrorCode.InvalidParams, 'outcome is required');
+    }
+
+    if (!args.solution_id && !args.solution_query) {
+      throw new McpError(ErrorCode.InvalidParams, 'solution_id or solution_query is required');
     }
 
     try {
       const trackingCalls: Promise<any>[] = [];
+
+      // Build tracking payload - prefer solution_id over solution_query
+      const trackPayload: any = {};
+      if (args.solution_id) {
+        trackPayload.solution_id = args.solution_id;
+      } else {
+        trackPayload.solution_query = args.solution_query;
+      }
 
       // Track thumbs up/down
       if (args.outcome === 'success') {
         trackingCalls.push(
           callEdgeFunction('track', {
             event_type: 'solution_success',
-            solution_query: args.solution_query
+            ...trackPayload
           })
         );
       } else if (args.outcome === 'failure') {
         trackingCalls.push(
           callEdgeFunction('track', {
             event_type: 'solution_failure',
-            solution_query: args.solution_query
+            ...trackPayload
           })
         );
         // Also track repeat search for failures
         trackingCalls.push(
           callEdgeFunction('track', {
             event_type: 'repeat_search',
-            solution_query: args.solution_query
+            ...trackPayload
           })
         );
       }
@@ -600,7 +643,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         trackingCalls.push(
           callEdgeFunction('track', {
             event_type: 'command_copy',
-            solution_query: args.solution_query
+            ...trackPayload
           })
         );
       }
@@ -613,8 +656,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         ? 'Thanks for confirming this solution worked!'
         : 'Sorry this didn\'t work. We\'ve noted this to improve our rankings.';
 
+      const solutionRef = args.solution_id ? `ID #${args.solution_id}` : args.solution_query;
       const formattedText = `# Feedback Recorded ${outcomeEmoji}\n\n` +
-        `**Solution**: ${args.solution_query}\n` +
+        `**Solution**: ${solutionRef}\n` +
         `**Outcome**: ${args.outcome}\n\n` +
         `${outcomeMessage}\n\n` +
         `This feedback helps improve solution quality for the community. 🙏`;
@@ -691,15 +735,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         solution_data: args.solution_data
       });
 
-      const formattedText = `# 🎉 Ticket Resolved & Solution Added!\n\n` +
+      const formattedText = `# 🎫 Ticket Resolved - Solution Queued for Verification\n\n` +
         `**Ticket**: ${args.ticket_id}\n` +
-        `**Knowledge Entry ID**: ${result.knowledge_id}\n\n` +
+        `**Pending ID**: ${result.pending_id}\n\n` +
         `${result.message}\n\n` +
         `---\n\n` +
-        `✅ This solution is now searchable in clauderepo\n` +
-        `✅ Future users with this problem will find your solution\n` +
-        `✅ No moderation needed - ticket-based solutions are auto-approved\n\n` +
-        `Thank you for helping grow the knowledge base! 🙏`;
+        `### Next Steps:\n` +
+        `1. **Test the fix** - Make sure it actually works\n` +
+        `2. **Say "clauderepo: worked"** - This verifies the solution\n` +
+        `3. **Or wait for admin review** - We'll review pending solutions\n\n` +
+        `Once verified, the solution will be added to the main knowledge base.\n\n` +
+        `*Why verification?* This ensures we only add proven solutions. 🔒`;
 
       return {
         content: [
@@ -716,6 +762,105 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new McpError(
         ErrorCode.InternalError,
         `Failed to resolve ticket: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // Handle list_pending_solutions tool
+  if (toolName === 'list_pending_solutions') {
+    try {
+      const result = await callEdgeFunction('ticket', {
+        action: 'list_pending',
+        ticket_id: '_admin'  // dummy ticket_id for list action
+      });
+
+      const pending = result.pending_solutions || [];
+
+      if (pending.length === 0) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: '# Pending Solutions\n\n✅ No pending solutions awaiting review.',
+            },
+          ],
+        };
+      }
+
+      let formattedText = `# Pending Solutions (${pending.length})\n\n`;
+      formattedText += `These solutions are awaiting verification:\n\n`;
+
+      for (const sol of pending) {
+        formattedText += `---\n`;
+        formattedText += `### ID: ${sol.id}\n`;
+        formattedText += `**Problem**: ${sol.original_problem}\n`;
+        formattedText += `**Category**: ${sol.category}\n`;
+        formattedText += `**Ticket**: ${sol.ticket_id}\n`;
+        formattedText += `**Confirmations**: ${sol.confirm_count}/2\n`;
+        formattedText += `**Created**: ${new Date(sol.created_at).toLocaleDateString()}\n\n`;
+
+        const solutions = sol.solutions || [];
+        if (solutions.length > 0) {
+          formattedText += `**Solutions**:\n`;
+          solutions.slice(0, 2).forEach((s: any, idx: number) => {
+            formattedText += `${idx + 1}. ${s.solution}\n`;
+          });
+        }
+        formattedText += '\n';
+      }
+
+      formattedText += `---\n`;
+      formattedText += `To approve a solution: \`approve_pending_solution(pending_id)\``;
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: formattedText,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to list pending solutions: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // Handle approve_pending_solution tool
+  if (toolName === 'approve_pending_solution') {
+    const args = request.params.arguments as any;
+
+    if (!args.pending_id) {
+      throw new McpError(ErrorCode.InvalidParams, 'pending_id is required');
+    }
+
+    try {
+      const result = await callEdgeFunction('ticket', {
+        action: 'admin_approve',
+        ticket_id: '_admin',  // dummy for this action
+        pending_id: args.pending_id
+      });
+
+      const formattedText = `# ✅ Solution Approved!\n\n` +
+        `**Pending ID**: ${args.pending_id}\n` +
+        `**Knowledge Entry ID**: ${result.knowledge_entry_id}\n\n` +
+        `${result.message}\n\n` +
+        `The solution is now live in the knowledge base and searchable by users.`;
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: formattedText,
+          },
+        ],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to approve solution: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
