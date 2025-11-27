@@ -1,5 +1,5 @@
-// Supabase Edge Function: List and Get Flows
-// Handles flow browsing and retrieval
+// Supabase Edge Function: List and Get Flows/Skills
+// Handles flow and skill browsing and retrieval
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -22,22 +22,32 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Parse request
-    const { action = 'list', category = null, flow_id = null, limit = 50 } = await req.json()
+    // Parse request - type defaults to 'flow' for backward compatibility
+    const { action = 'list', category = null, flow_id = null, limit = 50, type = 'flow' } = await req.json()
+    const entryType = type === 'skill' ? 'skill' : 'flow'
 
     const startTime = performance.now()
 
     if (action === 'list') {
-      // List all flows, optionally filtered by category
-      const { data, error } = await supabaseClient.rpc('list_flows', {
-        category_filter: category,
-        result_limit: limit
-      })
+      // List all flows/skills, optionally filtered by category
+      // Use direct query instead of RPC for flexibility with type
+      let query = supabaseClient
+        .from('knowledge_entries')
+        .select('id, query, category, solutions, common_pitfalls, created_at')
+        .eq('type', entryType)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (category) {
+        query = query.eq('category', category)
+      }
+
+      const { data, error } = await query
 
       if (error) {
-        console.error('List flows error:', error)
+        console.error(`List ${entryType}s error:`, error)
         return new Response(
-          JSON.stringify({ error: 'Failed to list flows' }),
+          JSON.stringify({ error: `Failed to list ${entryType}s` }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -48,7 +58,7 @@ serve(async (req) => {
       const { data: categories } = await supabaseClient
         .from('knowledge_entries')
         .select('category')
-        .eq('type', 'flow')
+        .eq('type', entryType)
         .order('category')
 
       const uniqueCategories = [...new Set(categories?.map(c => c.category) || [])]
@@ -56,6 +66,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           action: 'list',
+          type: entryType,
           flows: data || [],
           total_count: data?.length || 0,
           categories: uniqueCategories,
@@ -69,17 +80,17 @@ serve(async (req) => {
     }
 
     if (action === 'get' && flow_id) {
-      // Get a specific flow by ID
+      // Get a specific flow/skill by ID
       const { data, error } = await supabaseClient
         .from('knowledge_entries')
         .select('*')
         .eq('id', flow_id)
-        .eq('type', 'flow')
+        .eq('type', entryType)
         .single()
 
       if (error || !data) {
         return new Response(
-          JSON.stringify({ error: 'Flow not found' }),
+          JSON.stringify({ error: `${entryType} not found` }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -103,6 +114,9 @@ serve(async (req) => {
             common_pitfalls: data.common_pitfalls,
             prerequisites: data.prerequisites,
             success_indicators: data.success_indicators,
+            executable: data.executable || null,
+            executable_type: data.executable_type || 'steps',
+            preview_summary: data.preview_summary || null,
             view_count: data.view_count,
             created_at: data.created_at
           },

@@ -197,6 +197,40 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'list_skills',
+        description:
+          'Browse all available skills in the knowledge base. ' +
+          'Skills are reusable AI capabilities with cross-platform support (CLI commands + manual instructions). ' +
+          'Use this to discover skills or filter by category.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            category: {
+              type: 'string',
+              description: 'Optional: Filter skills by category (e.g., "claude-code", "web-automation")',
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'get_skill',
+        description:
+          'Get a specific skill by ID. Returns raw JSON with full execution details including: ' +
+          'cli commands (macos/linux/windows), manual instructions for web AIs, prerequisites, and pitfalls. ' +
+          'Use list_skills first to browse available skills and get their IDs.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            skill_id: {
+              type: 'number',
+              description: 'The skill ID (from list_skills results)',
+            },
+          },
+          required: ['skill_id'],
+        },
+      },
+      {
         name: 'contribute_solution',
         description:
           'Submit a new solution to the clauderepo knowledge base. ' +
@@ -683,6 +717,118 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new McpError(
         ErrorCode.InternalError,
         `Failed to get flow: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // Handle list_skills tool
+  if (toolName === 'list_skills') {
+    const category = request.params.arguments?.category as string | undefined;
+
+    try {
+      const result = await callEdgeFunction('flows', {
+        action: 'list',
+        category: category || null,
+        type: 'skill'
+      });
+
+      if (!result.flows || result.flows.length === 0) {
+        return {
+          content: [{ type: 'text', text: category
+            ? `No skills found in category: ${category}`
+            : 'No skills found in the knowledge base yet.'
+          }],
+        };
+      }
+
+      let formattedText = `## 🛠️ Available Skills${category ? ` (${category})` : ''}\n\n`;
+      formattedText += `Found ${result.flows.length} skill(s):\n\n`;
+
+      result.flows.forEach((skill: any) => {
+        formattedText += `- **${skill.query}** (ID: ${skill.id}) - ${skill.category}\n`;
+      });
+
+      formattedText += `\n*Use \`get_skill(skill_id)\` to get full execution details for a specific skill*\n`;
+
+      return {
+        content: [{ type: 'text', text: formattedText }],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to list skills: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // Handle get_skill tool - returns raw JSON for AI execution
+  if (toolName === 'get_skill') {
+    const skillId = request.params.arguments?.skill_id as number;
+    if (!skillId) {
+      throw new McpError(ErrorCode.InvalidParams, 'skill_id is required');
+    }
+
+    try {
+      const result = await callEdgeFunction('flows', { action: 'get', flow_id: skillId, type: 'skill' });
+
+      if (!result.flow) {
+        return {
+          content: [{ type: 'text', text: `❌ Skill not found with ID: ${skillId}` }],
+        };
+      }
+
+      const skill = result.flow;
+
+      // Return raw JSON for AI consumption
+      const skillData: any = {
+        id: skill.id,
+        name: skill.query,
+        category: skill.category,
+        type: 'skill',
+        executable_type: skill.executable_type || 'steps',
+        steps: skill.solutions,
+        prerequisites: skill.prerequisites || null,
+        common_pitfalls: skill.common_pitfalls || null,
+        success_indicators: skill.success_indicators || null,
+      };
+
+      // Include executable scripts if present
+      if (skill.executable) {
+        skillData.executable = skill.executable;
+        skillData.preview_summary = skill.preview_summary || null;
+      }
+
+      let output = `## 🛠️ Skill: ${skill.query}\n\n`;
+
+      // If this is an executable script skill, show confirmation prompt
+      if (skill.executable_type === 'script' && skill.executable) {
+        output += `### ⚡ Executable Skill\n\n`;
+        output += `**What this does:**\n${skill.preview_summary || 'Runs a script on your system'}\n\n`;
+        output += `**Platforms available:** ${Object.keys(skill.executable).join(', ')}\n\n`;
+        output += `---\n\n`;
+        output += `**🔒 Confirmation Required**\n\n`;
+        output += `Before running, ask the user: **"Run this skill? (yes / show script / no)"**\n\n`;
+        output += `- **yes** → Execute the script for their platform\n`;
+        output += `- **show script** → Display the full script code below, then ask again\n`;
+        output += `- **no** → Don't run it\n\n`;
+        output += `---\n\n`;
+      }
+
+      output += `**Execution Data (JSON):**\n\`\`\`json\n${JSON.stringify(skillData, null, 2)}\n\`\`\`\n\n`;
+
+      if (skill.executable_type !== 'script') {
+        output += `### How to use this skill:\n`;
+        output += `- **CLI AIs** (Claude Code, Cursor, etc.): Use the \`cli\` commands for your platform (macos/linux/windows)\n`;
+        output += `- **Web AIs** (ChatGPT, Gemini, etc.): Follow the \`manual\` instructions and guide the user\n`;
+      }
+
+      return {
+        content: [{ type: 'text', text: output }],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to get skill: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
