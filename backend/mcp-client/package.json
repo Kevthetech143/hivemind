@@ -1,11 +1,11 @@
 {
-  "name": "clauderepo-mcp",
-  "version": "2.2.0",
-  "description": "Instant troubleshooting solutions for Claude Code with integrated ticket system. Auto-opens systematic troubleshooting tickets when no solutions found.",
+  "name": "hivemind-mcp",
+  "version": "1.0.1",
+  "description": "Shared AI memory for debugging. 10,000+ fixes. Your AI already knows the solution.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "clauderepo-mcp": "dist/index.js"
+    "hivemind-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -14,14 +14,17 @@
   },
   "keywords": [
     "mcp",
-    "claude",
-    "claude-code",
-    "knowledge-base",
+    "hivemind",
+    "ai-memory",
+    "debugging",
     "troubleshooting",
     "model-context-protocol",
+    "claude-code",
+    "gemini-cli",
+    "codex-cli",
     "ai-tools"
   ],
-  "author": "clauderepo contributors",
+  "author": "hivemind contributors",
   "license": "MIT",
   "repository": {
     "type": "git",

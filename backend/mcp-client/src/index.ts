@@ -24,6 +24,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const CURRENT_VERSION = '2.2.0';
 const NPM_PACKAGE_NAME = 'clauderepo-mcp';
 
+// Session ID - unique per MCP server instance (persists for session lifetime)
+const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
 // ============================================================================
 // Version Checking (1 hour cache)
 // ============================================================================
@@ -206,17 +209,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           'Report solution feedback to improve rankings and quality. ' +
           'TRIGGER WORDS: When the user says "clauderepo: worked" or "clauderepo: failed", call this tool IMMEDIATELY. ' +
           'Also call when user says "that worked", "it worked", "that fixed it", "didn\'t work", "still broken", etc. ' +
-          'Use the solution_id from the most recent search result (preferred) or solution_query as fallback.',
+          'Use pending_id if from a just-resolved ticket, solution_id from search results, or solution_query as fallback.',
         inputSchema: {
           type: 'object',
           properties: {
+            pending_id: {
+              type: 'number',
+              description: 'The pending solution ID (from resolve_ticket response). Use this to approve a just-resolved ticket solution.',
+            },
             solution_id: {
               type: 'number',
               description: 'The numeric ID of the solution (from primary_solution.id in search results). Preferred over solution_query.',
             },
             solution_query: {
               type: 'string',
-              description: 'Fallback: The exact query/problem title of the solution (use solution_id instead if available)',
+              description: 'Fallback: The exact query/problem title of the solution (use solution_id or pending_id instead if available)',
             },
             outcome: {
               type: 'string',
@@ -311,32 +318,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ['ticket_id', 'solution_data'],
         },
       },
-      {
-        name: 'list_pending_solutions',
-        description:
-          'List solutions awaiting verification. Admin tool to review pending solutions from resolved tickets.',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-          required: [],
-        },
-      },
-      {
-        name: 'approve_pending_solution',
-        description:
-          'Admin approve a pending solution to immediately add it to the knowledge base. ' +
-          'Use this after reviewing a pending solution and confirming it is valid.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            pending_id: {
-              type: 'number',
-              description: 'The pending solution ID to approve',
-            },
-          },
-          required: ['pending_id'],
-        },
-      },
+      // ADMIN TOOLS REMOVED FROM PUBLIC NPM PACKAGE
+      // Use index-admin.ts locally for admin functions:
+      // - list_pending_solutions
+      // - approve_pending_solution
     ],
   };
 });
@@ -359,7 +344,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // Check for updates (async, non-blocking)
       const updateCheckPromise = checkForUpdates();
 
-      const result = await callEdgeFunction('search', { query });
+      const result = await callEdgeFunction('search', { query, session_id: SESSION_ID });
 
       // Format response for Claude Code
       let formattedText = `# Search Results: "${query}"\n\n`;
@@ -460,30 +445,46 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      const { primary_solution, confidence, related_solutions, environment_checks, validation_steps } = result;
+      const { primary_solution, confidence, related_solutions, environment_checks, validation_steps, detected_type } = result;
+      const entryType = primary_solution.type || 'fix';
 
-      // Primary solution - removed fake community stats
-      formattedText += `## 🎯 Primary Solution (${(confidence * 100).toFixed(0)}% confidence)\n\n`;
-      formattedText += `**Solution ID**: ${primary_solution.id}\n`;
-      formattedText += `**Problem**: ${primary_solution.query}\n`;
-      formattedText += `**Category**: ${primary_solution.category}\n\n`;
+      // Different rendering for fixes vs flows
+      if (entryType === 'flow') {
+        // FLOW: How-to instructions
+        formattedText += `## 📘 Flow: ${primary_solution.query}\n\n`;
+        formattedText += `**Category**: ${primary_solution.category}\n\n`;
 
-      // Pattern info
-      if (primary_solution.pattern) {
-        formattedText += `### 🔍 Pattern: ${primary_solution.pattern.display_name}\n\n`;
-        formattedText += `**Why this happens**: ${primary_solution.pattern.root_cause}\n\n`;
-        formattedText += `**How to recognize**: ${primary_solution.pattern.detection_signals}\n\n`;
-        formattedText += `**General approach**: ${primary_solution.pattern.solution_template}\n\n`;
+        formattedText += `### 📋 Steps:\n\n`;
+        primary_solution.solutions.forEach((step: any, idx: number) => {
+          formattedText += `**Step ${idx + 1}: ${step.solution}**\n`;
+          if (step.command) formattedText += `\`\`\`bash\n${step.command}\n\`\`\`\n`;
+          if (step.note) formattedText += `*Note*: ${step.note}\n`;
+          formattedText += '\n';
+        });
+      } else {
+        // FIX: Error solution (existing format)
+        formattedText += `## 🎯 Primary Solution\n\n`;
+        formattedText += `**Solution ID**: ${primary_solution.id}\n`;
+        formattedText += `**Problem**: ${primary_solution.query}\n`;
+        formattedText += `**Category**: ${primary_solution.category}\n\n`;
+
+        // Pattern info
+        if (primary_solution.pattern) {
+          formattedText += `### 🔍 Pattern: ${primary_solution.pattern.display_name}\n\n`;
+          formattedText += `**Why this happens**: ${primary_solution.pattern.root_cause}\n\n`;
+          formattedText += `**How to recognize**: ${primary_solution.pattern.detection_signals}\n\n`;
+          formattedText += `**General approach**: ${primary_solution.pattern.solution_template}\n\n`;
+        }
+
+        formattedText += `### 💡 Solutions:\n\n`;
+        primary_solution.solutions.forEach((sol: any, idx: number) => {
+          formattedText += `**${idx + 1}. ${sol.solution}**\n`;
+          if (sol.command) formattedText += `   \`\`\`bash\n   ${sol.command}\n   \`\`\`\n`;
+          if (sol.example) formattedText += `   *Example*: ${sol.example}\n`;
+          if (sol.note) formattedText += `   *Note*: ${sol.note}\n`;
+          formattedText += '\n';
+        });
       }
-
-      formattedText += `### 💡 Solutions:\n\n`;
-      primary_solution.solutions.forEach((sol: any, idx: number) => {
-        formattedText += `**${idx + 1}. ${sol.solution}**\n`;
-        if (sol.command) formattedText += `   \`\`\`bash\n   ${sol.command}\n   \`\`\`\n`;
-        if (sol.example) formattedText += `   *Example*: ${sol.example}\n`;
-        if (sol.note) formattedText += `   *Note*: ${sol.note}\n`;
-        formattedText += '\n';
-      });
 
       // Prerequisites
       if (environment_checks.length > 0) {
@@ -599,16 +600,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new McpError(ErrorCode.InvalidParams, 'outcome is required');
     }
 
-    if (!args.solution_id && !args.solution_query) {
-      throw new McpError(ErrorCode.InvalidParams, 'solution_id or solution_query is required');
+    if (!args.solution_id && !args.solution_query && !args.pending_id) {
+      throw new McpError(ErrorCode.InvalidParams, 'solution_id, solution_query, or pending_id is required');
     }
 
     try {
       const trackingCalls: Promise<any>[] = [];
 
-      // Build tracking payload - prefer solution_id over solution_query
+      // Build tracking payload - prefer pending_id > solution_id > solution_query
       const trackPayload: any = {};
-      if (args.solution_id) {
+      if (args.pending_id) {
+        trackPayload.pending_id = args.pending_id;
+      } else if (args.solution_id) {
         trackPayload.solution_id = args.solution_id;
       } else {
         trackPayload.solution_query = args.solution_query;
@@ -649,14 +652,30 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       // Execute tracking calls
-      await Promise.all(trackingCalls);
+      const results = await Promise.all(trackingCalls);
 
       const outcomeEmoji = args.outcome === 'success' ? '✅' : '❌';
-      const outcomeMessage = args.outcome === 'success'
-        ? 'Thanks for confirming this solution worked!'
-        : 'Sorry this didn\'t work. We\'ve noted this to improve our rankings.';
 
-      const solutionRef = args.solution_id ? `ID #${args.solution_id}` : args.solution_query;
+      // Check if pending solution was approved
+      const pendingApproved = results.some(r => r?.pending_approved);
+      const kbEntryId = results.find(r => r?.knowledge_entry_id)?.knowledge_entry_id;
+
+      let outcomeMessage: string;
+      let solutionRef: string;
+
+      if (args.pending_id && args.outcome === 'success') {
+        outcomeMessage = pendingApproved
+          ? `Solution approved and added to knowledge base! (Entry #${kbEntryId})`
+          : 'Pending solution confirmation recorded.';
+        solutionRef = `Pending #${args.pending_id}`;
+      } else if (args.outcome === 'success') {
+        outcomeMessage = 'Thanks for confirming this solution worked!';
+        solutionRef = args.solution_id ? `ID #${args.solution_id}` : args.solution_query;
+      } else {
+        outcomeMessage = 'Sorry this didn\'t work. We\'ve noted this to improve our rankings.';
+        solutionRef = args.solution_id ? `ID #${args.solution_id}` : (args.solution_query || `Pending #${args.pending_id}`);
+      }
+
       const formattedText = `# Feedback Recorded ${outcomeEmoji}\n\n` +
         `**Solution**: ${solutionRef}\n` +
         `**Outcome**: ${args.outcome}\n\n` +
@@ -766,104 +785,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   }
 
-  // Handle list_pending_solutions tool
-  if (toolName === 'list_pending_solutions') {
-    try {
-      const result = await callEdgeFunction('ticket', {
-        action: 'list_pending',
-        ticket_id: '_admin'  // dummy ticket_id for list action
-      });
-
-      const pending = result.pending_solutions || [];
-
-      if (pending.length === 0) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: '# Pending Solutions\n\n✅ No pending solutions awaiting review.',
-            },
-          ],
-        };
-      }
-
-      let formattedText = `# Pending Solutions (${pending.length})\n\n`;
-      formattedText += `These solutions are awaiting verification:\n\n`;
-
-      for (const sol of pending) {
-        formattedText += `---\n`;
-        formattedText += `### ID: ${sol.id}\n`;
-        formattedText += `**Problem**: ${sol.original_problem}\n`;
-        formattedText += `**Category**: ${sol.category}\n`;
-        formattedText += `**Ticket**: ${sol.ticket_id}\n`;
-        formattedText += `**Confirmations**: ${sol.confirm_count}/2\n`;
-        formattedText += `**Created**: ${new Date(sol.created_at).toLocaleDateString()}\n\n`;
-
-        const solutions = sol.solutions || [];
-        if (solutions.length > 0) {
-          formattedText += `**Solutions**:\n`;
-          solutions.slice(0, 2).forEach((s: any, idx: number) => {
-            formattedText += `${idx + 1}. ${s.solution}\n`;
-          });
-        }
-        formattedText += '\n';
-      }
-
-      formattedText += `---\n`;
-      formattedText += `To approve a solution: \`approve_pending_solution(pending_id)\``;
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: formattedText,
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to list pending solutions: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  // Handle approve_pending_solution tool
-  if (toolName === 'approve_pending_solution') {
-    const args = request.params.arguments as any;
-
-    if (!args.pending_id) {
-      throw new McpError(ErrorCode.InvalidParams, 'pending_id is required');
-    }
-
-    try {
-      const result = await callEdgeFunction('ticket', {
-        action: 'admin_approve',
-        ticket_id: '_admin',  // dummy for this action
-        pending_id: args.pending_id
-      });
-
-      const formattedText = `# ✅ Solution Approved!\n\n` +
-        `**Pending ID**: ${args.pending_id}\n` +
-        `**Knowledge Entry ID**: ${result.knowledge_entry_id}\n\n` +
-        `${result.message}\n\n` +
-        `The solution is now live in the knowledge base and searchable by users.`;
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: formattedText,
-          },
-        ],
-      };
-    } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to approve solution: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
+  // ADMIN TOOL HANDLERS REMOVED FROM PUBLIC NPM PACKAGE
+  // list_pending_solutions and approve_pending_solution are in index-admin.ts
 
   // Unknown tool
   throw new McpError(

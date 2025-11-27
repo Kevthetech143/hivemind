@@ -9,6 +9,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Detect query type: fix (error/problem) vs flow (how-to)
+function detectQueryType(query: string): 'fix' | 'flow' {
+  const queryLower = query.toLowerCase()
+
+  // Error signals take priority (even in "how do I fix X" queries)
+  const errorSignals = /(error|failed|failure|exception|cannot|unable|crash|undefined|null|timeout|refused|denied|broken|not working|doesn't work|won't|can't|bug|issue|problem|fix)/i
+
+  // How-to phrases (only if no error signals)
+  const howtoPhrases = /^(how (do|to|can|should)|what('s| is) the (best|right|correct) way|guide|tutorial|setup|set up|configure|install|create|build|implement|deploy|enable)/i
+
+  if (errorSignals.test(queryLower)) return 'fix'
+  if (howtoPhrases.test(queryLower)) return 'flow'
+  return 'fix' // default to fix (core use case)
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -42,7 +57,7 @@ serve(async (req) => {
     }
 
     // Parse request
-    const { query, max_results = 5 } = await req.json()
+    const { query, max_results = 5, session_id = null } = await req.json()
 
     if (!query) {
       return new Response(
@@ -52,6 +67,9 @@ serve(async (req) => {
     }
 
     const startTime = performance.now()
+
+    // Detect if user wants a fix or a flow (how-to)
+    const detectedType = detectQueryType(query)
 
     // Check if query is ambiguous (matches multiple categories without tech anchor)
     const { data: ambiguity } = await supabaseClient.rpc('detect_query_ambiguity', {
@@ -95,6 +113,18 @@ serve(async (req) => {
     }
 
     const searchTime = performance.now() - startTime
+
+    // Log search for analytics (fire and forget)
+    const hadResults = results && results.length > 0
+    supabaseClient
+      .from('search_logs')
+      .insert({
+        query,
+        had_results: hadResults,
+        result_count: results?.length || 0
+      })
+      .then(() => {})
+      .catch((e) => console.error('Search log error:', e))
 
     // Multi-category response for ambiguous queries
     if (searchMode === 'multi_category' && results && results.length > 0) {
@@ -140,10 +170,11 @@ serve(async (req) => {
         category = 'frontend'
       }
 
-      // Auto-create ticket
+      // Auto-create ticket with session binding
       const { data: ticket } = await supabaseClient.rpc('start_troubleshooting_ticket', {
         p_problem: query,
-        p_category: category
+        p_category: category,
+        p_session_id: session_id
       })
 
       return new Response(
@@ -255,8 +286,10 @@ serve(async (req) => {
     // Build response
     const response = {
       query,
+      detected_type: detectedType,
       primary_solution: {
         id: primary.id,
+        type: primary.type || 'fix',
         query: primary.query,
         category: primary.category,
         hit_frequency: primary.hit_frequency,
