@@ -57,7 +57,7 @@ serve(async (req) => {
     }
 
     // Parse request
-    const { query, max_results = 5, session_id = null } = await req.json()
+    const { query, max_results = 5, session_id = null, type = null } = await req.json()
 
     if (!query) {
       return new Response(
@@ -69,7 +69,9 @@ serve(async (req) => {
     const startTime = performance.now()
 
     // Detect if user wants a fix or a flow (how-to)
-    const detectedType = detectQueryType(query)
+    // User can override with explicit type parameter
+    const detectedType = type || detectQueryType(query)
+    const typeFilter = type // explicit type filter for SQL
 
     // Check if query is ambiguous (matches multiple categories without tech anchor)
     const { data: ambiguity } = await supabaseClient.rpc('detect_query_ambiguity', {
@@ -97,11 +99,15 @@ serve(async (req) => {
       }
       results = data
     } else {
-      // Standard search
-      const { data, error } = await supabaseClient.rpc('search_knowledge', {
+      // Standard search - with optional type filter
+      const searchParams: any = {
         search_query: query,
         result_limit: max_results
-      })
+      }
+      if (typeFilter) {
+        searchParams.type_filter = typeFilter
+      }
+      const { data, error } = await supabaseClient.rpc('search_knowledge', searchParams)
       if (error) {
         console.error('Search error:', error)
         return new Response(

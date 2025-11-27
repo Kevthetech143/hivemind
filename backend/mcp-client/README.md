@@ -1,87 +1,126 @@
-# clauderepo - MCP Server
+# Hivemind MCP
 
-**Instant troubleshooting solutions for Claude Code users.**
+**Shared knowledge layer accessible across all AI platforms via MCP.**
 
-Stop Googling for 15 minutes. Get ranked solutions in 10 seconds.
+Hivemind is an extensible, multi-vertical knowledge base that any AI (Claude, Gemini, Codex, etc.) can access through the Model Context Protocol.
 
 ## Installation
 
 ```bash
-claude mcp add clauderepo -- npx clauderepo-mcp
+# Claude Code
+claude mcp add hivemind -- npx hivemind-mcp
+
+# Or use npm directly
+npx hivemind-mcp
 ```
 
-Restart Claude Code. Done.
+Restart your AI session. Done.
 
-## Usage
+## Architecture
 
-In any Claude Code conversation:
-
-```
-Search clauderepo for "MCP connection refused"
-```
-
-Claude instantly shows you:
-- ✅ Top ranked solution (95% success rate)
-- ✅ Exact command to run
-- ✅ Common pitfalls to avoid
-- ✅ Validation steps
-
-## How It Works
-
-1. **Community-driven**: Real solutions from Claude Code users
-2. **Ranked by success**: Solutions ranked by what actually works
-3. **Always updating**: Database grows smarter every day
-4. **100% free**: No signups, no credit cards, no BS
-
-## Features
-
-- 🔍 **Full-text search** across 50+ verified solutions
-- ⚡ **Sub-second response** times
-- 📊 **Success tracking** shows what actually works
-- 🎯 **Context-aware** solutions for your specific issue
-- 🔒 **Privacy-first** (no tracking, no analytics)
-
-## Contributing Solutions
-
-Found a fix that should be in the knowledge base?
+**Single `knowledge_entries` table with `type` column for extensibility.**
 
 ```
-Contribute to clauderepo:
-- Query: "Your error message"
-- Solution: "What fixed it"
-- Command: "Exact command that worked"
+┌─────────────────────────────────────────────────────┐
+│                    HIVEMIND                         │
+│         Shared Knowledge Layer (MCP)                │
+├─────────────────────────────────────────────────────┤
+│  Fixes     │  Flows      │  Skills    │  Future... │
+│  (errors)  │  (how-tos)  │  (curated) │            │
+└─────────────────────────────────────────────────────┘
+        ↑           ↑            ↑
+    Any AI platform can read/write via MCP
 ```
 
-Your contribution helps the next person solve it in seconds instead of hours.
+## Verticals
 
-## Categories
+| Type | Purpose | Example |
+|------|---------|---------|
+| **Fixes** | Error solutions (reactive) | "MCP connection refused" → solution steps |
+| **Flows** | How-to instructions (proactive) | "How to respawn Claude" → step-by-step guide |
+| **Skills** | Evaluated skill recommendations | (coming soon) |
 
-- MCP Troubleshooting
-- Supabase
-- React/Next.js
-- TypeScript
-- Git
-- Docker
-- Python
-- Node.js/npm
-- PostgreSQL
-- And more...
+## Tools
+
+### `search_kb`
+Search the knowledge base. Auto-detects type or use explicit filter.
+```
+search_kb("connection refused")           # auto-detect
+search_kb("how to setup", type="flow")    # force flow search
+```
+
+### `list_flows`
+Browse all available flows by category.
+```
+list_flows()                      # all flows
+list_flows(category="claude-code") # filtered
+```
+
+### `get_flow`
+Get specific flow by ID with full step-by-step instructions.
+```
+get_flow(flow_id=13398)
+```
+
+### `contribute_solution`
+Submit new fixes/flows to the knowledge base (reviewed before publishing).
+
+### `report_solution_outcome`
+Report if a solution worked/failed to improve rankings.
+
+## Data Schema
+
+Each entry in `knowledge_entries`:
+```json
+{
+  "id": 12345,
+  "type": "fix | flow | skill",
+  "query": "Problem or how-to title",
+  "category": "claude-code | web-automation | database | ...",
+  "solutions": [
+    {
+      "solution": "Step description",
+      "command": "optional bash command",
+      "note": "optional context",
+      "platform": "optional: macos | linux | windows"
+    }
+  ],
+  "common_pitfalls": "What to avoid",
+  "prerequisites": "What's needed first",
+  "success_indicators": "How to verify it worked"
+}
+```
+
+## For AI Platforms
+
+**Hivemind is intentionally extensible.** The `type` column enables adding new verticals without schema changes. When building integrations:
+
+1. **Read**: Use `search_kb` with optional `type` filter
+2. **Write**: Use `contribute_solution` with appropriate `type`
+3. **Extend**: New verticals just need a new `type` value
+
+## Current Stats
+
+- 15,900+ fixes
+- 1+ flows
+- Growing daily via community contributions
 
 ## Backend
 
 - **Database**: Supabase (Postgres + Edge Functions)
 - **Search**: Full-text search with ts_rank
-- **API**: 3 Deno edge functions (search, contribute, track)
+- **API**: Edge functions (search, flows, contribute, track, ticket)
+
+## Links
+
+- **npm**: https://www.npmjs.com/package/hivemind-mcp
+- **Website**: https://hivemind-mcp.com
+- **API**: https://ksethrexopllfhyrxlrb.supabase.co/functions/v1
 
 ## License
 
 MIT
 
-## Support
-
-- Issues: https://github.com/Kevthetech143/clauderepo/issues
-- API: https://ksethrexopllfhyrxlrb.supabase.co/functions/v1
-
 ---
 
-**Built for the Claude Code community** ❤️
+**Built for the AI community.**

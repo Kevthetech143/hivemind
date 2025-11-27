@@ -140,7 +140,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: 'search_kb',
         description:
-          'Search the clauderepo knowledge base for troubleshooting solutions, error fixes, and best practices. ' +
+          'Search the hivemind knowledge base for troubleshooting solutions, error fixes, and how-to flows. ' +
           'Returns ranked solutions with success rates, prerequisites, validation steps, and related patterns. ' +
           'Covers MCP servers, Playwright automation, security patterns, and more.',
         inputSchema: {
@@ -150,10 +150,50 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: 'string',
               description:
                 'Error message, problem description, or technology to search for. ' +
-                'Examples: "MCP connection refused", "playwright timeout", "API key leak prevention"',
+                'Examples: "MCP connection refused", "playwright timeout", "how to respawn claude"',
+            },
+            type: {
+              type: 'string',
+              enum: ['fix', 'flow'],
+              description:
+                'Optional: Force search to return only fixes or only flows. ' +
+                'If not specified, type is auto-detected from query (error keywords → fix, how-to phrases → flow)',
             },
           },
           required: ['query'],
+        },
+      },
+      {
+        name: 'list_flows',
+        description:
+          'Browse all available flows (how-to instructions) in the knowledge base. ' +
+          'Flows are step-by-step guides that any AI can execute. ' +
+          'Use this to discover what flows are available or filter by category.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            category: {
+              type: 'string',
+              description: 'Optional: Filter flows by category (e.g., "claude-code", "web-automation")',
+            },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'get_flow',
+        description:
+          'Get a specific flow by ID. Returns full step-by-step instructions. ' +
+          'Use list_flows first to browse available flows and get their IDs.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            flow_id: {
+              type: 'number',
+              description: 'The flow ID (from list_flows results)',
+            },
+          },
+          required: ['flow_id'],
         },
       },
       {
@@ -336,6 +376,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   // Handle search_kb tool
   if (toolName === 'search_kb') {
     const query = String(request.params.arguments?.query);
+    const typeFilter = request.params.arguments?.type as string | undefined;
     if (!query) {
       throw new McpError(ErrorCode.InvalidParams, 'query parameter is required');
     }
@@ -344,7 +385,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // Check for updates (async, non-blocking)
       const updateCheckPromise = checkForUpdates();
 
-      const result = await callEdgeFunction('search', { query, session_id: SESSION_ID });
+      const searchParams: any = { query, session_id: SESSION_ID };
+      if (typeFilter) {
+        searchParams.type = typeFilter;
+      }
+      const result = await callEdgeFunction('search', searchParams);
 
       // Format response for Claude Code
       let formattedText = `# Search Results: "${query}"\n\n`;
@@ -546,6 +591,98 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new McpError(
         ErrorCode.InternalError,
         `Search failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // Handle list_flows tool
+  if (toolName === 'list_flows') {
+    const category = request.params.arguments?.category as string | undefined;
+
+    try {
+      const result = await callEdgeFunction('flows', { action: 'list', category });
+
+      let formattedText = `# 📘 Available Flows\n\n`;
+
+      if (result.flows.length === 0) {
+        formattedText += `No flows found${category ? ` in category "${category}"` : ''}.\n\n`;
+        formattedText += `Flows are step-by-step how-to guides. Currently the knowledge base has mostly fixes (error solutions).\n`;
+      } else {
+        formattedText += `**Total**: ${result.total_count} flow(s)`;
+        if (category) {
+          formattedText += ` in category "${category}"`;
+        }
+        formattedText += `\n\n`;
+
+        if (result.categories.length > 0) {
+          formattedText += `**Categories**: ${result.categories.join(', ')}\n\n`;
+        }
+
+        formattedText += `---\n\n`;
+
+        result.flows.forEach((flow: any) => {
+          const stepCount = flow.solutions?.length || 0;
+          formattedText += `### ${flow.query}\n`;
+          formattedText += `- **ID**: ${flow.id}\n`;
+          formattedText += `- **Category**: ${flow.category}\n`;
+          formattedText += `- **Steps**: ${stepCount}\n\n`;
+        });
+      }
+
+      formattedText += `---\n`;
+      formattedText += `*Use \`get_flow(flow_id)\` to see full instructions for a specific flow*\n`;
+
+      return {
+        content: [{ type: 'text', text: formattedText }],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to list flows: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // Handle get_flow tool
+  if (toolName === 'get_flow') {
+    const flowId = request.params.arguments?.flow_id as number;
+    if (!flowId) {
+      throw new McpError(ErrorCode.InvalidParams, 'flow_id is required');
+    }
+
+    try {
+      const result = await callEdgeFunction('flows', { action: 'get', flow_id: flowId });
+
+      if (!result.flow) {
+        return {
+          content: [{ type: 'text', text: `❌ Flow not found with ID: ${flowId}` }],
+        };
+      }
+
+      const flow = result.flow;
+      let formattedText = `## 📘 Flow: ${flow.query}\n\n`;
+      formattedText += `**ID**: ${flow.id}\n`;
+      formattedText += `**Category**: ${flow.category}\n\n`;
+
+      formattedText += `### 📋 Steps:\n\n`;
+      flow.solutions.forEach((step: any, idx: number) => {
+        formattedText += `**Step ${idx + 1}: ${step.solution}**\n`;
+        if (step.command) formattedText += `\`\`\`bash\n${step.command}\n\`\`\`\n`;
+        if (step.note) formattedText += `*Note*: ${step.note}\n`;
+        formattedText += '\n';
+      });
+
+      if (flow.common_pitfalls) {
+        formattedText += `### ⚠️ Common Pitfalls:\n${flow.common_pitfalls}\n\n`;
+      }
+
+      return {
+        content: [{ type: 'text', text: formattedText }],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to get flow: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
