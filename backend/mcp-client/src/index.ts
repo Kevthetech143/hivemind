@@ -21,7 +21,7 @@ import {
 
 const SUPABASE_URL = 'https://ksethrexopllfhyrxlrb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZXRocmV4b3BsbGZoeXJ4bHJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3NDU4ODksImV4cCI6MjA3OTMyMTg4OX0.SDJulNaemJ66EaFl77-1IJLTAleihU5PvEChNaO5osI';
-const CURRENT_VERSION = '2.2.0';
+const CURRENT_VERSION = '2.2.1';
 const NPM_PACKAGE_NAME = 'clauderepo-mcp';
 
 // Session ID - unique per MCP server instance (persists for session lifetime)
@@ -154,9 +154,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             type: {
               type: 'string',
-              enum: ['fix', 'flow'],
+              enum: ['fix', 'flow', 'skill'],
               description:
-                'Optional: Force search to return only fixes or only flows. ' +
+                'Optional: Force search to return only fixes, flows, or skills. ' +
                 'If not specified, type is auto-detected from query (error keywords → fix, how-to phrases → flow)',
             },
           },

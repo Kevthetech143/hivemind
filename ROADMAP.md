@@ -233,6 +233,30 @@ When users search clauderepo, return not just solutions but relevant skills they
 
 ---
 
+## Phase 6: Duplicate Linking (Future)
+
+**Goal**: Link duplicate entries to canonical solutions (SO-style signposts)
+
+### Context:
+- Currently allowing duplicate entries as search signposts
+- Different phrasings help discoverability ("useEffect infinite loop" vs "effect runs every render")
+- Stack Overflow keeps dupes but links them to canonical Q&A
+
+### Implementation (When Needed):
+- [ ] Add `canonical_id` field to `knowledge_entries`
+- [ ] NULL = original entry, populated = signpost pointing to canonical
+- [ ] Search returns canonical entry's solutions for all linked dupes
+- [ ] Merge solution arrays from linked entries at query time
+- [ ] Admin tool to link duplicates
+
+### Trigger to Implement:
+- When scattered solutions become a problem (users missing solutions)
+- When we need to show "ALL solutions for this problem" in one place
+
+**Status**: Deferred - current approach working fine
+
+---
+
 ## Risk Mitigation
 
 ### Risk: Supabase costs spiral
