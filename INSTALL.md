@@ -1,47 +1,52 @@
-# clauderepo - Installation Guide
+# hivemind-mcp - Installation Guide
 
-## Quick Install (After npm publish)
+## Quick Install (Recommended)
 
 **One command setup:**
 
 ```bash
-claude mcp add clauderepo -- npx clauderepo-mcp
+npm install -g hivemind-mcp
+claude mcp add hivemind -- npx hivemind-mcp
 ```
 
 Restart Claude Code. You're done!
 
-## Manual Setup (Development)
+## Platform-Specific Setup
 
-If you want to use clauderepo before it's published to npm:
-
-### 1. Clone the repo
+### Claude Code
 
 ```bash
-cd ~/Desktop
-git clone https://github.com/Kevthetech143/clauderepo.git
-cd clauderepo/backend/mcp-client
-npm install
-npm run build
+npm install -g hivemind-mcp
+claude mcp add hivemind -- npx hivemind-mcp
 ```
 
-### 2. Add to Claude Code config
+### Codex CLI (OpenAI)
 
 ```bash
-claude mcp add clauderepo -- node /Users/admin/Desktop/clauderepo/backend/mcp-client/dist/index.js
+npm install -g hivemind-mcp
+codex mcp add hivemind -- npx -y hivemind-mcp
 ```
 
-### 3. Restart Claude Code
+### Gemini CLI (Google)
 
 ```bash
-# Restart Claude Code (Cmd+Q and reopen)
+npm install -g hivemind-mcp
+gemini mcp add hivemind npx -y hivemind-mcp
 ```
 
-### 4. Verify it works
+### Cursor / Windsurf
 
-In Claude Code:
+```bash
+npm install -g hivemind-mcp
+# Add to MCP settings: npx hivemind-mcp
+```
+
+## Verify Installation
+
+In your AI CLI:
 
 ```
-Search clauderepo for "MCP connection refused"
+Search hivemind for "MCP connection refused"
 ```
 
 You should get instant results!
@@ -51,20 +56,26 @@ You should get instant results!
 ### Search for solutions
 
 ```
-Search clauderepo for "[your error message]"
+Search hivemind for "[your error message]"
 ```
 
 Examples:
-- `Search clauderepo for "MCP connection refused"`
-- `Search clauderepo for "Supabase RLS blocking queries"`
-- `Search clauderepo for "React hydration mismatch"`
+- `Search hivemind for "MCP connection refused"`
+- `Search hivemind for "Supabase RLS blocking queries"`
+- `Search hivemind for "React hydration mismatch"`
 
-### Report solution success
+### Give feedback
 
 After trying a solution:
 
 ```
-Report to clauderepo: solution for "MCP connection refused" worked
+hivemind: worked
+```
+
+Or:
+
+```
+hivemind: failed
 ```
 
 This helps rank solutions by what actually works!
@@ -74,72 +85,44 @@ This helps rank solutions by what actually works!
 ### MCP server not showing
 
 ```bash
-# Check MCP config
-cat ~/.config/claude/mcp_settings.json
-
-# Verify clauderepo is listed
+# Check MCP config (Claude Code)
 claude mcp list
+
+# Verify hivemind is listed
 ```
 
 ### Connection errors
 
-```bash
-# Test API directly
-curl https://ksethrexopllfhyrxlrb.supabase.co/functions/v1/search \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  -H "Content-Type: application/json" \
-  -d '{"query": "test"}'
-```
+1. Check internet connection
+2. Try: `Search hivemind for test`
+3. Restart your AI CLI/editor
 
 ### Still not working?
 
-1. Restart Claude Code
-2. Check Claude Code version (needs latest)
-3. Open issue: https://github.com/Kevthetech143/clauderepo/issues
-
-## Publishing to npm (For maintainers)
-
-```bash
-cd ~/Desktop/clauderepo/backend/mcp-client
-
-# Login to npm
-npm login
-
-# Publish
-npm publish
-
-# Update version
-npm version patch
-npm publish
-```
-
-## Supabase Backend
-
-The knowledge base runs on Supabase:
-- **Database**: `ksethrexopllfhyrxlrb`
-- **Search endpoint**: `/functions/v1/search`
-- **Contribute endpoint**: `/functions/v1/contribute`
-- **Track endpoint**: `/functions/v1/track`
-
-## Database Schema
-
-- `knowledge_entries` - Verified solutions (53 entries)
-- `prerequisites` - Requirements for solutions
-- `success_indicators` - How to verify solution worked
-- `pending_contributions` - Moderation queue
-- `user_usage` - Anonymous usage tracking
+1. Reinstall: `npm install -g hivemind-mcp@latest`
+2. Restart your AI CLI
+3. Open issue: https://github.com/Kevthetech143/hivemind/issues
 
 ## Architecture
 
 ```
-Claude Code
+Your AI CLI/Editor
     ↓
-MCP Client (npm package)
+MCP Client (hivemind-mcp npm package)
     ↓
 Supabase Edge Functions
     ↓
-Postgres (full-text search)
+Postgres (full-text search, 16k+ solutions)
 ```
+
+## What Data is Sent
+
+The MCP client only sends:
+- Search queries (your error messages)
+- Feedback votes (worked/failed)
+- Solution contributions (if you submit any)
+
+**Never sent**: Your code, files, or conversation history.
 
 ## License
 
@@ -147,5 +130,5 @@ MIT - Free forever, open source
 
 ## Support
 
-- GitHub Issues: https://github.com/Kevthetech143/clauderepo/issues
-- Frontend: file:///Users/admin/Desktop/clauderepo/frontend/index.html
+- GitHub Issues: https://github.com/Kevthetech143/hivemind/issues
+- npm Package: https://www.npmjs.com/package/hivemind-mcp

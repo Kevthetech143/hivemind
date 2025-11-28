@@ -285,10 +285,8 @@ See [ROADMAP.md](ROADMAP.md) for full details.
 User → Any AI CLI/Editor → MCP → Supabase Edge Functions → Postgres
 ```
 
-**Files**:
-- `backend/mcp-client/` - MCP server source
-- `backend/functions/` - Edge functions (search, track, contribute)
-- `backend/schema.sql` - Database schema
+**Public Source**:
+- `hivemind-mcp/` - MCP client package (what you install via npm)
 
 ---
 
