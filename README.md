@@ -190,6 +190,54 @@ Natural language ("that worked") is ambiguous. Trigger phrases ensure your AI AL
 
 ---
 
+## 🔒 Security
+
+hivemind is designed to be a **safe, public knowledge base**. We take security seriously:
+
+### Credential Scanning
+
+All contributions are scanned for sensitive data before storage. Our scanner blocks:
+
+- **API Keys**: OpenAI, Anthropic, AWS, GCP, Azure, Stripe, Slack, GitHub, GitLab, and 30+ providers
+- **Tokens**: JWT, Bearer tokens, OAuth tokens, PATs
+- **Secrets**: Database passwords, webhook URLs, Basic auth headers
+- **Obfuscation Attempts**: Base64-encoded secrets, zero-width character tricks
+
+**How it works**:
+1. Pattern matching against 45+ known secret formats
+2. Base64 decode + rescan for hidden secrets
+3. Entropy analysis for high-randomness strings near keywords like `key=`, `secret=`
+4. Zero-width character stripping to defeat obfuscation
+
+If your contribution is rejected, check for accidentally included credentials.
+
+### Row-Level Security
+
+All database tables use Postgres RLS policies. The public API can only:
+- Read solutions and skills
+- Submit contributions (to moderation queue)
+- Submit feedback votes
+
+No direct write access to production data.
+
+### Rate Limiting
+
+Aggressive rate limits prevent abuse:
+- Search: 100/hour
+- Voting: 20/hour
+- Contributions: 5/hour
+
+### What We Don't Store
+
+- No user accounts required
+- No tracking cookies
+- No personally identifiable information
+- IP addresses used only for rate limiting (not logged with searches)
+
+See [PRIVACY.md](PRIVACY.md) for full privacy policy.
+
+---
+
 ## 📊 Monitoring
 
 Beta testers: We monitor usage via Supabase dashboard. You can check your own usage:
