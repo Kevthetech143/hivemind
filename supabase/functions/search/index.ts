@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getRealClientIP, isIPBanned, logSecurityEvent } from '../_shared/security.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,10 +38,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // SECURITY FIX: Use secure IP detection (prevents spoofing)
+    const clientIP = getRealClientIP(req)
+
+    // SECURITY FIX: Check if IP is banned
+    if (await isIPBanned(supabaseClient, clientIP)) {
+      await logSecurityEvent(supabaseClient, 'banned_ip_attempted_search', clientIP, 'search')
+      return new Response(
+        JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Rate limiting check
-    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] ||
-                     req.headers.get('x-real-ip') ||
-                     'unknown'
 
     const { data: rateLimitOk } = await supabaseClient.rpc('check_rate_limit', {
       p_ip_address: clientIP,
@@ -50,6 +60,7 @@ serve(async (req) => {
     })
 
     if (!rateLimitOk) {
+      await logSecurityEvent(supabaseClient, 'rate_limit_exceeded', clientIP, 'search', { limit: 100 })
       return new Response(
         JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -121,11 +132,13 @@ serve(async (req) => {
     const searchTime = performance.now() - startTime
 
     // Log search for analytics (fire and forget)
+    // SECURITY FIX: Sanitize query to remove PII/secrets before logging
     const hadResults = results && results.length > 0
+    const { data: sanitizedQuery } = await supabaseClient.rpc('sanitize_query', { raw_query: query })
     supabaseClient
       .from('search_logs')
       .insert({
-        query,
+        query: sanitizedQuery || query, // fallback to original if sanitization fails
         had_results: hadResults,
         result_count: results?.length || 0
       })

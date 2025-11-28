@@ -1,0 +1,14 @@
+INSERT INTO knowledge_entries (query, category, type, solutions, executable_type, prerequisites, common_pitfalls, success_indicators, preview_summary, source_url, contributor_email)
+VALUES (
+  'GitHub Workflow Automation Skill - Advanced GitHub Actions with AI swarm coordination',
+  'claude-code',
+  'skill',
+  '[{"solution": "Initialize GitHub workflow automation with swarm", "cli": {"macos": "npx ruv-swarm actions generate-workflow --analyze-codebase --detect-languages --create-optimal-pipeline", "linux": "npx ruv-swarm actions generate-workflow --analyze-codebase --detect-languages --create-optimal-pipeline", "windows": "npx ruv-swarm actions generate-workflow --analyze-codebase --detect-languages --create-optimal-pipeline"}, "manual": "1. Ensure gh CLI is installed\n2. Run generate-workflow command\n3. Select optimal pipeline\n4. Review generated workflow file\n5. Commit to .github/workflows/", "note": "Requires Node v16+, gh CLI, and claude-flow@alpha"}, {"solution": "Optimize existing workflow for parallelization", "cli": {"macos": "npx ruv-swarm actions optimize --workflow .github/workflows/ci.yml --suggest-parallelization", "linux": "npx ruv-swarm actions optimize --workflow .github/workflows/ci.yml --suggest-parallelization", "windows": "npx ruv-swarm actions optimize --workflow .github/workflows/ci.yml --suggest-parallelization"}, "manual": "1. Identify non-parallel steps\n2. Analyze dependencies\n3. Create job matrix\n4. Test in development branch\n5. Merge optimized workflow", "note": "Always test optimization in branch first"}, {"solution": "Analyze workflow failures and auto-fix common issues", "cli": {"macos": "gh run view <run-id> --json jobs,conclusion | npx ruv-swarm actions analyze-failure --suggest-fixes", "linux": "gh run view <run-id> --json jobs,conclusion | npx ruv-swarm actions analyze-failure --suggest-fixes", "windows": "gh run view <run-id> --json jobs,conclusion | npx ruv-swarm actions analyze-failure --suggest-fixes"}, "manual": "1. Get failed run ID\n2. View run summary\n3. Review failure details\n4. Apply suggested fixes\n5. Retry workflow", "note": "Use run ID from GitHub Actions UI"}]'::jsonb,
+  'script',
+  'GitHub CLI (gh), git, Node.js v16+, claude-flow@alpha, npm',
+  'Not creating .github/workflows directory before generation, incorrect runner specifications, missing secrets in GitHub Actions, not testing workflows in branch first, insufficient permissions on repository',
+  'Generated workflow files in .github/workflows/, GitHub Actions enabled on repository, workflows run on push and PR events, all CI jobs completing successfully, parallelized jobs executing concurrently',
+  'Advanced GitHub workflow automation with swarm coordination and intelligent CI/CD pipelines',
+  'https://skillsmp.com/skills/ruvnet-claude-flow-claude-skills-github-workflow-automation-skill-md',
+  'admin:HAIKU_SKILL_1764290180_35582'
+);

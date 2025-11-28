@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getRealClientIP, isIPBanned, logSecurityEvent } from '../_shared/security.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,15 +37,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // SECURITY FIX: Use secure IP detection
+    const clientIP = getRealClientIP(req)
+
+    // SECURITY FIX: Check if IP is banned
+    if (await isIPBanned(supabaseClient, clientIP)) {
+      await logSecurityEvent(supabaseClient, 'banned_ip_attempted_contribute', clientIP, 'contribute')
+      return new Response(
+        JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Rate limiting for contributions (prevent spam)
-    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] ||
-                     req.headers.get('x-real-ip') ||
-                     'unknown'
 
     const { data: rateLimitOk } = await supabaseClient.rpc('check_rate_limit', {
       p_ip_address: clientIP,
       p_endpoint: 'contribute',
-      p_limit: 50, // 50 contributions per hour (increased from 5)
+      p_limit: 5, // SECURITY FIX: Reduced from 50 to 5 to prevent spam
       p_window_minutes: 60
     })
 

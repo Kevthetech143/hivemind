@@ -251,7 +251,7 @@ INSERT INTO knowledge_entries (
         {"solution": "Verify transactional.id is configured before calling producer.send()", "percentage": 97},
         {"solution": "Call initTransactions() exactly once during producer initialization, not before every send()", "percentage": 96},
         {"solution": "Use try-with-resources to ensure producer.close() is always called: try (KafkaProducer<K,V> producer = new KafkaProducer<>(props))", "percentage": 94},
-        {"solution": "Don't use same producer instance from multiple threads without synchronization", "percentage": 92}
+        {"solution": "Don''t use same producer instance from multiple threads without synchronization", "percentage": 92}
     ]'::jsonb,
     'Kafka transactional producer setup with proper initialization sequence',
     'Producer initializes transactions without IllegalStateException; transactions commit/abort successfully',

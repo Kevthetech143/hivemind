@@ -1,0 +1,14 @@
+INSERT INTO knowledge_entries (query, category, type, solutions, executable_type, prerequisites, common_pitfalls, success_indicators, preview_summary, source_url, contributor_email)
+VALUES (
+  'Solidity Security - Master smart contract security best practices and vulnerability prevention',
+  'blockchain-web3',
+  'skill',
+  '[{"solution": "Prevent reentrancy attacks", "cli": {"macos": "npm install @openzeppelin/contracts", "linux": "npm install @openzeppelin/contracts", "windows": "npm install @openzeppelin/contracts"}, "manual": "Apply Checks-Effects-Interactions (CEI) pattern or use ReentrancyGuard from OpenZeppelin", "note": "Update state before external calls, emit events before transfers"}, {"solution": "Handle integer overflow/underflow", "cli": {"macos": "npm install @openzeppelin/contracts", "linux": "npm install @openzeppelin/contracts", "windows": "npm install @openzeppelin/contracts"}, "manual": "Use Solidity 0.8+ for automatic overflow checks or SafeMath for older versions", "note": "Solidity 0.8+ has built-in overflow/underflow protection"}, {"solution": "Implement access control", "cli": {"macos": "npm install @openzeppelin/contracts", "linux": "npm install @openzeppelin/contracts", "windows": "npm install @openzeppelin/contracts"}, "manual": "Use Ownable, AccessControl, or custom role-based modifiers", "note": "Prevent unauthorized access with require statements and modifiers"}, {"solution": "Mitigate front-running", "cli": {"macos": "hardhat compile", "linux": "hardhat compile", "windows": "hardhat compile"}, "manual": "Implement commit-reveal pattern or use private mempools", "note": "Two-transaction pattern: commit in block N, reveal in block N+2"}, {"solution": "Audit and test smart contracts", "cli": {"macos": "npm install --save-dev hardhat chai ethers", "linux": "npm install --save-dev hardhat chai ethers", "windows": "npm install --save-dev hardhat chai ethers"}, "manual": "Run static analysis with Slither, fuzz test with Echidna, document security checklist", "note": "Use OpenZeppelin test utilities and comprehensive test coverage"}]'::jsonb,
+  'script',
+  'Solidity programming, Hardhat or Truffle setup, OpenZeppelin library knowledge, smart contract testing experience',
+  'Calling external functions before updating state, not validating user input, using tx.origin for authentication, missing emergency stop mechanisms, no rate limiting',
+  'Smart contract passes all security tests, no reentrancy vulnerabilities detected, input validation on all functions, proper access control implemented, royalties correctly calculated',
+  'Secure Solidity patterns covering reentrancy, overflow, access control, and front-running mitigation with comprehensive testing',
+  'https://skillsmp.com/skills/wshobson-agents-plugins-blockchain-web3-skills-solidity-security-skill-md',
+  'admin:HAIKU_SKILL_1764289624_86615'
+);

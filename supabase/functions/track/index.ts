@@ -3,6 +3,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getRealClientIP, isIPBanned, logSecurityEvent } from '../_shared/security.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,12 +23,24 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Parse tracking event
-    const { event_type, solution_query, solution_id } = await req.json()
+    // SECURITY FIX: Use secure IP detection
+    const clientIP = getRealClientIP(req)
 
-    if (!event_type || (!solution_query && !solution_id)) {
+    // SECURITY FIX: Check if IP is banned
+    if (await isIPBanned(supabaseClient, clientIP)) {
+      await logSecurityEvent(supabaseClient, 'banned_ip_attempted_track', clientIP, 'track')
       return new Response(
-        JSON.stringify({ error: 'event_type and (solution_query or solution_id) required' }),
+        JSON.stringify({ error: 'Access denied' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Parse tracking event
+    const { event_type, solution_query, solution_id, pending_id } = await req.json()
+
+    if (!event_type || (!solution_query && !solution_id && !pending_id)) {
+      return new Response(
+        JSON.stringify({ error: 'event_type and (solution_query, solution_id, or pending_id) required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -51,9 +64,6 @@ serve(async (req) => {
 
     // Rate limiting for voting events (stricter limits)
     if (event_type === 'solution_success' || event_type === 'solution_failure') {
-      const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0] ||
-                       req.headers.get('x-real-ip') ||
-                       'unknown'
 
       const { data: rateLimitOk } = await supabaseClient.rpc('check_rate_limit', {
         p_ip_address: clientIP,
@@ -127,6 +137,10 @@ serve(async (req) => {
     }
 
     if (event_type === 'solution_success') {
+      // SECURITY FIX: Removed admin_approve_solution from public endpoint
+      // Pending solutions now require manual admin approval or multi-user confirmation
+      // pending_id parameter is ignored for security
+
       // Get current thumbs_up count
       const { data: entry, error: fetchError } = await findEntry('id, thumbs_up')
 

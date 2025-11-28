@@ -1,0 +1,14 @@
+INSERT INTO knowledge_entries (query, category, type, solutions, executable_type, prerequisites, common_pitfalls, success_indicators, preview_summary, source_url, contributor_email)
+VALUES (
+  'workflow-interactive-dev - Guide for developing FastGPT interactive nodes in workflow systems',
+  'claude-code',
+  'skill',
+  '[{"solution": "Define interactive node types in type.d.ts, create dispatch handler, register in constants, build frontend components", "cli": {"macos": "mkdir -p packages/service/core/workflow/dispatch/interactive && touch packages/service/core/workflow/dispatch/interactive/yourNode.ts", "linux": "mkdir -p packages/service/core/workflow/dispatch/interactive && touch packages/service/core/workflow/dispatch/interactive/yourNode.ts", "windows": "mkdir packages\\service\\core\\workflow\\dispatch\\interactive && type nul > packages\\service\\core\\workflow\\dispatch\\interactive\\yourNode.ts"}, "manual": "Step 1: Define node type in packages/global/core/workflow/template/system/interactive/type.d.ts with InteractiveNodeType interface. Step 2: Optionally add to FlowNodeTypeEnum in packages/global/core/workflow/node/constant.ts. Step 3: Create node template in packages/global/core/workflow/template/system/interactive/yourNode.ts. Step 4: Implement dispatch handler in packages/service/core/workflow/dispatch/interactive/yourNode.ts with two-stage execution. Step 5: Register in callbackMap in packages/service/core/workflow/dispatch/constants.ts. Step 6: Add isEntry flag handling in packages/service/core/workflow/dispatch/index.ts. Step 7-8: Create chat and editor components in projects/app/src/components/ and projects/app/src/pageComponents/. Step 9: Add i18n translations to packages/web/i18n/*/app.json. Step 10: Handle history rewriting logic.", "note": "Critical: Must implement isEntry flag reset (node.isEntry = false) on second execution to resume workflow. Use rewriteHistories to manage interaction records."}]'::jsonb,
+  'script',
+  'Understanding of FastGPT architecture, TypeScript, React, workflow dispatch system, two-stage execution pattern',
+  'Forgetting to reset isEntry flag on second execution causing infinite loops, not adding node type to isEntry whitelist causing workflow to not resume, incorrect history handling breaking message display, missing i18n translations',
+  'Node appears in workflow editor, configuration persists correctly, first execution triggers interactive dialog, user input submits successfully, workflow resumes after submission, message history displays correctly, output connects to downstream nodes',
+  'Full guide to implementing custom interactive nodes in FastGPT with two-stage execution, frontend components, and workflow integration',
+  'https://skillsmp.com/skills/labring-fastgpt-claude-skills-core-app-workflow-inteactive-skill-md',
+  'admin:HAIKU_SKILL_1764289594_83925'
+);
