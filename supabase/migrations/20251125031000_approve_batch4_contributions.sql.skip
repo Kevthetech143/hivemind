@@ -1,4 +1,0 @@
--- Approve batch 4 contributions (PostgreSQL fixes)
-UPDATE pending_contributions
-SET status = 'approved', reviewed_at = NOW()
-WHERE id IN (16, 17, 18) AND status = 'pending';

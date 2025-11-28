@@ -16,10 +16,11 @@ which tmux
 tmux -V
 ```
 
-### Step 2: Create new tmux session with Claude
+### Step 2: Create new tmux session with Claude (with mouse support)
 ```bash
 SESSION_NAME="clauderespawn-$(date +%s)"
-tmux new-session -d -s "$SESSION_NAME" && \
+tmux new-session -d -s "$SESSION_NAME" -x 200 -y 50
+tmux set-option -t "$SESSION_NAME" -g mouse on
 tmux send-keys -t "$SESSION_NAME" "claude --dangerously-skip-permissions --continue" Enter
 ```
 

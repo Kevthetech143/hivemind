@@ -1,4 +1,0 @@
--- Fix severity constraint to include MAJOR and MINOR
-ALTER TABLE postmortems DROP CONSTRAINT IF EXISTS postmortems_severity_check;
-ALTER TABLE postmortems ADD CONSTRAINT postmortems_severity_check
-    CHECK (severity IN ('LOW', 'MINOR', 'MEDIUM', 'HIGH', 'MAJOR', 'CRITICAL'));

@@ -257,11 +257,12 @@ GitHub Issues: https://github.com/Kevthetech143/hivemind/issues (label: "privacy
 
 ## 14. Open Source Transparency
 
-This project is **open source (MIT License)**. You can audit our data practices by reviewing:
+The **MCP client package** (what you install via npm) is **open source (MIT License)**. You can audit what data your AI tool sends by reviewing:
 
-- **MCP Server Code:** `backend/mcp-client/src/index.ts`
-- **Edge Functions:** `backend/functions/search/index.ts`
-- **Database Schema:** `backend/schema.sql`
+- **MCP Client Source:** `hivemind-mcp/` in our [GitHub repository](https://github.com/Kevthetech143/hivemind)
+- **npm Package:** [`hivemind-mcp` on npm](https://www.npmjs.com/package/hivemind-mcp)
+
+The MCP client only sends: search queries, feedback votes, and solution contributions. No code from your projects is ever transmitted.
 
 We believe in privacy through transparency. If you find privacy concerns in our code, please report them via GitHub Issues.
 

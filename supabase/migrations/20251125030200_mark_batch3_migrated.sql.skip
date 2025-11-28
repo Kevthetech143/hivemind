@@ -1,4 +1,0 @@
--- Mark batch 3 contributions as migrated
-UPDATE pending_contributions
-SET status = 'migrated', reviewed_at = NOW()
-WHERE id IN (14, 15) AND status = 'approved';

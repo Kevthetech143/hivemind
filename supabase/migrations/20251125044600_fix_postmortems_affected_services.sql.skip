@@ -1,3 +1,0 @@
--- Fix affected_services column type to JSONB
-ALTER TABLE postmortems DROP COLUMN affected_services;
-ALTER TABLE postmortems ADD COLUMN affected_services JSONB;

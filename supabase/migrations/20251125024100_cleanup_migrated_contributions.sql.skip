@@ -1,4 +1,0 @@
--- Update status of migrated contributions to track them
-UPDATE pending_contributions
-SET status = 'migrated', reviewed_at = NOW()
-WHERE id IN (6, 7, 8, 9, 10) AND status = 'approved';
