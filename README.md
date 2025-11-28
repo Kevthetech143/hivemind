@@ -1,18 +1,18 @@
-# clauderepo
+# hivemind
 
 > **Instant troubleshooting solutions for AI coding assistants**
-> Community-driven knowledge base with 2,400+ solutions and growing
+> Community-driven knowledge base with 16,000+ solutions and growing
 
 **Works with any MCP-compatible CLI:** Claude Code, Codex CLI, Gemini CLI, Grok CLI, Cursor, and more.
 
-[![npm version](https://img.shields.io/npm/v/clauderepo-mcp.svg)](https://www.npmjs.com/package/clauderepo-mcp)
+[![npm version](https://img.shields.io/npm/v/hivemind-mcp.svg)](https://www.npmjs.com/package/hivemind-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 🎯 What is clauderepo?
+## 🎯 What is hivemind?
 
-clauderepo is a **Model Context Protocol (MCP) server** that gives AI coding assistants instant access to a searchable knowledge base of troubleshooting solutions.
+hivemind is a **Model Context Protocol (MCP) server** that gives AI coding assistants instant access to a searchable knowledge base of troubleshooting solutions.
 
 **Supported platforms:**
 - Claude Code (Anthropic)
@@ -22,15 +22,15 @@ clauderepo is a **Model Context Protocol (MCP) server** that gives AI coding ass
 - Cursor
 - Any MCP-compatible tool
 
-When you hit an error, search clauderepo - get ranked solutions from the community in seconds.
+When you hit an error, search hivemind - get ranked solutions from the community in seconds.
 
 ---
 
 ## ✨ Features
 
 - 🔍 **Full-text search** - Fast Postgres FTS with relevance ranking
-- 👍 **Community feedback** - Say "clauderepo: worked" to rate solutions
-- 🎯 **Trigger words** - Claude automatically tracks your feedback
+- 👍 **Community feedback** - Say "hivemind: worked" to rate solutions
+- 🎯 **Trigger words** - AI automatically tracks your feedback
 - 📊 **Smart ranking** - Solutions sorted by success rate and votes
 - 🚀 **Zero config** - No API keys, no setup, just install and use
 - ⚡ **Fast** - < 1s search response time
@@ -39,23 +39,41 @@ When you hit an error, search clauderepo - get ranked solutions from the communi
 
 ## 📦 Installation
 
-### Step 1: Install the MCP package
+### Quick Install
 
+**Claude Code:**
 ```bash
-npm install -g clauderepo-mcp@latest
+npm install -g hivemind-mcp
+claude mcp add hivemind -- npx hivemind-mcp
 ```
 
-### Step 2: Add to Claude Code MCP settings
+**Codex CLI:**
+```bash
+npm install -g hivemind-mcp
+codex mcp add hivemind -- npx -y hivemind-mcp
+```
 
-Open Claude Code and configure MCP:
+**Gemini CLI:**
+```bash
+npm install -g hivemind-mcp
+gemini mcp add hivemind npx -y hivemind-mcp
+```
+
+**Cursor / Windsurf:**
+```bash
+npm install -g hivemind-mcp
+# Add to MCP settings: npx hivemind-mcp
+```
+
+### Manual Setup (Claude Code)
 
 **Option A: Via Claude Code UI**
 1. Open Claude Code settings
 2. Go to MCP Servers section
 3. Add new server:
-   - Name: `clauderepo`
+   - Name: `hivemind`
    - Command: `npx`
-   - Args: `["clauderepo-mcp"]`
+   - Args: `["hivemind-mcp"]`
 
 **Option B: Via config file**
 
@@ -64,17 +82,15 @@ Edit `~/.config/claude/mcp_config.json`:
 ```json
 {
   "mcpServers": {
-    "clauderepo": {
+    "hivemind": {
       "command": "npx",
-      "args": ["clauderepo-mcp"]
+      "args": ["hivemind-mcp"]
     }
   }
 }
 ```
 
-### Step 3: Restart Claude Code
-
-Reload Claude Code to activate the MCP server.
+Restart your CLI/editor to activate the MCP server.
 
 ---
 
@@ -84,27 +100,27 @@ Reload Claude Code to activate the MCP server.
 
 ```
 User: "MCP connection refused"
-Claude: [searches clauderepo automatically]
+AI: [searches hivemind automatically]
 ```
 
 Or explicitly:
 ```
-User: "Search clauderepo for playwright timeout"
+User: "Search hivemind for playwright timeout"
 ```
 
 ### Give Feedback
 
 After trying a solution:
 ```
-User: "clauderepo: worked"
+User: "hivemind: worked"
 ```
 
 Or:
 ```
-User: "clauderepo: failed"
+User: "hivemind: failed"
 ```
 
-Claude automatically tracks your feedback to improve rankings!
+Your AI automatically tracks your feedback to improve rankings!
 
 ---
 
@@ -118,7 +134,7 @@ Claude automatically tracks your feedback to improve rankings!
 | Auth problems | "user signed in but gets must sign in error" |
 | Supabase issues | "supabase migration failed" |
 
-**Current knowledge base**: 2,400+ solutions (and growing) covering MCP, Playwright, Supabase, web development, databases, security, and more.
+**Current knowledge base**: 16,000+ solutions (and growing) covering MCP, Playwright, Supabase, web development, databases, security, and more.
 
 ---
 
@@ -148,15 +164,15 @@ Include:
 
 ## 🎓 How Trigger Words Work
 
-When you say **"clauderepo: worked"** or **"clauderepo: failed"**:
+When you say **"hivemind: worked"** or **"hivemind: failed"**:
 
-1. Claude recognizes the trigger phrase
+1. Your AI recognizes the trigger phrase
 2. Automatically calls feedback tool
 3. Backend increments thumbs_up or thumbs_down
 4. Future searches show better-ranked solutions
 
 **Why trigger words?**
-Natural language ("that worked") is ambiguous. Trigger phrases ensure Claude ALWAYS catches your feedback.
+Natural language ("that worked") is ambiguous. Trigger phrases ensure your AI ALWAYS catches your feedback.
 
 ---
 
@@ -169,7 +185,7 @@ Natural language ("that worked") is ambiguous. Trigger phrases ensure Claude ALW
 
 **Stack**:
 - Backend: Supabase (Postgres 17 + Edge Functions)
-- Database: 2,400+ solutions
+- Database: 16,000+ solutions
 - Security: IP banning, input sanitization, moderated contributions
 
 ---
@@ -195,7 +211,7 @@ See [MONITORING.md](MONITORING.md) for admin dashboard access.
 - ✅ Trigger word system
 - ✅ Rate limiting
 - ✅ Security (IP bans, sanitization, moderation queue)
-- ✅ 2,400+ solutions
+- ✅ 16,000+ solutions
 - ✅ Version update notifications
 
 **Coming Soon**:
@@ -218,7 +234,7 @@ See [ROADMAP.md](ROADMAP.md) for full details.
 
 **Architecture**:
 ```
-User → Claude Code → MCP → Supabase Edge Functions → Postgres
+User → Any AI CLI/Editor → MCP → Supabase Edge Functions → Postgres
 ```
 
 **Files**:
@@ -243,19 +259,19 @@ User → Claude Code → MCP → Supabase Edge Functions → Postgres
 
 ```bash
 # Check if installed
-npm list -g clauderepo-mcp
+npm list -g hivemind-mcp
 
 # Reinstall
-npm install -g clauderepo-mcp@latest
+npm install -g hivemind-mcp@latest
 
-# Restart Claude Code
+# Restart your AI CLI/editor
 ```
 
 ### Search not working
 
-1. Check Claude Code MCP logs
+1. Check your AI CLI MCP logs
 2. Verify internet connection
-3. Try: "Search clauderepo for test"
+3. Try: "Search hivemind for test"
 
 ### Feedback not tracked
 
@@ -265,7 +281,7 @@ Known issue - tracking endpoint works but MCP may not call it consistently. We'r
 
 ## 🐛 Reporting Issues
 
-1. Check [existing issues](https://github.com/Kevthetech143/clauderepo/issues)
+1. Check [existing issues](https://github.com/Kevthetech143/hivemind-mcp/issues)
 2. Create new issue with:
    - What you tried
    - What happened
@@ -282,7 +298,7 @@ MIT License - see [LICENSE](LICENSE) file
 
 ## 🌟 Star History
 
-If clauderepo helped you, give it a star ⭐
+If hivemind helped you, give it a star ⭐
 
 ---
 
